@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Open WhatsApp Channel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .btn { 
+            background: #25D366; 
+            color: white; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: bold;
+            display: inline-block;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Join My WhatsApp Channel</h1>
+    <p>Click the button below to open directly in WhatsApp:</p>
+
+    <!-- Universal WhatsApp Channel Link (Works on Android & iOS) -->
+    <a class="btn" href="intent://channel/0029VaJO5e1LY6d9EtRSHg3A#Intent;package=com.whatsapp;scheme=whatsapp;end">
+        Open Channel in WhatsApp
+    </a>
+
+    <!-- Fallback for non-Android devices -->
+    <script>
+        // Detect if not Android and replace with iOS deep link
+        if (!navigator.userAgent.toLowerCase().includes("android")) {
+            document.querySelector('.btn').href = "whatsapp://channel/0029VaJO5e1LY6d9EtRSHg3A";
+        }
+    </script>
+
+    <!-- Fallback if WhatsApp not installed -->
+    <p>If nothing happens, <a href="https://whatsapp.com/channel/0029VaJO5e1LY6d9EtRSHg3A">open on WhatsApp Web</a>.</p>
+</body>
+</html>
