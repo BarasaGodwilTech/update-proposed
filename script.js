@@ -1,15 +1,73 @@
 
-// YouTube API Configuration
-const YT_API_KEY = "AIzaSyBnhvlEoMzX9A_DIq5Lks74m_S5CBL9jXU"
-const PLAYLIST_ID = "PL3UeMmSqW6uaESNSPkwr-RMrZJNiOUmYV"
-const YT = window.YT // Declare the YT variable
 
-// Global variables
-let player
-const isMuted = true
-let currentVideoId = ""
-let playlistVideos = []
-let hasAutoplayed = false
+// ===== ADD MISSING FUNCTIONS HERE =====
+
+function addUrgencyEffects(days) {
+    // Add urgency effects when launch is near
+    if (days <= 7) {
+        const countdownSection = document.querySelector('.countdown');
+        if (countdownSection && !countdownSection.classList.contains('urgent')) {
+            countdownSection.classList.add('urgent');
+            
+            // Add pulsing animation to countdown
+            const timerItems = document.querySelectorAll('.timer-item');
+            timerItems.forEach(item => {
+                item.style.animation = 'pulse 2s infinite';
+            });
+            
+            // Show notification for the first time
+            if (days === 7) {
+                showNotification(`Only ${days} days until launch! 🚀`, 'success');
+            }
+        }
+    }
+}
+
+function showCelebration() {
+    const countdownContainer = document.querySelector('.countdown-container');
+    const countdownCta = document.querySelector('.countdown-cta');
+    const celebration = document.getElementById('celebration');
+    
+    if (countdownContainer) countdownContainer.style.display = 'none';
+    if (countdownCta) countdownCta.style.display = 'none';
+    if (celebration) {
+        celebration.style.display = 'block';
+        // Add celebration animation
+        celebration.style.animation = 'celebrate 1s ease-out';
+    }
+    
+    document.title = "🎉 We're Live! - Will's Tech Store";
+    
+    // Show celebration notification
+    showNotification("🎉 We're officially live! Welcome to Will's Tech Store!", 'success');
+    
+    // Update page content for live state
+    updatePageForLiveState();
+}
+
+function updatePageForLiveState() {
+    // Update any elements that should change when we're live
+    const notifySection = document.querySelector('.notify-section');
+    if (notifySection) {
+        notifySection.innerHTML = `
+            <div class="container">
+                <div class="notify-success" style="display: block;">
+                    <div class="success-icon">
+                        <i class="fas fa-rocket" aria-hidden="true"></i>
+                    </div>
+                    <h3>We're Live! 🎉</h3>
+                    <p>Thank you for your patience! Will's Tech Store is now officially open for business.</p>
+                    <a href="#products" class="btn btn-primary">
+                        <i class="fas fa-shopping-bag" aria-hidden="true"></i>
+                        Start Shopping Now
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ===== END OF MISSING FUNCTIONS =====
 
 document.addEventListener("DOMContentLoaded", () => {
   try {
@@ -28,6 +86,10 @@ document.addEventListener("DOMContentLoaded", () => {
     initQuickView()
     initMobileMenu()
     initDropdownNavigation()
+    initModalActions()
+    initAboutSection()
+    initWhatsAppCTA()
+    initFeaturesSection()
   } catch (error) {
     console.error("Initialization error:", error)
   }
@@ -147,7 +209,7 @@ function initPageLoader() {
       setTimeout(() => {
         loader.classList.add("hidden")
         document.body.style.overflow = "auto"
-        initScrollRevealAnimations()
+        initScrollAnimations()
       }, 500)
     }
   }, 100)
@@ -474,309 +536,622 @@ function trackFormInteraction(action) {
 }
 
 // YouTube API Initialization
+// Enhanced YouTube API Configuration
+const YT_API_KEY = "AIzaSyBnhvlEoMzX9A_DIq5Lks74m_S5CBL9jXU"
+const PLAYLIST_ID = "PL3UeMmSqW6uaESNSPkwr-RMrZJNiOUmYV"
+const YT = window.YT
+
+// Global variables
+let player
+let currentVideoId = ""
+let playlistVideos = []
+let hasAutoplayed = false
+
+// Enhanced YouTube API Initialization
 function initYouTubeAPI() {
-  const tag = document.createElement("script")
-  tag.src = "https://www.youtube.com/iframe_api"
-  const firstScriptTag = document.getElementsByTagName("script")[0]
-  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+    // Check if YouTube API is already loaded
+    if (window.YT && window.YT.Player) {
+        createYouTubePlayer();
+        return;
+    }
+
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+}
+
+// Enhanced YouTube Player Creation
+function createYouTubePlayer() {
+    player = new YT.Player('mainVideoPlayer', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+            'autoplay': 0,
+            'controls': 1,
+            'rel': 0,
+            'showinfo': 0,
+            'modestbranding': 1,
+            'playsinline': 1
+        },
+        events: {
+            'onReady': onPlayerReady,
+            'onStateChange': onPlayerStateChange,
+            'onError': onPlayerError
+        }
+    });
 }
 
 // YouTube API Ready Callback
-window.onYouTubeIframeAPIReady = () => {
-  player = new YT.Player("mainVideoPlayer", {
-    events: {
-      onStateChange: onPlayerStateChange,
-      onReady: onPlayerReady,
-    },
-  })
-}
+window.onYouTubeIframeAPIReady = createYouTubePlayer;
 
 function onPlayerReady(event) {
-  setupScrollAutoplay()
-  setupVolumeControl()
-  const videoData = event.target.getVideoData()
-  if (videoData.video_id) {
-    updateActionButtons(videoData.video_id)
-  }
+    console.log('YouTube player ready');
+    setupScrollAutoplay();
+    setupVolumeControl();
+    fetchPlaylistVideos();
+    
+    // Get initial video data
+    try {
+        const videoData = event.target.getVideoData();
+        if (videoData.video_id) {
+            updateActionButtons(videoData.video_id);
+        }
+    } catch (error) {
+        console.log('Could not get initial video data:', error);
+    }
 }
 
 function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.PLAYING) {
-    const videoData = event.target.getVideoData()
-    if (videoData.video_id && videoData.video_id !== currentVideoId) {
-      updateActionButtons(videoData.video_id)
-    }
-  }
-}
-
-function initScrollRevealAnimations() {
-  const observerOptions = {
-    threshold: 0.1,
-    rootMargin: "0px 0px -50px 0px",
-  }
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = "1"
-        entry.target.style.transform = "translateY(0)"
-      }
-    })
-  }, observerOptions)
-
-  // Observe elements for animation
-  document.querySelectorAll(".feature-card, .timer-item, .video-item").forEach((el) => {
-    el.style.opacity = "0"
-    el.style.transform = "translateY(30px)"
-    el.style.transition = "opacity 0.6s ease, transform 0.6s ease"
-    observer.observe(el)
-  })
-}
-
-// Parallax Effects
-function initParallaxEffects() {
-  let ticking = false
-
-  function updateParallax() {
-    const scrolled = window.pageYOffset
-    const parallaxElements = document.querySelectorAll(".hero")
-
-    parallaxElements.forEach((element) => {
-      const speed = 0.5
-      element.style.transform = `translateY(${scrolled * speed}px)`
-    })
-
-    ticking = false
-  }
-
-  window.addEventListener("scroll", () => {
-    if (!ticking) {
-      requestAnimationFrame(updateParallax)
-      ticking = true
-    }
-  })
-}
-
-// Enhanced Auto-play with Intersection Observer
-function setupScrollAutoplay() {
-  const videoSection = document.querySelector(".youtube-section")
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting && !hasAutoplayed) {
-          if (entry.intersectionRatio >= 0.3) {
-            setTimeout(() => {
-              if (player && player.playVideo) {
-                player.playVideo()
-                hasAutoplayed = true
-                observer.unobserve(videoSection)
-
-                // Show notification
-                showNotification("🎥 Video started playing!", "success")
-              }
-            }, 500)
-          }
+    if (event.data === YT.PlayerState.PLAYING) {
+        try {
+            const videoData = event.target.getVideoData();
+            if (videoData.video_id && videoData.video_id !== currentVideoId) {
+                updateActionButtons(videoData.video_id);
+                trackVideoPlay(videoData.video_id, videoData.title);
+            }
+        } catch (error) {
+            console.log('Could not get video data on state change:', error);
         }
-      })
-    },
-    { threshold: [0.3, 0.5, 0.7] },
-  )
+    }
+    
+    // Track video completion
+    if (event.data === YT.PlayerState.ENDED) {
+        trackVideoCompletion(currentVideoId);
+    }
+}
 
-  observer.observe(videoSection)
+function onPlayerError(error) {
+    console.error('YouTube player error:', error);
+    showNotification('Error loading video. Please try again.', 'error');
 }
 
 // Enhanced Volume Control
 function setupVolumeControl() {
-  const volumeToggle = document.getElementById("volumeToggle")
-  const volumeSlider = document.getElementById("volumeSlider")
-  const volumeIndicator = document.querySelector(".volume-indicator")
-  const volumeIcon = volumeToggle.querySelector("i")
+    const volumeToggle = document.getElementById('volumeToggle');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeIndicator = document.querySelector('.volume-indicator');
+    const volumeIcon = volumeToggle.querySelector('i');
 
-  let currentVolume = 0
-  let previousVolume = 50
+    let currentVolume = 0;
+    let previousVolume = 50;
 
-  // Initialize
-  updateVolumeDisplay(currentVolume)
+    // Initialize volume display
+    updateVolumeDisplay(currentVolume);
 
-  volumeToggle.addEventListener("click", () => {
-    if (currentVolume === 0) {
-      // Unmute
-      currentVolume = previousVolume
-      player.setVolume(currentVolume)
-      player.unMute()
-    } else {
-      // Mute
-      previousVolume = currentVolume
-      currentVolume = 0
-      player.setVolume(0)
-      player.mute()
+    volumeToggle.addEventListener('click', () => {
+        if (currentVolume === 0) {
+            // Unmute
+            currentVolume = previousVolume;
+            if (player && player.setVolume) {
+                player.setVolume(currentVolume);
+                player.unMute();
+            }
+            showNotification('Volume on', 'success');
+        } else {
+            // Mute
+            previousVolume = currentVolume;
+            currentVolume = 0;
+            if (player && player.setVolume) {
+                player.setVolume(0);
+                player.mute();
+            }
+            showNotification('Volume muted', 'info');
+        }
+
+        volumeSlider.value = currentVolume;
+        updateVolumeDisplay(currentVolume);
+    });
+
+    volumeSlider.addEventListener('input', (e) => {
+        currentVolume = parseInt(e.target.value);
+        if (player && player.setVolume) {
+            player.setVolume(currentVolume);
+            
+            if (currentVolume === 0) {
+                player.mute();
+            } else {
+                player.unMute();
+                previousVolume = currentVolume;
+            }
+        }
+
+        updateVolumeDisplay(currentVolume);
+    });
+
+    function updateVolumeDisplay(volume) {
+        volumeIndicator.style.width = volume + '%';
+        
+        // Update toggle button appearance
+        volumeToggle.classList.toggle('muted', volume === 0);
+        
+        // Update icon based on volume level
+        if (volume === 0) {
+            volumeIcon.className = 'fas fa-volume-mute';
+        } else if (volume < 30) {
+            volumeIcon.className = 'fas fa-volume-down';
+        } else if (volume < 70) {
+            volumeIcon.className = 'fas fa-volume-up';
+        } else {
+            volumeIcon.className = 'fas fa-volume-up';
+        }
     }
+}
 
-    volumeSlider.value = currentVolume
-    updateVolumeDisplay(currentVolume)
-  })
+// Enhanced Auto-play with Intersection Observer
+function setupScrollAutoplay() {
+    const videoSection = document.querySelector('.youtube-section');
+    if (!videoSection) return;
 
-  volumeSlider.addEventListener("input", (e) => {
-    currentVolume = Number.parseInt(e.target.value)
-    player.setVolume(currentVolume)
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting && !hasAutoplayed) {
+                    if (entry.intersectionRatio >= 0.3) {
+                        setTimeout(() => {
+                            if (player && player.playVideo) {
+                                player.playVideo();
+                                hasAutoplayed = true;
+                                observer.unobserve(videoSection);
+                                showNotification('🎥 Video started playing!', 'success');
+                            }
+                        }, 1000);
+                    }
+                }
+            });
+        },
+        { 
+            threshold: [0.3, 0.5, 0.7],
+            rootMargin: '0px 0px -100px 0px'
+        }
+    );
 
-    if (currentVolume === 0) {
-      player.mute()
-    } else {
-      player.unMute()
-      previousVolume = currentVolume
-    }
-
-    updateVolumeDisplay(currentVolume)
-  })
-
-  function updateVolumeDisplay(volume) {
-    volumeIndicator.style.width = volume + "%"
-    volumeToggle.classList.toggle("muted", volume === 0)
-
-    // Update icon based on volume level
-    volumeIcon.className =
-      volume === 0
-        ? "fas fa-volume-mute"
-        : volume < 30
-          ? "fas fa-volume-down"
-          : volume < 70
-            ? "fas fa-volume-up"
-            : "fas fa-volume-up"
-  }
+    observer.observe(videoSection);
 }
 
 // Update action buttons for current video
 function updateActionButtons(videoId) {
-  currentVideoId = videoId
-  const likeBtn = document.getElementById("likeBtn")
-  const commentBtn = document.getElementById("commentBtn")
+    currentVideoId = videoId;
+    const likeBtn = document.getElementById('likeBtn');
+    const commentBtn = document.getElementById('commentBtn');
 
-  likeBtn.href = `https://www.youtube.com/watch?v=${videoId}&like=1`
-  commentBtn.href = `https://www.youtube.com/watch?v=${videoId}#comments`
+    if (likeBtn) {
+        likeBtn.href = `https://www.youtube.com/watch?v=${videoId}&like=1`;
+    }
+    
+    if (commentBtn) {
+        commentBtn.href = `https://www.youtube.com/watch?v=${videoId}#comments`;
+    }
 
-  updateRecommendedVideos()
+    updateRecommendedVideos();
 }
 
 // Update recommended videos (excluding current one)
 function updateRecommendedVideos() {
-  const otherVideos = playlistVideos.filter((video) => video.id !== currentVideoId)
-  renderVideoGrid(otherVideos)
+    const otherVideos = playlistVideos.filter((video) => video.id !== currentVideoId);
+    renderVideoGrid(otherVideos);
 }
 
-// Fetch playlist videos from YouTube API
+// Enhanced playlist videos fetch with error handling
 async function fetchPlaylistVideos() {
-  try {
-    let nextPageToken = ""
-    let allVideos = []
+    try {
+        showVideoGridLoading();
+        
+        let nextPageToken = "";
+        let allVideos = [];
 
-    do {
-      const response = await fetch(
-        `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${YT_API_KEY}&pageToken=${nextPageToken}`,
-      )
+        do {
+            const response = await fetch(
+                `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${YT_API_KEY}&pageToken=${nextPageToken}`
+            );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch videos")
-      }
+            if (!response.ok) {
+                throw new Error(`Failed to fetch videos: ${response.status}`);
+            }
 
-      const data = await response.json()
+            const data = await response.json();
 
-      allVideos = allVideos.concat(
-        data.items.map((item) => ({
-          id: item.snippet.resourceId.videoId,
-          title: item.snippet.title,
-          thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default.url,
-        })),
-      )
+            if (!data.items) {
+                throw new Error('No videos found in playlist');
+            }
 
-      nextPageToken = data.nextPageToken || ""
-    } while (nextPageToken)
+            allVideos = allVideos.concat(
+                data.items.map((item) => ({
+                    id: item.snippet.resourceId.videoId,
+                    title: item.snippet.title,
+                    thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
+                    publishedAt: item.snippet.publishedAt,
+                    description: item.snippet.description
+                }))
+            );
 
-    playlistVideos = allVideos
-    if (playlistVideos.length > 0) {
-      updateActionButtons(playlistVideos[0].id)
+            nextPageToken = data.nextPageToken || "";
+        } while (nextPageToken);
+
+        playlistVideos = allVideos;
+        
+        if (playlistVideos.length > 0) {
+            // Set first video as current
+            const firstVideo = playlistVideos[0];
+            updateActionButtons(firstVideo.id);
+            showNotification(`Loaded ${playlistVideos.length} videos`, 'success');
+        } else {
+            showVideoGridError('No videos found in playlist');
+        }
+    } catch (error) {
+        console.error('Error fetching playlist videos:', error);
+        showVideoGridError('Failed to load videos. Please try again later.');
+        trackYouTubeError(error.message);
     }
-  } catch (error) {
-    console.error("Error fetching playlist videos:", error)
-    const videoGrid = document.getElementById("videoGrid")
-    videoGrid.innerHTML = '<div class="video-placeholder">Failed to load videos. Please try again later.</div>'
-  }
 }
 
-// Render video grid
+// Enhanced video grid rendering
 function renderVideoGrid(videos) {
-  const videoGrid = document.getElementById("videoGrid")
+    const videoGrid = document.getElementById('videoGrid');
+    if (!videoGrid) return;
 
-  if (videos.length === 0) {
-    videoGrid.innerHTML = '<div class="video-placeholder">No additional videos available.</div>'
-    return
-  }
+    if (videos.length === 0) {
+        showVideoGridError('No additional videos available.');
+        return;
+    }
 
-  videoGrid.innerHTML = ""
-  videos.forEach((video) => {
-    const videoItem = document.createElement("div")
-    videoItem.className = "video-item"
-    videoItem.innerHTML = `
-            <a href="https://www.youtube.com/watch?v=${video.id}" target="_blank" rel="noopener noreferrer">
-                <div class="video-thumbnail">
-                    <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
-                    <div class="play-icon"><i class="fas fa-play"></i></div>
-                </div>
-                <div class="video-info">
-                    <h3 class="video-title">${escapeHtml(video.title)}</h3>
-                </div>
-            </a>
-        `
-    videoGrid.appendChild(videoItem)
-  })
+    // Show only first 8 videos for better performance
+    const videosToShow = videos.slice(0, 8);
+    
+    videoGrid.innerHTML = "";
+    videosToShow.forEach((video, index) => {
+        const videoItem = createVideoItem(video, index);
+        videoGrid.appendChild(videoItem);
+    });
 }
 
-// Utility function to escape HTML
+function createVideoItem(video, index) {
+    const videoItem = document.createElement('div');
+    videoItem.className = 'video-item';
+    videoItem.style.animationDelay = `${index * 0.1}s`;
+    
+    // Format published date
+    const publishedDate = new Date(video.publishedAt).toLocaleDateString();
+    
+    videoItem.innerHTML = `
+        <a href="https://www.youtube.com/watch?v=${video.id}" target="_blank" rel="noopener noreferrer" class="video-link">
+            <div class="video-thumbnail">
+                <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
+                <div class="play-overlay">
+                    <div class="play-icon">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                    </div>
+                </div>
+                <div class="video-duration">Watch</div>
+            </div>
+            <div class="video-info">
+                <h4 class="video-title">${escapeHtml(video.title)}</h4>
+                <div class="video-meta">
+                    <span>Published: ${publishedDate}</span>
+                </div>
+            </div>
+        </a>
+    `;
+    
+    // Add click tracking
+    const videoLink = videoItem.querySelector('.video-link');
+    videoLink.addEventListener('click', () => {
+        trackVideoClick(video.id, video.title);
+    });
+    
+    return videoItem;
+}
+
+// Utility functions
+function showVideoGridLoading() {
+    const videoGrid = document.getElementById('videoGrid');
+    if (videoGrid) {
+        videoGrid.innerHTML = `
+            <div class="video-placeholder">
+                <i class="fas fa-spinner" aria-hidden="true"></i>
+                Loading amazing tech videos...
+            </div>
+        `;
+    }
+}
+
+function showVideoGridError(message) {
+    const videoGrid = document.getElementById('videoGrid');
+    if (videoGrid) {
+        videoGrid.innerHTML = `
+            <div class="video-placeholder">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                ${message}
+            </div>
+        `;
+    }
+}
+
 function escapeHtml(text) {
-  const map = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  }
-  return text.replace(/[&<>"']/g, (m) => map[m])
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// Analytics and tracking
+function trackVideoPlay(videoId, videoTitle) {
+    console.log('Video playing:', videoTitle);
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'play', {
+            'event_category': 'YouTube Video',
+            'event_label': videoTitle,
+            'value': videoId
+        });
+    }
+}
+
+function trackVideoCompletion(videoId) {
+    console.log('Video completed:', videoId);
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'complete', {
+            'event_category': 'YouTube Video',
+            'event_label': 'Video Completed',
+            'value': videoId
+        });
+    }
+}
+
+function trackVideoClick(videoId, videoTitle) {
+    console.log('Video clicked:', videoTitle);
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'click', {
+            'event_category': 'YouTube Video',
+            'event_label': videoTitle,
+            'value': videoId
+        });
+    }
+}
+
+function trackYouTubeError(errorMessage) {
+    console.error('YouTube error:', errorMessage);
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'exception', {
+            'description': errorMessage,
+            'fatal': false
+        });
+    }
 }
 
 function initProductFilters() {
-  const categoryBtns = document.querySelectorAll(".category-btn")
-  const productCards = document.querySelectorAll(".product-card")
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    const productCards = document.querySelectorAll('.product-card');
+    const productsGrid = document.querySelector('.products-grid');
 
-  categoryBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const category = btn.dataset.category
+    if (!categoryBtns.length || !productCards.length) return;
 
-      // Update active button and ARIA states
-      categoryBtns.forEach((b) => {
-        b.classList.remove("active")
-        b.setAttribute("aria-selected", "false")
-      })
-      btn.classList.add("active")
-      btn.setAttribute("aria-selected", "true")
+    // Filter products function
+    function filterProducts(category) {
+        let visibleCount = 0;
+        
+        productCards.forEach((card, index) => {
+            const cardCategory = card.dataset.category;
+            const shouldShow = category === 'all' || cardCategory === category;
+            
+            if (shouldShow) {
+                visibleCount++;
+                card.style.display = 'block';
+                // Staggered animation
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                    card.style.animation = `fadeInUp 0.6s ease forwards ${index * 0.1}s`;
+                }, 100);
+            } else {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.display = 'none';
+                }, 300);
+            }
+        });
 
-      // Filter products with animation
-      productCards.forEach((card) => {
-        if (category === "all" || card.dataset.category === category) {
-          card.style.display = "block"
-          setTimeout(() => {
-            card.style.opacity = "1"
-            card.style.transform = "translateY(0)"
-          }, 100)
-        } else {
-          card.style.opacity = "0"
-          card.style.transform = "translateY(20px)"
-          setTimeout(() => {
-            card.style.display = "none"
-          }, 300)
+        // Show empty state if no products
+        showEmptyState(visibleCount === 0, category);
+        
+        // Track filter usage
+        trackFilterUsage(category);
+    }
+
+    // Show empty state
+    function showEmptyState(isEmpty, category) {
+        let emptyState = document.querySelector('.products-empty-state');
+        
+        if (isEmpty && !emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.className = 'products-empty-state';
+            emptyState.innerHTML = `
+                <div class="empty-state-content">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                    <h3>No ${category === 'all' ? '' : category} products found</h3>
+                    <p>We're constantly adding new products. Check back soon or contact us for special requests.</p>
+                    <button class="cta-btn cta-btn-primary reset-filters">
+                        <i class="fas fa-redo" aria-hidden="true"></i>
+                        Show All Products
+                    </button>
+                </div>
+            `;
+            productsGrid.appendChild(emptyState);
+            
+            // Add event listener to reset button
+            emptyState.querySelector('.reset-filters').addEventListener('click', () => {
+                categoryBtns.forEach(btn => {
+                    if (btn.dataset.category === 'all') {
+                        btn.click();
+                    }
+                });
+            });
+        } else if (!isEmpty && emptyState) {
+            emptyState.remove();
         }
-      })
-    })
-  })
+    }
+
+    // Track filter usage
+    function trackFilterUsage(category) {
+        console.log(`Products filtered by: ${category}`);
+        
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'product_filter', {
+                'event_category': 'Products',
+                'event_label': category,
+                'value': 1
+            });
+        }
+    }
+
+    // Add event listeners to category buttons
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const category = this.dataset.category;
+            
+            // Update active button states
+            categoryBtns.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-selected', 'false');
+                b.setAttribute('tabindex', '-1');
+            });
+            
+            this.classList.add('active');
+            this.setAttribute('aria-selected', 'true');
+            this.setAttribute('tabindex', '0');
+            this.focus();
+            
+            // Filter products
+            filterProducts(category);
+        });
+    });
+
+    // Enhanced wishlist functionality
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.add-to-wishlist')) {
+            e.preventDefault();
+            const btn = e.target.closest('.add-to-wishlist');
+            const icon = btn.querySelector('i');
+            const productCard = btn.closest('.product-card');
+            const productName = productCard.querySelector('h3').textContent;
+
+            if (icon.classList.contains('far')) {
+                // Add to wishlist
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.classList.add('active');
+                btn.style.background = 'var(--products-danger)';
+                btn.style.borderColor = 'var(--products-danger)';
+                btn.style.color = 'white';
+                
+                showNotification(`Added ${productName} to wishlist!`, 'success');
+                trackWishlistAction('add', productName);
+            } else {
+                // Remove from wishlist
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.classList.remove('active');
+                btn.style.background = 'var(--products-card-bg)';
+                btn.style.borderColor = 'var(--products-border)';
+                btn.style.color = 'var(--text-light)';
+                
+                showNotification(`Removed ${productName} from wishlist`, 'info');
+                trackWishlistAction('remove', productName);
+            }
+        }
+
+        // Buy Now button functionality
+        if (e.target.closest('.buy-now-btn')) {
+            e.preventDefault();
+            const btn = e.target.closest('.buy-now-btn');
+            const productCard = btn.closest('.product-card');
+            const productName = productCard.querySelector('h3').textContent;
+            const productPrice = productCard.querySelector('.current-price').textContent;
+            
+            const message = `Hi Will's Tech! I want to buy: ${productName} - ${productPrice}. Please provide payment details and delivery information.`;
+            const whatsappUrl = `https://wa.me/256751924844?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+            trackPurchaseIntent(productName, productPrice);
+        }
+    });
+
+    // Keyboard navigation for category filters
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            const activeBtn = document.querySelector('.category-btn[aria-selected="true"]');
+            const buttons = Array.from(categoryBtns);
+            const currentIndex = buttons.indexOf(activeBtn);
+            let nextIndex;
+
+            if (e.key === 'ArrowRight') {
+                nextIndex = (currentIndex + 1) % buttons.length;
+            } else {
+                nextIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+            }
+
+            buttons[nextIndex].click();
+            buttons[nextIndex].focus();
+        }
+    });
+
+    // Initialize with all products
+    filterProducts('all');
+}
+
+// Track wishlist actions
+function trackWishlistAction(action, productName) {
+    console.log(`Wishlist ${action}: ${productName}`);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', action, {
+            'event_category': 'Wishlist',
+            'event_label': productName,
+            'value': 1
+        });
+    }
+}
+
+// Track purchase intent
+function trackPurchaseIntent(productName, productPrice) {
+    console.log(`Purchase intent: ${productName} - ${productPrice}`);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'begin_checkout', {
+            'event_category': 'Purchase',
+            'event_label': productName,
+            'value': parseFloat(productPrice.replace(/[^\d.]/g, '')) || 1
+        });
+    }
+    
+    if (typeof fbq !== 'undefined') {
+        fbq('track', 'InitiateCheckout');
+    }
 }
 
 function initTestimonialSlider() {
@@ -925,166 +1300,400 @@ function initTestimonialSlider() {
   window.addEventListener('beforeunload', stopAutoSlide);
 }
 
-function initContactForm() {
-  const form = document.getElementById("contactForm")
 
-  if (!form) return
 
-  form.addEventListener("submit", (e) => {
-    e.preventDefault()
+function closeQuickViewModal() {
+    const modal = document.getElementById('quickViewModal');
+    if (!modal) return;
+    
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = 'auto';
 
-    const formData = new FormData(form)
-    const data = Object.fromEntries(formData)
-
-    // Basic validation
-    if (!data.name || !data.email || !data.message) {
-      showNotification("Please fill in all required fields.", "error")
-      return
-    }
-
-    // Create WhatsApp message
-    const message = `Hi Will's Tech! 
-
-Name: ${data.name}
-Email: ${data.email}
-Phone: ${data.phone || "Not provided"}
-Subject: ${data.subject}
-
-Message: ${data.message}`
-
-    const whatsappUrl = `https://wa.me/256751924844?text=${encodeURIComponent(message)}`
-    window.open(whatsappUrl, "_blank")
-
-    // Show success message
-    showNotification("Message prepared! Opening WhatsApp...", "success")
-
-    // Reset form
-    form.reset()
-  })
+    // Remove focus trap
+    removeFocusTrap();
 }
 
+      function removeFocusTrap() {
+        // Focus will naturally return to the trigger element
+    }
+
 function initQuickView() {
-  const quickViewBtns = document.querySelectorAll(".quick-view-btn")
-  const modal = document.getElementById("quickViewModal")
-  const closeBtn = document.querySelector(".modal-close")
+    const quickViewBtns = document.querySelectorAll('.quick-view-btn');
+    const modal = document.getElementById('quickViewModal');
+    const closeBtn = document.querySelector('.modal-close');
 
-  if (!modal) return
+    // Create modal if it doesn't exist
+    if (!modal) {
+        createQuickViewModal();
+        return;
+    }
 
-  const productData = {
-    "iPhone 15 Pro": {
-      image: "public/iphone-15-pro.png",
-      title: "iPhone 15 Pro",
-      description:
-        "The iPhone 15 Pro features a titanium design, A17 Pro chip, and advanced camera system. Experience the future of mobile technology with this premium device.",
-      price: "UGX 4,500,000",
-      originalPrice: "UGX 5,000,000",
-      rating: "(128 reviews)",
-      stars: 5,
-    },
-    "MacBook Pro M3": {
-      image: "public/macbook-pro-m3-laptop.jpg",
-      title: "MacBook Pro M3",
-      description:
-        "Supercharged by the M3 chip, this MacBook Pro delivers exceptional performance for professionals and creators. Perfect for demanding workflows.",
-      price: "UGX 8,500,000",
-      originalPrice: "",
-      rating: "(89 reviews)",
-      stars: 5,
-    },
-    "PlayStation 5": {
-      image: "public/playstation-5-gaming-console.jpg",
-      title: "PlayStation 5",
-      description:
-        "Experience next-generation gaming with the PlayStation 5. Featuring ultra-high speed SSD, haptic feedback, and stunning 4K graphics.",
-      price: "UGX 2,800,000",
-      originalPrice: "",
-      rating: "(156 reviews)",
-      stars: 4.5,
-    },
-    "AirPods Pro": {
-      image: "public/airpods-pro-wireless-earbuds.jpg",
-      title: "AirPods Pro",
-      description:
-        "Premium wireless earbuds with active noise cancellation, spatial audio, and all-day battery life. Perfect for music lovers.",
-      price: "UGX 950,000",
-      originalPrice: "",
-      rating: "(203 reviews)",
-      stars: 5,
-    },
-  }
+    const productData = {
+        "iPhone 15 Pro": {
+            image: "public/iphone-15-pro.png",
+            title: "iPhone 15 Pro",
+            description: "The iPhone 15 Pro features a titanium design, A17 Pro chip, and advanced camera system. Experience the future of mobile technology with this premium device with professional-grade capabilities.",
+            price: "UGX 4,500,000",
+            originalPrice: "UGX 5,000,000",
+            rating: "(128 reviews)",
+            stars: 5,
+            features: [
+                "Titanium design",
+                "A17 Pro chip",
+                "Professional camera system",
+                "5G capable",
+                "Face ID"
+            ],
+            stock: "In Stock",
+            sku: "APP-IP15P-256"
+        },
+        "MacBook Pro M3": {
+            image: "public/macbook-pro-m3-laptop.jpg",
+            title: "MacBook Pro M3",
+            description: "Supercharged by the M3 chip, this MacBook Pro delivers exceptional performance for professionals and creators. Perfect for demanding workflows with enhanced graphics and processing power.",
+            price: "UGX 8,500,000",
+            originalPrice: "",
+            rating: "(89 reviews)",
+            stars: 5,
+            features: [
+                "M3 chip",
+                "Liquid Retina XDR display",
+                "Up to 22 hours battery",
+                "8GB Unified Memory",
+                "512GB SSD Storage"
+            ],
+            stock: "In Stock",
+            sku: "APP-MBP-M3-512"
+        },
+        "PlayStation 5": {
+            image: "public/playstation-5-gaming-console.jpg",
+            title: "PlayStation 5",
+            description: "Experience next-generation gaming with the PlayStation 5. Featuring ultra-high speed SSD, haptic feedback, and stunning 4K graphics for immersive gaming experiences.",
+            price: "UGX 2,800,000",
+            originalPrice: "",
+            rating: "(156 reviews)",
+            stars: 4.5,
+            features: [
+                "4K Gaming",
+                "Ultra-high speed SSD",
+                "Haptic feedback",
+                "3D Audio",
+                "Backward compatibility"
+            ],
+            stock: "Limited Stock",
+            sku: "SONY-PS5-STD"
+        },
+        "AirPods Pro": {
+            image: "public/airpods-pro-wireless-earbuds.jpg",
+            title: "AirPods Pro",
+            description: "Premium wireless earbuds with active noise cancellation, spatial audio, and all-day battery life. Perfect for music lovers and professionals seeking crystal-clear audio quality.",
+            price: "UGX 950,000",
+            originalPrice: "",
+            rating: "(203 reviews)",
+            stars: 5,
+            features: [
+                "Active Noise Cancellation",
+                "Spatial Audio",
+                "Sweat and water resistant",
+                "Up to 6 hours battery",
+                "Wireless charging case"
+            ],
+            stock: "In Stock",
+            sku: "APP-AIRPODS-PRO"
+        }
+    };
 
-  quickViewBtns.forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault()
-      const productCard = btn.closest(".product-card")
-      const productTitle = productCard.querySelector("h3").textContent
-      const product = productData[productTitle]
+    // Add event listeners to quick view buttons
+    quickViewBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const productCard = btn.closest('.product-card');
+            if (!productCard) return;
+            
+            const productTitle = productCard.querySelector('h3').textContent;
+            const product = productData[productTitle];
 
-      if (product) {
+            if (product) {
+                openQuickViewModal(product);
+            } else {
+                console.warn('Product data not found for:', productTitle);
+                showNotification('Product details not available', 'error');
+            }
+        });
+    });
+
+    // Close modal functionality
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeQuickViewModal);
+    }
+
+    // Close modal when clicking outside
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeQuickViewModal();
+            }
+        });
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeQuickViewModal();
+        }
+    });
+
+    function openQuickViewModal(product) {
+        if (!modal) return;
+
         // Update modal content
         const elements = {
-          image: document.getElementById("modalProductImage"),
-          title: document.getElementById("modalProductTitle"),
-          description: document.getElementById("modalProductDescription"),
-          price: document.getElementById("modalProductPrice"),
-          originalPrice: document.getElementById("modalProductOriginalPrice"),
-          rating: document.getElementById("modalProductRating"),
-          stars: document.getElementById("modalProductStars"),
-        }
+            image: document.getElementById('modalProductImage'),
+            title: document.getElementById('modalProductTitle'),
+            description: document.getElementById('modalProductDescription'),
+            price: document.getElementById('modalProductPrice'),
+            originalPrice: document.getElementById('modalProductOriginalPrice'),
+            rating: document.getElementById('modalProductRating'),
+            stars: document.getElementById('modalProductStars'),
+            features: document.getElementById('modalProductFeatures'),
+            stock: document.getElementById('modalProductStock'),
+            sku: document.getElementById('modalProductSKU')
+        };
 
-        if (elements.image) elements.image.src = product.image
-        if (elements.title) elements.title.textContent = product.title
-        if (elements.description) elements.description.textContent = product.description
-        if (elements.price) elements.price.textContent = product.price
-        if (elements.originalPrice) elements.originalPrice.textContent = product.originalPrice
-        if (elements.rating) elements.rating.textContent = product.rating
+        // Set product data
+        if (elements.image) elements.image.src = product.image;
+        if (elements.image) elements.image.alt = product.title;
+        if (elements.title) elements.title.textContent = product.title;
+        if (elements.description) elements.description.textContent = product.description;
+        if (elements.price) elements.price.textContent = product.price;
+        
+        // Handle original price
+        if (elements.originalPrice) {
+            if (product.originalPrice) {
+                elements.originalPrice.textContent = product.originalPrice;
+                elements.originalPrice.style.display = 'inline';
+            } else {
+                elements.originalPrice.style.display = 'none';
+            }
+        }
+        
+        if (elements.rating) elements.rating.textContent = product.rating;
+        if (elements.stock) elements.stock.textContent = product.stock;
+        if (elements.sku) elements.sku.textContent = product.sku;
 
         // Generate stars
         if (elements.stars) {
-          elements.stars.innerHTML = ""
-          for (let i = 0; i < 5; i++) {
-            const star = document.createElement("i")
-            if (i < Math.floor(product.stars)) {
-              star.className = "fas fa-star"
-            } else if (i < product.stars) {
-              star.className = "fas fa-star-half-alt"
-            } else {
-              star.className = "far fa-star"
+            elements.stars.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const star = document.createElement('i');
+                if (i < Math.floor(product.stars)) {
+                    star.className = 'fas fa-star';
+                } else if (i < product.stars) {
+                    star.className = 'fas fa-star-half-alt';
+                } else {
+                    star.className = 'far fa-star';
+                }
+                elements.stars.appendChild(star);
             }
-            elements.stars.appendChild(star)
-          }
         }
 
-        modal.classList.add("active")
-        modal.setAttribute("aria-hidden", "false")
-        document.body.style.overflow = "hidden"
-      }
-    })
-  })
+        // Generate features list
+        if (elements.features && product.features) {
+            elements.features.innerHTML = '';
+            product.features.forEach(feature => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="fas fa-check" aria-hidden="true"></i> ${feature}`;
+                elements.features.appendChild(li);
+            });
+        }
 
-  if (closeBtn) {
-    closeBtn.addEventListener("click", closeModal)
-  }
+        // Show modal
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
 
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) {
-      closeModal()
+        // Add focus trap for accessibility
+        trapFocus(modal);
+
+        // Track quick view event
+        trackQuickView(product.title);
     }
-  })
 
-  function closeModal() {
-    modal.classList.remove("active")
-    modal.setAttribute("aria-hidden", "true")
-    document.body.style.overflow = "auto"
-  }
 
-  // Close modal with Escape key
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("active")) {
-      closeModal()
+    function trapFocus(modal) {
+        const focusableElements = modal.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        modal.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                if (e.shiftKey) {
+                    if (document.activeElement === firstElement) {
+                        e.preventDefault();
+                        lastElement.focus();
+                    }
+                } else {
+                    if (document.activeElement === lastElement) {
+                        e.preventDefault();
+                        firstElement.focus();
+                    }
+                }
+            }
+        });
+
+        firstElement.focus();
     }
-  })
+
+
+    function createQuickViewModal() {
+        const modalHTML = `
+            <div id="quickViewModal" class="modal" aria-hidden="true">
+                <div class="modal-overlay">
+                    <div class="modal-content" role="dialog" aria-labelledby="modalProductTitle" aria-modal="true">
+                        <button class="modal-close" aria-label="Close quick view">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                        
+                        <div class="modal-body">
+                            <div class="modal-product-image">
+                                <img id="modalProductImage" src="" alt="" loading="lazy">
+                            </div>
+                            
+                            <div class="modal-product-info">
+                                <div class="product-header">
+                                    <h2 id="modalProductTitle">Product Title</h2>
+                                    <div class="product-meta">
+                                        <span id="modalProductStock" class="stock-status in-stock">In Stock</span>
+                                        <span id="modalProductSKU" class="product-sku">SKU: N/A</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="product-rating">
+                                    <div id="modalProductStars" class="stars">
+                                        <!-- Stars will be generated here -->
+                                    </div>
+                                    <span id="modalProductRating" class="rating-count">(0 reviews)</span>
+                                </div>
+                                
+                                <div class="product-price">
+                                    <span id="modalProductPrice" class="current-price">UGX 0</span>
+                                    <span id="modalProductOriginalPrice" class="original-price" style="display: none;"></span>
+                                </div>
+                                
+                                <div class="product-description">
+                                    <p id="modalProductDescription">Product description will appear here.</p>
+                                </div>
+                                
+                                <div class="product-features">
+                                    <h3>Key Features</h3>
+                                    <ul id="modalProductFeatures">
+                                        <!-- Features will be generated here -->
+                                    </ul>
+                                </div>
+                                
+                                <div class="modal-actions">
+                                    <button class="btn btn-primary whatsapp-order">
+                                        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                                        Order on WhatsApp
+                                    </button>
+                                    <button class="btn btn-outline add-to-wishlist-modal">
+                                        <i class="far fa-heart" aria-hidden="true"></i>
+                                        Add to Wishlist
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Re-initialize with the new modal
+        initQuickView();
+    }
 }
+
+// Track quick view events
+function trackQuickView(productName) {
+    console.log(`Quick view opened for: ${productName}`);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'view_item', {
+            'event_category': 'Quick View',
+            'event_label': productName,
+            'value': 1
+        });
+    }
+}
+
+// Add this to your initQuickView function or as a separate function
+function initModalActions() {
+    // WhatsApp order button
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.whatsapp-order')) {
+            e.preventDefault();
+            const modal = document.getElementById('quickViewModal');
+            const productTitle = document.getElementById('modalProductTitle')?.textContent;
+            const productPrice = document.getElementById('modalProductPrice')?.textContent;
+            
+            if (productTitle && productPrice) {
+                const message = `Hi Will's Tech! I want to order: ${productTitle} - ${productPrice}. Please provide more details.`;
+                const whatsappUrl = `https://wa.me/256751924844?text=${encodeURIComponent(message)}`;
+                
+                window.open(whatsappUrl, '_blank');
+                trackModalAction('whatsapp_order', productTitle);
+            }
+            
+            closeQuickViewModal();
+        }
+
+        // Add to wishlist from modal
+        if (e.target.closest('.add-to-wishlist-modal')) {
+            e.preventDefault();
+            const productTitle = document.getElementById('modalProductTitle')?.textContent;
+            
+            if (productTitle) {
+                // Find the corresponding product card and trigger wishlist
+                const productCards = document.querySelectorAll('.product-card');
+                productCards.forEach(card => {
+                    if (card.querySelector('h3').textContent === productTitle) {
+                        const wishlistBtn = card.querySelector('.add-to-wishlist');
+                        if (wishlistBtn) {
+                            wishlistBtn.click();
+                        }
+                    }
+                });
+                
+                trackModalAction('wishlist_from_modal', productTitle);
+            }
+            
+            closeQuickViewModal();
+        }
+    });
+}
+
+// Track modal actions
+function trackModalAction(action, productName) {
+    console.log(`Modal ${action}: ${productName}`);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', action, {
+            'event_category': 'Quick View Modal',
+            'event_label': productName,
+            'value': 1
+        });
+    }
+}
+
+// Call this function in your DOMContentLoaded event
+// initModalActions();
 
 function initMobileMenu() {
     const toggle = document.querySelector(".mobile-menu-toggle");
@@ -1563,3 +2172,111 @@ function trackWhatsAppClick(buttonType) {
 
 // Make function global for potential external calls
 window.trackWhatsAppClick = trackWhatsAppClick;
+
+function initFeaturesSection() {
+    // Animate feature cards when they come into view
+    const featureCards = document.querySelectorAll('.feature-card');
+    const featureHighlights = document.querySelector('.feature-highlights');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                if (entry.target.classList.contains('feature-card')) {
+                    animateFeatureCard(entry.target);
+                } else if (entry.target === featureHighlights) {
+                    animateFeatureHighlights();
+                }
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    // Observe all feature cards and highlights
+    featureCards.forEach(card => observer.observe(card));
+    if (featureHighlights) observer.observe(featureHighlights);
+
+    function animateFeatureCard(card) {
+        card.style.animationPlayState = 'running';
+    }
+
+    function animateFeatureHighlights() {
+        const highlights = document.querySelectorAll('.feature-highlight');
+        highlights.forEach((highlight, index) => {
+            setTimeout(() => {
+                highlight.style.opacity = '1';
+                highlight.style.transform = 'translateY(0)';
+            }, index * 200);
+        });
+    }
+
+    // Add interactive hover effects
+    featureCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
+
+    // Add click tracking for CTA buttons
+    const ctaButtons = document.querySelectorAll('.cta-btn');
+    ctaButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const buttonType = this.classList.contains('cta-btn-primary') ? 'Primary' : 'Secondary';
+            const buttonText = this.textContent.trim();
+            trackFeatureCTAClick(buttonType, buttonText);
+        });
+    });
+
+    // Initialize feature highlights
+    if (featureHighlights) {
+        const highlights = document.querySelectorAll('.feature-highlight');
+        highlights.forEach(highlight => {
+            highlight.style.opacity = '0';
+            highlight.style.transform = 'translateY(20px)';
+            highlight.style.transition = 'all 0.6s ease';
+        });
+    }
+}
+
+// Track feature CTA button clicks
+function trackFeatureCTAClick(buttonType, buttonText) {
+    console.log(`Features ${buttonType} CTA clicked: ${buttonText}`);
+    
+    // Google Analytics integration
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'click', {
+            'event_category': 'Features CTA',
+            'event_label': `${buttonType} - ${buttonText}`,
+            'value': 1
+        });
+    }
+}
+
+// Make function global
+window.trackFeatureCTAClick = trackFeatureCTAClick;
+
+function initParallaxEffects() {
+    let ticking = false;
+
+    function updateParallax() {
+        const scrolled = window.pageYOffset;
+        const parallaxElements = document.querySelectorAll(".hero, .about-image-main");
+
+        parallaxElements.forEach((element) => {
+            const speed = element.classList.contains('hero') ? 0.5 : 0.3;
+            element.style.transform = `translateY(${scrolled * speed}px)`;
+        });
+
+        ticking = false;
+    }
+
+    window.addEventListener("scroll", () => {
+        if (!ticking) {
+            requestAnimationFrame(updateParallax);
+            ticking = true;
+        }
+    });
+}
