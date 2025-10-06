@@ -103,29 +103,35 @@
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            
-            // Simple authentication - CHANGE THESE CREDENTIALS!
-            if (username === 'admin' && password === 'willstech2024') {
-                localStorage.setItem('willstech_admin_auth', 'true');
-                window.location.href = 'admin.html';
-            } else {
-                errorMessage.style.display = 'block';
-                setTimeout(() => {
-                    errorMessage.style.display = 'none';
-                }, 3000);
-            }
-        });
-        
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+
+        if (loginForm) {
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                // Simple authentication - CHANGE THESE CREDENTIALS!
+                if (username === 'admin' && password === 'willstech2024') {
+                    localStorage.setItem('willstech_admin_auth', 'true');
+                    window.location.href = 'admin.html';
+                } else {
+                    errorMessage.style.display = 'block';
+                    setTimeout(() => {
+                        errorMessage.style.display = 'none';
+                    }, 3000);
+                }
+            });
+        }
+
         // Check if already logged in
         if (localStorage.getItem('willstech_admin_auth')) {
             window.location.href = 'admin.html';
         }
-    </script>
+    });
+</script>
 </body>
 </html>

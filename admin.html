@@ -260,6 +260,31 @@
             gap: 0.5rem;
             margin-top: 1rem;
         }
+        .file-management {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .file-item h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary);
+        }
+
+        .file-item p {
+            margin: 0 0 1rem 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -534,7 +559,7 @@ Business Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM</textarea>
                     <div class="form-group">
                         <label for="repoName">Repository Name</label>
                         <input type="text" id="repoName" class="form-control" 
-                               value="BarasaGodwilTech/willstech-tempolary">
+                               value="BarasaGodwilTech/update-proposed">
                     </div>
                     
                     <div class="form-group">
@@ -558,6 +583,35 @@ Business Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM</textarea>
                         </button>
                     </div>
                 </div>
+
+                <div class="form-section">
+                   <h2>File Management</h2>
+                    <div class="file-management">
+                       <div class="file-item">
+                     <h4>index.html</h4>
+                           <p>Main website file - updates hero, products, and content</p>
+                          <button class="btn btn-primary" onclick="admin.previewFile('index.html')">
+                    <i class="fas fa-eye"></i> Preview
+                      </button>
+                 </div>
+        
+                <div class="file-item">
+                    <h4>styles.css</h4>
+                    <p>Website styling and design</p>
+                    <button class="btn btn-primary" onclick="admin.previewFile('styles.css')">
+                    <i class="fas fa-eye"></i> Preview
+                     </button>
+                </div>
+        
+                <div class="file-item">
+                     <h4>script.js</h4>
+                     <p>Website functionality and interactions</p>
+                     <button class="btn btn-primary" onclick="admin.previewFile('script.js')">
+                  <i class="fas fa-eye"></i> Preview
+                    </button>
+                </div>
+              </div>
+             </div>
             </div>
         </div>
     </div>

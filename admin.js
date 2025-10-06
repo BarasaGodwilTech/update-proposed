@@ -2,66 +2,129 @@
 class WillTechAdmin {
     constructor() {
         this.currentData = {};
-        this.init();
     }
 
     init() {
+        console.log('Admin panel initializing...');
+        
         // Check authentication first
         if (!localStorage.getItem('willstech_admin_auth')) {
+            console.log('Not authenticated, redirecting to login...');
             window.location.href = 'admin-login.html';
             return;
         }
 
+        console.log('Authentication passed, loading data...');
         this.loadData();
         this.setupEventListeners();
         this.setupNavigation();
         this.loadProducts();
+        
+        console.log('Admin panel fully initialized');
     }
 
     setupEventListeners() {
+        console.log('Setting up event listeners...');
+        
         // Form submissions
-        document.getElementById('heroForm')?.addEventListener('submit', (e) => this.handleHeroForm(e));
-        document.getElementById('productForm')?.addEventListener('submit', (e) => this.handleProductForm(e));
-        document.getElementById('contentForm')?.addEventListener('submit', (e) => this.handleContentForm(e));
-        document.getElementById('socialForm')?.addEventListener('submit', (e) => this.handleSocialForm(e));
+        const heroForm = document.getElementById('heroForm');
+        const productForm = document.getElementById('productForm');
+        const contentForm = document.getElementById('contentForm');
+        const socialForm = document.getElementById('socialForm');
+        
+        if (heroForm) {
+            heroForm.addEventListener('submit', (e) => this.handleHeroForm(e));
+            console.log('Hero form listener added');
+        }
+        
+        if (productForm) {
+            productForm.addEventListener('submit', (e) => this.handleProductForm(e));
+            console.log('Product form listener added');
+        }
+        
+        if (contentForm) {
+            contentForm.addEventListener('submit', (e) => this.handleContentForm(e));
+            console.log('Content form listener added');
+        }
+        
+        if (socialForm) {
+            socialForm.addEventListener('submit', (e) => this.handleSocialForm(e));
+            console.log('Social form listener added');
+        }
         
         // Deployment
-        document.getElementById('deployBtn')?.addEventListener('click', () => this.deployChanges());
-        document.getElementById('backupBtn')?.addEventListener('click', () => this.downloadBackup());
-        document.getElementById('restoreBtn')?.addEventListener('click', () => this.restoreBackup());
+        const deployBtn = document.getElementById('deployBtn');
+        const backupBtn = document.getElementById('backupBtn');
+        const restoreBtn = document.getElementById('restoreBtn');
+        
+        if (deployBtn) {
+            deployBtn.addEventListener('click', () => this.deployChanges());
+            console.log('Deploy button listener added');
+        }
+        
+        if (backupBtn) {
+            backupBtn.addEventListener('click', () => this.downloadBackup());
+        }
+        
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', () => this.restoreBackup());
+        }
         
         // Logout
-        document.getElementById('logout')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.logout();
-        });
+        const logoutBtn = document.getElementById('logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.logout();
+            });
+            console.log('Logout button listener added');
+        }
 
         // Product tabs
-        document.querySelectorAll('[data-tab]').forEach(tab => {
+        const productTabs = document.querySelectorAll('[data-tab]');
+        productTabs.forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const tabName = e.target.getAttribute('data-tab');
                 this.switchProductTab(tabName);
             });
         });
+        console.log('Product tab listeners added');
     }
 
     setupNavigation() {
-        document.querySelectorAll('.nav-links a').forEach(link => {
+        console.log('Setting up navigation...');
+        
+        const navLinks = document.querySelectorAll('.nav-links a');
+        console.log('Found nav links:', navLinks.length);
+        
+        navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const target = link.getAttribute('href').substring(1);
-                this.showTab(target);
-                
-                // Update active states
-                document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
-                link.classList.add('active');
+                const target = link.getAttribute('href');
+                if (target && target.startsWith('#')) {
+                    const tabName = target.substring(1);
+                    console.log('Navigation clicked:', tabName);
+                    this.showTab(tabName);
+                    
+                    // Update active states
+                    document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
             });
         });
+        
+        // Activate first tab by default
+        if (navLinks.length > 0) {
+            navLinks[0].classList.add('active');
+        }
     }
 
     showTab(tabName) {
+        console.log('Showing tab:', tabName);
+        
         // Hide all tabs
-        document.querySelectorAll('.tab-content').forEach(tab => {
+        const allTabs = document.querySelectorAll('.tab-content');
+        allTabs.forEach(tab => {
             tab.classList.remove('active');
         });
         
@@ -69,6 +132,9 @@ class WillTechAdmin {
         const targetTab = document.getElementById(tabName);
         if (targetTab) {
             targetTab.classList.add('active');
+            console.log('Tab activated:', tabName);
+        } else {
+            console.error('Tab not found:', tabName);
         }
     }
 
@@ -87,17 +153,27 @@ class WillTechAdmin {
     }
 
     loadData() {
+        console.log('Loading data from localStorage...');
+        
         // Try to load existing data from localStorage
-        const savedData = localStorage.getItem('willstech_data');
-        if (savedData) {
-            this.currentData = JSON.parse(savedData);
-        } else {
-            // Initialize with default data
+        try {
+            const savedData = localStorage.getItem('willstech_data');
+            if (savedData) {
+                this.currentData = JSON.parse(savedData);
+                console.log('Data loaded successfully');
+            } else {
+                // Initialize with default data
+                console.log('No saved data, using defaults');
+                this.currentData = this.getDefaultData();
+                this.saveData();
+            }
+            
+            this.populateForms();
+        } catch (error) {
+            console.error('Error loading data:', error);
             this.currentData = this.getDefaultData();
             this.saveData();
         }
-        
-        this.populateForms();
     }
 
     getDefaultData() {
@@ -308,321 +384,269 @@ class WillTechAdmin {
         localStorage.setItem('willstech_data', JSON.stringify(this.currentData));
     }
 
-    async deployChanges() {
-    const token = prompt('🔒 Enter your GitHub Fine-Grained Personal Access Token:');
+    async verifyGitHubToken(token) {
+    try {
+        const response = await fetch('https://api.github.com/user', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (response.ok) {
+            const userData = await response.json();
+            console.log('✅ GitHub token verified for user:', userData.login);
+            return true;
+        } else {
+            console.error('❌ GitHub token verification failed:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error verifying GitHub token:', error);
+        return false;
+    }
+}
+
+   async deployChanges() {
+    const token = prompt('🔒 Enter your GitHub token to update ACTUAL website files:');
     
     if (!token) {
-        this.showAlert('Deployment cancelled. Token is required.', 'error');
+        this.showAlert('Deployment cancelled.', 'error');
         return;
     }
 
-    this.showAlert('🔄 Testing token access...', 'success');
-
     try {
-        // Test token with repository access
-        const repoResponse = await fetch('https://api.github.com/repos/BarasaGodwilTech/update-proposed', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-
-        if (!repoResponse.ok) {
-            throw new Error(`Cannot access repository: ${repoResponse.status}`);
+        this.showAlert('🚀 Starting FULL website deployment...', 'success');
+        
+        // Verify token first
+        const isValid = await this.verifyGitHubToken(token);
+        if (!isValid) {
+            this.showAlert('❌ Invalid GitHub token', 'error');
+            return;
         }
 
-        this.showAlert('✅ Repository access verified!', 'success');
+        this.showAlert('✅ Token verified! Generating files...', 'success');
         
-        // Use the simpler Contents API approach
-        await this.simpleContentsAPIDeploy(token);
+        // Generate all updated files
+        const files = await this.generateUpdatedFiles();
+        
+        // Deploy each file
+        const fileEntries = Object.entries(files);
+        for (let i = 0; i < fileEntries.length; i++) {
+            const [filePath, content] = fileEntries[i];
+            this.showAlert(`📁 Updating: ${filePath} (${i + 1}/${fileEntries.length})`, 'success');
+            await this.updateFileOnGitHub(token, filePath, content);
+        }
+        
+        this.showAlert('🎉 SUCCESS! Entire website updated!', 'success');
+        this.showAlert('🌐 Your live site will refresh within 2-5 minutes', 'success');
+        this.showAlert('📊 Changes include: Hero section, Meta tags, Social links, Products', 'success');
         
     } catch (error) {
-        console.error('Deployment error:', error);
         this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
-        this.showAlert('💡 Make sure your token has "Contents: Read and write" permissions for your repository', 'error');
     }
 }
 
-async simpleContentsAPIDeploy(token) {
-    const repo = 'BarasaGodwilTech/willstech-tempolary';
-    const branch = 'main';
-
-    this.showAlert('📦 Creating admin data file...', 'success');
-
-    // Create the data content
-    const dataContent = JSON.stringify({
-        adminData: this.currentData,
-        lastUpdated: new Date().toISOString(),
-        version: '1.0'
-    }, null, 2);
-
-    // Encode to base64
-    const encodedContent = btoa(unescape(encodeURIComponent(dataContent)));
-
-    this.showAlert('🔄 Checking if file exists...', 'success');
-
-    // First, check if the file already exists to get its SHA
-    let existingSha = null;
-    try {
-        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/admin-data.json?ref=${branch}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-
-        if (getResponse.ok) {
-            const fileData = await getResponse.json();
-            existingSha = fileData.sha;
-            this.showAlert('📁 Updating existing admin-data.json...', 'success');
-        } else {
-            this.showAlert('📄 Creating new admin-data.json...', 'success');
-        }
-    } catch (error) {
-        // File doesn't exist, that's fine - we'll create it
-        this.showAlert('📄 Creating new admin-data.json file...', 'success');
-    }
-
-    this.showAlert('🚀 Uploading to GitHub...', 'success');
-
-    // Create or update the file using Contents API
-    const putResponse = await fetch(`https://api.github.com/repos/${repo}/contents/admin-data.json`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            message: `🔄 Admin Panel Update - ${new Date().toLocaleString('en-UG', { timeZone: 'Africa/Kampala' })}`,
-            content: encodedContent,
-            branch: branch,
-            sha: existingSha // Include SHA only if updating existing file
-        })
-    });
-
-    if (!putResponse.ok) {
-        const errorText = await putResponse.text();
-        throw new Error(`GitHub API error: ${putResponse.status} - ${errorText}`);
-    }
-
-    const result = await putResponse.json();
+    async generateUpdatedFiles() {
+    this.showAlert('📄 Generating updated website files...', 'success');
     
-    this.showAlert('🎉 SUCCESS! Data deployed to GitHub.', 'success');
-    this.showAlert('📊 Your admin changes are now saved!', 'success');
-    this.showAlert('🌐 The data file is available at: https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/main/admin-data.json', 'success');
+    try {
+        // Get current index.html to use as template
+        const currentHTML = await this.fetchCurrentFile('index.html');
+        
+        // Generate updated HTML with new content
+        const updatedHTML = this.updateHTMLContent(currentHTML);
+        
+        // Get current CSS
+        const currentCSS = await this.fetchCurrentFile('styles.css');
+        
+        // Get current JS
+        const currentJS = await this.fetchCurrentFile('script.js');
+        
+        const files = {
+            'index.html': updatedHTML,
+            'styles.css': currentCSS,
+            'script.js': currentJS,
+            'data/site-config.json': JSON.stringify({
+                hero: this.currentData.hero,
+                content: this.currentData.content,
+                social: this.currentData.social,
+                products: this.currentData.products,
+                lastUpdated: new Date().toISOString()
+            }, null, 2),
+            'data/products.json': JSON.stringify(this.currentData.products, null, 2)
+        };
+
+        this.showAlert('✅ Generated: index.html, styles.css, script.js + data files', 'success');
+        return files;
+        
+    } catch (error) {
+        this.showAlert('⚠️ Using fallback template', 'error');
+        // Fallback to data-only deployment
+        return {
+            'data/site-config.json': JSON.stringify(this.currentData, null, 2)
+        };
+    }
 }
 
-    async verifyGitHubToken(token) {
+async fetchCurrentFile(filename) {
+    try {
+        const response = await fetch(filename);
+        if (!response.ok) throw new Error('File not found');
+        return await response.text();
+    } catch (error) {
+        throw new Error(`Cannot fetch ${filename}`);
+    }
+}
+
+updateHTMLContent(html) {
+    let updatedHTML = html;
+    
+    // Update meta tags
+    updatedHTML = updatedHTML.replace(
+        /<title>.*?<\/title>/,
+        `<title>${this.currentData.content.storeName} | Premium Gadgets & Tech in Uganda, Kampala | Mbale</title>`
+    );
+    
+    updatedHTML = updatedHTML.replace(
+        /<meta name="description" content=".*?"\/>/,
+        `<meta name="description" content="${this.currentData.content.description}"\/>`
+    );
+    
+    // Update hero section
+    updatedHTML = this.updateHeroSection(updatedHTML);
+    
+    // Update social links
+    updatedHTML = this.updateSocialLinks(updatedHTML);
+    
+    // Update WhatsApp links
+    updatedHTML = this.updateWhatsAppLinks(updatedHTML);
+    
+    return updatedHTML;
+}
+
+updateHeroSection(html) {
+    const newHeroContent = `
+                <h1>${this.escapeHTML(this.currentData.hero.title)}</h1>
+                <p>${this.escapeHTML(this.currentData.hero.description)}</p>
+                <div class="hero-buttons">
+                    <a href="${this.currentData.hero.whatsappLink}" class="btn btn-primary" rel="noopener noreferrer">
+                        <i class="fab fa-whatsapp" aria-hidden="true"></i> Join WhatsApp Channel
+                    </a>
+                    <a href="#notify" class="btn btn-outline">Notify Me at Launch</a>
+                </div>`;
+    
+    // Find and replace hero content
+    return html.replace(
+        /<h1>[\s\S]*?<\/h1>\s*<p>[\s\S]*?<\/p>\s*<div class="hero-buttons">[\s\S]*?<\/div>/,
+        newHeroContent
+    );
+}
+
+updateSocialLinks(html) {
+    let updatedHTML = html;
+    
+    // Update Instagram
+    if (this.currentData.social.instagram) {
+        updatedHTML = updatedHTML.replace(
+            /https:\/\/instagram\.com\/willstech\.store/g,
+            this.currentData.social.instagram
+        );
+    }
+    
+    // Update Twitter/X
+    if (this.currentData.social.twitter) {
+        updatedHTML = updatedHTML.replace(
+            /https:\/\/x\.com\/willstech_store/g,
+            this.currentData.social.twitter
+        );
+    }
+    
+    // Update TikTok
+    if (this.currentData.social.tiktok) {
+        updatedHTML = updatedHTML.replace(
+            /http:\/\/www\.tiktok\.com\/@willstech\.store/g,
+            this.currentData.social.tiktok
+        );
+    }
+    
+    // Update YouTube
+    if (this.currentData.social.youtube) {
+        updatedHTML = updatedHTML.replace(
+            /https:\/\/www\.youtube\.com\/@Willstech\.storeug/g,
+            this.currentData.social.youtube
+        );
+    }
+    
+    return updatedHTML;
+}
+
+updateWhatsAppLinks(html) {
+    let updatedHTML = html;
+    
+    // Update all WhatsApp links
+    const currentWhatsApp = 'https://wa.me/256751924844';
+    if (this.currentData.hero.whatsappLink) {
+        updatedHTML = updatedHTML.replace(
+            new RegExp(currentWhatsApp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+            this.currentData.hero.whatsappLink
+        );
+    }
+    
+    return updatedHTML;
+}
+
+escapeHTML(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+    async updateFileOnGitHub(token, filePath, content) {
+        const repo = 'BarasaGodwilTech/update-proposed';
+        const branch = 'main';
+
+        // First, check if file exists to get its SHA
+        let existingSha = null;
         try {
-            const response = await fetch('https://api.github.com/user', {
+            const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`, {
                 headers: {
-                    'Authorization': `token ${token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/vnd.github.v3+json'
                 }
             });
-            return response.ok;
+
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                existingSha = fileData.sha;
+            }
         } catch (error) {
-            return false;
+            // File doesn't exist, we'll create it
         }
-    }
 
-    async generateUpdatedFiles() {
-    // For now, let's just update the data files, not the main index.html
-    // This avoids the blob creation issue for large HTML files
-    const files = {
-        'data/products.json': JSON.stringify(this.currentData.products, null, 2),
-        'data/site-config.json': JSON.stringify({
-            hero: this.currentData.hero,
-            content: this.currentData.content,
-            social: this.currentData.social,
-            lastUpdated: new Date().toISOString()
-        }, null, 2)
-    };
-
-    this.showAlert('📄 Generated data files (products.json, site-config.json)', 'success');
-    return files;
-}
-
-    generateUpdatedIndexHTML() {
-        // This would be your full updated HTML file
-        // For now, we'll create a simple version
-        return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.currentData.content.storeName} | Premium Tech Store</title>
-    <meta name="description" content="${this.currentData.content.description}">
-</head>
-<body>
-    <header>
-        <h1>${this.currentData.content.storeName}</h1>
-        <p>${this.currentData.content.tagline}</p>
-    </header>
-    
-    <section class="hero">
-        <h2>${this.currentData.hero.title}</h2>
-        <p>${this.currentData.hero.description}</p>
-        <a href="${this.currentData.hero.whatsappLink}" class="btn">Join WhatsApp Channel</a>
-    </section>
-    
-    <!-- Note: This is a simplified version. Your actual index.html would be more complex -->
-</body>
-</html>`;
-    }
-
-    async commitToGitHub(token, repo, branch, files) {
-    try {
-        this.showAlert('🚀 Starting deployment process...', 'success');
-
-        // 1. Get the latest commit SHA
-        const refResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+        // Create or update the file
+        const putResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            method: 'PUT',
             headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        
-        if (!refResponse.ok) {
-            const errorText = await refResponse.text();
-            throw new Error(`Cannot access repository: ${refResponse.status} - ${errorText}`);
-        }
-
-        const refData = await refResponse.json();
-        const latestCommitSha = refData.object.sha;
-
-        // 2. Get the current tree
-        const commitResponse = await fetch(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, {
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
-        
-        if (!commitResponse.ok) {
-            throw new Error('Failed to get current commit');
-        }
-
-        const commitData = await commitResponse.json();
-        const baseTreeSha = commitData.tree.sha;
-
-        // 3. Create blobs for each file
-        const tree = [];
-        this.showAlert('📁 Creating file blobs...', 'success');
-
-        for (const [path, content] of Object.entries(files)) {
-            try {
-                // Convert content to base64 properly
-                const base64Content = btoa(unescape(encodeURIComponent(content)));
-                
-                const blobResponse = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content: base64Content,
-                        encoding: 'base64'
-                    })
-                });
-
-                if (!blobResponse.ok) {
-                    const errorText = await blobResponse.text();
-                    throw new Error(`Failed to create blob for ${path}: ${blobResponse.status} - ${errorText}`);
-                }
-
-                const blobData = await blobResponse.json();
-                tree.push({
-                    path: path,
-                    mode: '100644',
-                    type: 'blob',
-                    sha: blobData.sha
-                });
-
-                this.showAlert(`✅ Created blob for: ${path}`, 'success');
-                
-            } catch (error) {
-                console.error(`Error creating blob for ${path}:`, error);
-                throw new Error(`Failed to create ${path}: ${error.message}`);
-            }
-        }
-
-        // 4. Create new tree
-        this.showAlert('🌳 Creating file tree...', 'success');
-        const treeResponse = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `token ${token}`,
+                'Authorization': `Bearer ${token}`,
                 'Accept': 'application/vnd.github.v3+json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                base_tree: baseTreeSha,
-                tree: tree
+                message: `🔄 Will's Tech Update - ${filePath} - ${new Date().toLocaleString('en-UG')}`,
+                content: btoa(unescape(encodeURIComponent(content))),
+                branch: branch,
+                sha: existingSha
             })
         });
 
-        if (!treeResponse.ok) {
-            const errorText = await treeResponse.text();
-            throw new Error(`Tree creation failed: ${treeResponse.status} - ${errorText}`);
+        if (!putResponse.ok) {
+            const errorText = await putResponse.text();
+            throw new Error(`Failed to update ${filePath}: ${putResponse.status}`);
         }
 
-        const treeData = await treeResponse.json();
-
-        // 5. Create new commit
-        this.showAlert('📝 Creating commit...', 'success');
-        const commitResponse2 = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: `🔄 Admin Panel Update - ${new Date().toLocaleString('en-UG', {timeZone: 'Africa/Kampala'})}`,
-                tree: treeData.sha,
-                parents: [latestCommitSha]
-            })
-        });
-
-        if (!commitResponse2.ok) {
-            const errorText = await commitResponse2.text();
-            throw new Error(`Commit creation failed: ${commitResponse2.status} - ${errorText}`);
-        }
-
-        const commitData2 = await commitResponse2.json();
-
-        // 6. Update reference
-        this.showAlert('🔄 Updating repository...', 'success');
-        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
-            method: 'PATCH',
-            headers: {
-                'Authorization': `token ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                sha: commitData2.sha,
-                force: false
-            })
-        });
-
-        if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            throw new Error(`Reference update failed: ${updateResponse.status} - ${errorText}`);
-        }
-
-        this.showAlert('✅ Successfully updated repository reference!', 'success');
-        return true;
-
-    } catch (error) {
-        console.error('GitHub deployment error:', error);
-        throw error;
+        return await putResponse.json();
     }
-}
 
     downloadBackup() {
         const dataStr = JSON.stringify(this.currentData, null, 2);
@@ -698,9 +722,21 @@ async simpleContentsAPIDeploy(token) {
         localStorage.removeItem('willstech_data');
         window.location.href = 'admin-login.html';
     }
+
+    // Temporary debug function
+    testAdmin() {
+        console.log('=== ADMIN PANEL DEBUG INFO ===');
+        console.log('Authentication:', localStorage.getItem('willstech_admin_auth'));
+        console.log('Nav links found:', document.querySelectorAll('.nav-links a').length);
+        console.log('Forms found:', document.querySelectorAll('form').length);
+        console.log('Current data:', this.currentData);
+        console.log('=== END DEBUG INFO ===');
+    }
 }
 
 // Initialize admin panel when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM fully loaded, creating admin instance...');
     window.admin = new WillTechAdmin();
+    window.admin.init();
 });
