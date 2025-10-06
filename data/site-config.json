@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Your Ultimate Online tech Store Is Coming Soon!+",
+    "description": "We're working hard to bring you the ultimate tech shopping experience, delivering authentic and top-notch technologies and innovation to your doorstep without lifting a foot. Uganda, are you ready? Join our WhatsApp channel for exclusive early-bird deals!",
+    "whatsappLink": "https://wa.me/256751924844?text=Hi%20Will's%20Tech!%20I%20want%20to%20join%20your%20channel.%20Thanks."
+  },
+  "content": {
+    "storeName": "Will's Tech Store",
+    "tagline": "Elevate Your Lifestyle With Authentic Tech",
+    "description": "Uganda's trusted tech store for 100% authentic smartphones, laptops & gadgets. Elevate Your Lifestyle With Authentic Tech. Free delivery around Kampala and Mbale. WhatsApp: +256 751 924 844",
+    "contactInfo": "WhatsApp: +256 751 924 844\nEmail: wills.tech.store.ug@gmail.com\nLocations: Kampala & Mbale, Uganda\nBusiness Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM"
+  },
+  "social": {
+    "facebook": "#",
+    "instagram": "https://instagram.com/willstech.store",
+    "twitter": "https://x.com/willstech_store",
+    "tiktok": "http://www.tiktok.com/@willstech.store",
+    "youtube": "https://www.youtube.com/@Willstech.storeug"
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "iPhone 15 Pro",
+      "category": "smartphones",
+      "description": "Latest Apple flagship with titanium design and A17 Pro chip",
+      "price": "4500000",
+      "image": "public/iphone-15-pro.png",
+      "featured": true
+    },
+    {
+      "id": 2,
+      "name": "MacBook Pro M3",
+      "category": "laptops",
+      "description": "Professional laptop with M3 chip for demanding workflows",
+      "price": "8500000",
+      "image": "public/macbook-pro-m3-laptop.jpg",
+      "featured": true
+    }
+  ],
+  "lastUpdated": "2025-10-06T21:54:47.848Z"
+}
