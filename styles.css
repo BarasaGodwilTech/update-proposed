@@ -941,21 +941,22 @@ hero-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
-  height: 50px;
-  background: var(--glass-bg);
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  color: var(--light);
-  font-size: 1.2rem;
+  color: #ffffff;
+  font-size: 1rem;
   transition: var(--transition);
+  text-decoration: none;
 }
 
 .social-links a:hover {
-  background: var(--accent);
+  background: #f59e0b;
   transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
 }
 
 /* Enhanced section headers */
@@ -984,6 +985,7 @@ hero-content {
     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     position: relative;
     overflow: hidden;
+    z-index: 2000;
 }
 
 .features::before {
@@ -5714,7 +5716,7 @@ hero-content {
 /* About Image Styles */
 .about-image {
   position: relative;
-  perspective: 1000px;
+  perspective: 10px;
   margin-bottom: 4rem; /* Add space for stats on mobile */
 }
 
@@ -8158,4 +8160,23 @@ timer-item span.changing {
     100% {
         transform: rotateX(0deg);
     }
+}
+/* Add this to your CSS file or in a <style> tag */
+.about-image {
+    position: relative !important;
+    margin-top: 0 !important;
+    margin-bottom: 2rem !important;
+    perspective: 1000px !important;
+}
+
+.about-image-main {
+    transform: none !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Reset any problematic transforms */
+.about-image-main,
+.about-image img {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) !important;
+    transform-style: flat !important;
 }
