@@ -148,7 +148,7 @@ section {
   --primary-light: #448aff;
   --secondary: #0a2463;
   --secondary-dark: #061a44;
-  --accent: #00e676;
+  --accent: #f59e0b;
   --accent-dark: #00c853;
   --accent-light: #69f0ae;
   
@@ -481,7 +481,7 @@ h6 {
     background: linear-gradient(135deg, #031057 0%, #0822b2 50%, #87bef1 100%);
     backdrop-filter: blur(15px);
     border-bottom: 1px solid rgba(245, 158, 11, 0.3);
-    z-index: 1000;
+    z-index: 5000;
     padding: 0.8rem 0;
     transition: var(--transition);
     box-shadow: 0 4px 20px rgba(12, 22, 116, 0.3);

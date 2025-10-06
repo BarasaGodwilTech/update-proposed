@@ -1,3 +1,11 @@
+// Admin authentication check - Add this at the TOP of your script.js file
+if (window.location.pathname.includes('admin.html') && 
+    !localStorage.getItem('willstech_admin_auth')) {
+    window.location.href = 'admin-login.html';
+}
+
+// Your existing script.js code continues below...
+// [YOUR EXISTING SCRIPT.JS CODE HERE]
 
 
 // ===== ADD MISSING FUNCTIONS HERE =====

@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will's Tech Store - Admin Panel</title>
+    <style>
+        :root {
+            --primary: #164e63;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --light: #f8fafc;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: #f5f5f5;
+            color: var(--dark);
+        }
+        
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .logo {
+            text-align: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .logo h2 {
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .nav-links {
+            list-style: none;
+        }
+        
+        .nav-links li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            display: block;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-links i {
+            margin-right: 0.5rem;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 2rem;
+        }
+        
+        .header {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Forms */
+        .form-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0e3a4a;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Alerts */
+        .alert {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .product-card {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 1rem;
+            background: white;
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h2>Will's Tech Admin</h2>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#dashboard" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#hero"><i class="fas fa-home"></i> Hero Section</a></li>
+                <li><a href="#products"><i class="fas fa-box"></i> Products</a></li>
+                <li><a href="#content"><i class="fas fa-edit"></i> Content</a></li>
+                <li><a href="#social"><i class="fas fa-share-alt"></i> Social Media</a></li>
+                <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+                <li><a href="#" id="logout"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard -->
+            <div id="dashboard" class="tab-content active">
+                <div class="header">
+                    <h1>Dashboard</h1>
+                    <p>Welcome to Will's Tech Store Admin Panel</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-eye"></i>
+                        <h3 id="pageViews">1,254</h3>
+                        <p>Page Views</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-shopping-cart"></i>
+                        <h3 id="productsCount">24</h3>
+                        <p>Products</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-users"></i>
+                        <h3 id="customersCount">1,000+</h3>
+                        <p>Customers</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-comments"></i>
+                        <h3 id="whatsappLeads">156</h3>
+                        <p>WhatsApp Leads</p>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Quick Actions</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="showTab('hero')">
+                            <i class="fas fa-edit"></i> Edit Hero Section
+                        </button>
+                        <button class="btn btn-primary" onclick="showTab('products')">
+                            <i class="fas fa-box"></i> Manage Products
+                        </button>
+                        <button class="btn btn-primary" onclick="showTab('content')">
+                            <i class="fas fa-text-height"></i> Update Content
+                        </button>
+                        <button class="btn btn-primary" onclick="showTab('social')">
+                            <i class="fas fa-share-alt"></i> Social Links
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Section Editor -->
+            <div id="hero" class="tab-content">
+                <div class="header">
+                    <h1>Hero Section Editor</h1>
+                    <p>Update the main banner content and call-to-action</p>
+                </div>
+
+                <div class="form-section">
+                    <form id="heroForm">
+                        <div class="form-group">
+                            <label for="heroTitle">Main Title</label>
+                            <input type="text" id="heroTitle" class="form-control" 
+                                   value="Your Ultimate Online Tech Store Is Coming Soon!">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="heroDescription">Description</label>
+                            <textarea id="heroDescription" class="form-control">
+We're working hard to bring you the ultimate tech shopping experience, delivering authentic and top-notch technologies and innovation to your doorstep without lifting a foot. Uganda, are you ready? Join our WhatsApp channel for exclusive early-bird deals!</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="whatsappLink">WhatsApp Link</label>
+                            <input type="text" id="whatsappLink" class="form-control" 
+                                   value="https://wa.me/256751924844?text=Hi%20Will's%20Tech!%20I%20want%20to%20join%20your%20channel.%20Thanks.">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Management -->
+            <div id="products" class="tab-content">
+                <div class="header">
+                    <h1>Products Management</h1>
+                    <p>Add, edit, or remove products from your store</p>
+                </div>
+
+                <div class="form-section">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="products-list">Products List</div>
+                        <div class="tab" data-tab="add-product">Add New Product</div>
+                    </div>
+
+                    <!-- Products List -->
+                    <div id="products-list" class="tab-content active">
+                        <div class="products-grid" id="productsContainer">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Add Product Form -->
+                    <div id="add-product" class="tab-content">
+                        <form id="productForm">
+                            <div class="form-group">
+                                <label for="productName">Product Name</label>
+                                <input type="text" id="productName" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productCategory">Category</label>
+                                <select id="productCategory" class="form-control" required>
+                                    <option value="">Select Category</option>
+                                    <option value="smartphones">Smartphones</option>
+                                    <option value="laptops">Laptops</option>
+                                    <option value="accessories">Accessories</option>
+                                    <option value="gaming">Gaming</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productDescription">Description</label>
+                                <textarea id="productDescription" class="form-control" required></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productPrice">Price (UGX)</label>
+                                <input type="number" id="productPrice" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="productImage">Image URL</label>
+                                <input type="text" id="productImage" class="form-control" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add Product
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Editor -->
+            <div id="content" class="tab-content">
+                <div class="header">
+                    <h1>Content Editor</h1>
+                    <p>Update website content and text</p>
+                </div>
+
+                <div class="form-section">
+                    <form id="contentForm">
+                        <div class="form-group">
+                            <label for="storeName">Store Name</label>
+                            <input type="text" id="storeName" class="form-control" value="Will's Tech Store">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeTagline">Tagline</label>
+                            <input type="text" id="storeTagline" class="form-control" 
+                                   value="Elevate Your Lifestyle With Authentic Tech">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeDescription">Meta Description</label>
+                            <textarea id="storeDescription" class="form-control">
+Uganda's trusted tech store for 100% authentic smartphones, laptops & gadgets. Elevate Your Lifestyle With Authentic Tech. Free delivery around Kampala and Mbale. WhatsApp: +256 751 924 844</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contactInfo">Contact Information</label>
+                            <textarea id="contactInfo" class="form-control">
+WhatsApp: +256 751 924 844
+Email: wills.tech.store.ug@gmail.com
+Locations: Kampala & Mbale, Uganda
+Business Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Content
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Social Media -->
+            <div id="social" class="tab-content">
+                <div class="header">
+                    <h1>Social Media Links</h1>
+                    <p>Update your social media profiles and links</p>
+                </div>
+
+                <div class="form-section">
+                    <form id="socialForm">
+                        <div class="form-group">
+                            <label for="facebookLink">Facebook</label>
+                            <input type="text" id="facebookLink" class="form-control" value="#">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="instagramLink">Instagram</label>
+                            <input type="text" id="instagramLink" class="form-control" 
+                                   value="https://instagram.com/willstech.store">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="twitterLink">Twitter/X</label>
+                            <input type="text" id="twitterLink" class="form-control" 
+                                   value="https://x.com/willstech_store">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tiktokLink">TikTok</label>
+                            <input type="text" id="tiktokLink" class="form-control" 
+                                   value="http://www.tiktok.com/@willstech.store">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="youtubeLink">YouTube</label>
+                            <input type="text" id="youtubeLink" class="form-control" 
+                                   value="https://www.youtube.com/@Willstech.storeug">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Social Links
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div id="settings" class="tab-content">
+                <div class="header">
+                    <h1>Settings</h1>
+                    <p>Website configuration and deployment</p>
+                </div>
+
+                <div class="form-section">
+                    <h2>GitHub Deployment</h2>
+                    <div class="form-group">
+                        <label for="githubToken">GitHub Personal Access Token</label>
+                        <input type="password" id="githubToken" class="form-control" 
+                               placeholder="Enter your GitHub token">
+                        <small>Create a token with repo permissions at GitHub Settings > Developer settings</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="repoName">Repository Name</label>
+                        <input type="text" id="repoName" class="form-control" 
+                               value="BarasaGodwilTech/willstech-tempolary">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="branchName">Branch Name</label>
+                        <input type="text" id="branchName" class="form-control" value="main">
+                    </div>
+                    
+                    <button id="deployBtn" class="btn btn-success">
+                        <i class="fas fa-rocket"></i> Deploy Changes to GitHub
+                    </button>
+                </div>
+
+                <div class="form-section">
+                    <h2>Backup & Restore</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="backupBtn" class="btn btn-primary">
+                            <i class="fas fa-download"></i> Download Backup
+                        </button>
+                        <button id="restoreBtn" class="btn btn-secondary">
+                            <i class="fas fa-upload"></i> Restore from Backup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
