@@ -384,6 +384,7 @@ class WillTechAdmin {
         localStorage.setItem('willstech_data', JSON.stringify(this.currentData));
     }
 
+<<<<<<< HEAD
     async verifyGitHubToken(token) {
     try {
         const response = await fetch('https://api.github.com/user', {
@@ -608,6 +609,44 @@ escapeHTML(text) {
 
         // First, check if file exists to get its SHA
         let existingSha = null;
+=======
+    async deployChanges() {
+        const token = prompt('🔒 Enter your GitHub Personal Access Token:\n\n(This token is used once and not stored. Make sure it has "repo" permissions.)');
+        
+        if (!token) {
+            this.showAlert('Deployment cancelled. Token is required.', 'error');
+            return;
+        }
+
+        this.showAlert('Verifying GitHub token...', 'success');
+
+        try {
+            const isValid = await this.verifyGitHubToken(token);
+            if (!isValid) {
+                this.showAlert('❌ Invalid GitHub token. Please check:\n• Token has "repo" permissions\n• Token is not expired\n• Repository access is granted', 'error');
+                return;
+            }
+
+            this.showAlert('✅ Token verified! Generating updated files...', 'success');
+
+            const repo = 'BarasaGodwilTech/willstech-tempolary';
+            const branch = 'main';
+            
+            const updatedFiles = await this.generateUpdatedFiles();
+            this.showAlert('📁 Files generated! Committing to GitHub...', 'success');
+            
+            await this.commitToGitHub(token, repo, branch, updatedFiles);
+            
+            this.showAlert('🎉 Changes deployed successfully! Your live website will update within 2-5 minutes.', 'success');
+            
+        } catch (error) {
+            console.error('Deployment error:', error);
+            this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
+        }
+    }
+
+    async verifyGitHubToken(token) {
+>>>>>>> parent of 9ae42f0 (updated js for admin pannel commits)
         try {
             const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`, {
                 headers: {
@@ -624,6 +663,7 @@ escapeHTML(text) {
             // File doesn't exist, we'll create it
         }
 
+<<<<<<< HEAD
         // Create or update the file
         const putResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
             method: 'PUT',
@@ -646,6 +686,172 @@ escapeHTML(text) {
         }
 
         return await putResponse.json();
+=======
+    async generateUpdatedFiles() {
+        // Generate updated HTML and data files
+        const files = {
+            'index.html': this.generateUpdatedIndexHTML(),
+            'data/products.json': JSON.stringify(this.currentData.products, null, 2),
+            'data/site-config.json': JSON.stringify({
+                hero: this.currentData.hero,
+                content: this.currentData.content,
+                social: this.currentData.social
+            }, null, 2)
+        };
+
+        return files;
+    }
+
+    generateUpdatedIndexHTML() {
+        // This would be your full updated HTML file
+        // For now, we'll create a simple version
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${this.currentData.content.storeName} | Premium Tech Store</title>
+    <meta name="description" content="${this.currentData.content.description}">
+</head>
+<body>
+    <header>
+        <h1>${this.currentData.content.storeName}</h1>
+        <p>${this.currentData.content.tagline}</p>
+    </header>
+    
+    <section class="hero">
+        <h2>${this.currentData.hero.title}</h2>
+        <p>${this.currentData.hero.description}</p>
+        <a href="${this.currentData.hero.whatsappLink}" class="btn">Join WhatsApp Channel</a>
+    </section>
+    
+    <!-- Note: This is a simplified version. Your actual index.html would be more complex -->
+</body>
+</html>`;
+    }
+
+    async commitToGitHub(token, repo, branch, files) {
+        try {
+            // Get the latest commit SHA
+            const refResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!refResponse.ok) {
+                throw new Error(`Cannot access repository: ${refResponse.statusText}`);
+            }
+
+            const refData = await refResponse.json();
+            const latestCommitSha = refData.object.sha;
+
+            // Get the current tree
+            const commitResponse = await fetch(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, {
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            const commitData = await commitResponse.json();
+            const baseTreeSha = commitData.tree.sha;
+
+            // Create blobs for each file
+            const tree = [];
+            for (const [path, content] of Object.entries(files)) {
+                const blobResponse = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content: btoa(unescape(encodeURIComponent(content))),
+                        encoding: 'base64'
+                    })
+                });
+
+                if (!blobResponse.ok) {
+                    throw new Error(`Failed to create blob for ${path}`);
+                }
+
+                const blobData = await blobResponse.json();
+                tree.push({
+                    path: path,
+                    mode: '100644',
+                    type: 'blob',
+                    sha: blobData.sha
+                });
+            }
+
+            // Create new tree
+            const treeResponse = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    base_tree: baseTreeSha,
+                    tree: tree
+                })
+            });
+
+            if (!treeResponse.ok) {
+                throw new Error('Tree creation failed');
+            }
+
+            const treeData = await treeResponse.json();
+
+            // Create new commit
+            const commitResponse2 = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Admin Panel Update - ${new Date().toLocaleString()}`,
+                    tree: treeData.sha,
+                    parents: [latestCommitSha]
+                })
+            });
+
+            if (!commitResponse2.ok) {
+                throw new Error('Commit creation failed');
+            }
+
+            const commitData2 = await commitResponse2.json();
+
+            // Update reference
+            const updateResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sha: commitData2.sha,
+                    force: false
+                })
+            });
+
+            if (!updateResponse.ok) {
+                throw new Error('Reference update failed');
+            }
+
+            return true;
+        } catch (error) {
+            console.error('GitHub commit error:', error);
+            throw error;
+        }
+>>>>>>> parent of 9ae42f0 (updated js for admin pannel commits)
     }
 
     downloadBackup() {
