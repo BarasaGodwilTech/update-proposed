@@ -309,39 +309,109 @@ class WillTechAdmin {
     }
 
     async deployChanges() {
-        const token = prompt('🔒 Enter your GitHub Personal Access Token:\n\n(This token is used once and not stored. Make sure it has "repo" permissions.)');
-        
-        if (!token) {
-            this.showAlert('Deployment cancelled. Token is required.', 'error');
-            return;
-        }
-
-        this.showAlert('Verifying GitHub token...', 'success');
-
-        try {
-            const isValid = await this.verifyGitHubToken(token);
-            if (!isValid) {
-                this.showAlert('❌ Invalid GitHub token. Please check:\n• Token has "repo" permissions\n• Token is not expired\n• Repository access is granted', 'error');
-                return;
-            }
-
-            this.showAlert('✅ Token verified! Generating updated files...', 'success');
-
-            const repo = 'BarasaGodwilTech/willstech-tempolary';
-            const branch = 'main';
-            
-            const updatedFiles = await this.generateUpdatedFiles();
-            this.showAlert('📁 Files generated! Committing to GitHub...', 'success');
-            
-            await this.commitToGitHub(token, repo, branch, updatedFiles);
-            
-            this.showAlert('🎉 Changes deployed successfully! Your live website will update within 2-5 minutes.', 'success');
-            
-        } catch (error) {
-            console.error('Deployment error:', error);
-            this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
-        }
+    const token = prompt('🔒 Enter your GitHub Fine-Grained Personal Access Token:');
+    
+    if (!token) {
+        this.showAlert('Deployment cancelled. Token is required.', 'error');
+        return;
     }
+
+    this.showAlert('🔄 Testing token access...', 'success');
+
+    try {
+        // Test token with repository access
+        const repoResponse = await fetch('https://api.github.com/repos/BarasaGodwilTech/update-proposed', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (!repoResponse.ok) {
+            throw new Error(`Cannot access repository: ${repoResponse.status}`);
+        }
+
+        this.showAlert('✅ Repository access verified!', 'success');
+        
+        // Use the simpler Contents API approach
+        await this.simpleContentsAPIDeploy(token);
+        
+    } catch (error) {
+        console.error('Deployment error:', error);
+        this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
+        this.showAlert('💡 Make sure your token has "Contents: Read and write" permissions for your repository', 'error');
+    }
+}
+
+async simpleContentsAPIDeploy(token) {
+    const repo = 'BarasaGodwilTech/willstech-tempolary';
+    const branch = 'main';
+
+    this.showAlert('📦 Creating admin data file...', 'success');
+
+    // Create the data content
+    const dataContent = JSON.stringify({
+        adminData: this.currentData,
+        lastUpdated: new Date().toISOString(),
+        version: '1.0'
+    }, null, 2);
+
+    // Encode to base64
+    const encodedContent = btoa(unescape(encodeURIComponent(dataContent)));
+
+    this.showAlert('🔄 Checking if file exists...', 'success');
+
+    // First, check if the file already exists to get its SHA
+    let existingSha = null;
+    try {
+        const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/admin-data.json?ref=${branch}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            existingSha = fileData.sha;
+            this.showAlert('📁 Updating existing admin-data.json...', 'success');
+        } else {
+            this.showAlert('📄 Creating new admin-data.json...', 'success');
+        }
+    } catch (error) {
+        // File doesn't exist, that's fine - we'll create it
+        this.showAlert('📄 Creating new admin-data.json file...', 'success');
+    }
+
+    this.showAlert('🚀 Uploading to GitHub...', 'success');
+
+    // Create or update the file using Contents API
+    const putResponse = await fetch(`https://api.github.com/repos/${repo}/contents/admin-data.json`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            message: `🔄 Admin Panel Update - ${new Date().toLocaleString('en-UG', { timeZone: 'Africa/Kampala' })}`,
+            content: encodedContent,
+            branch: branch,
+            sha: existingSha // Include SHA only if updating existing file
+        })
+    });
+
+    if (!putResponse.ok) {
+        const errorText = await putResponse.text();
+        throw new Error(`GitHub API error: ${putResponse.status} - ${errorText}`);
+    }
+
+    const result = await putResponse.json();
+    
+    this.showAlert('🎉 SUCCESS! Data deployed to GitHub.', 'success');
+    this.showAlert('📊 Your admin changes are now saved!', 'success');
+    this.showAlert('🌐 The data file is available at: https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/main/admin-data.json', 'success');
+}
 
     async verifyGitHubToken(token) {
         try {
@@ -358,19 +428,21 @@ class WillTechAdmin {
     }
 
     async generateUpdatedFiles() {
-        // Generate updated HTML and data files
-        const files = {
-            'index.html': this.generateUpdatedIndexHTML(),
-            'data/products.json': JSON.stringify(this.currentData.products, null, 2),
-            'data/site-config.json': JSON.stringify({
-                hero: this.currentData.hero,
-                content: this.currentData.content,
-                social: this.currentData.social
-            }, null, 2)
-        };
+    // For now, let's just update the data files, not the main index.html
+    // This avoids the blob creation issue for large HTML files
+    const files = {
+        'data/products.json': JSON.stringify(this.currentData.products, null, 2),
+        'data/site-config.json': JSON.stringify({
+            hero: this.currentData.hero,
+            content: this.currentData.content,
+            social: this.currentData.social,
+            lastUpdated: new Date().toISOString()
+        }, null, 2)
+    };
 
-        return files;
-    }
+    this.showAlert('📄 Generated data files (products.json, site-config.json)', 'success');
+    return files;
+}
 
     generateUpdatedIndexHTML() {
         // This would be your full updated HTML file
@@ -401,36 +473,49 @@ class WillTechAdmin {
     }
 
     async commitToGitHub(token, repo, branch, files) {
-        try {
-            // Get the latest commit SHA
-            const refResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            
-            if (!refResponse.ok) {
-                throw new Error(`Cannot access repository: ${refResponse.statusText}`);
+    try {
+        this.showAlert('🚀 Starting deployment process...', 'success');
+
+        // 1. Get the latest commit SHA
+        const refResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
             }
+        });
+        
+        if (!refResponse.ok) {
+            const errorText = await refResponse.text();
+            throw new Error(`Cannot access repository: ${refResponse.status} - ${errorText}`);
+        }
 
-            const refData = await refResponse.json();
-            const latestCommitSha = refData.object.sha;
+        const refData = await refResponse.json();
+        const latestCommitSha = refData.object.sha;
 
-            // Get the current tree
-            const commitResponse = await fetch(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            
-            const commitData = await commitResponse.json();
-            const baseTreeSha = commitData.tree.sha;
+        // 2. Get the current tree
+        const commitResponse = await fetch(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, {
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!commitResponse.ok) {
+            throw new Error('Failed to get current commit');
+        }
 
-            // Create blobs for each file
-            const tree = [];
-            for (const [path, content] of Object.entries(files)) {
+        const commitData = await commitResponse.json();
+        const baseTreeSha = commitData.tree.sha;
+
+        // 3. Create blobs for each file
+        const tree = [];
+        this.showAlert('📁 Creating file blobs...', 'success');
+
+        for (const [path, content] of Object.entries(files)) {
+            try {
+                // Convert content to base64 properly
+                const base64Content = btoa(unescape(encodeURIComponent(content)));
+                
                 const blobResponse = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
                     method: 'POST',
                     headers: {
@@ -439,13 +524,14 @@ class WillTechAdmin {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        content: btoa(unescape(encodeURIComponent(content))),
+                        content: base64Content,
                         encoding: 'base64'
                     })
                 });
 
                 if (!blobResponse.ok) {
-                    throw new Error(`Failed to create blob for ${path}`);
+                    const errorText = await blobResponse.text();
+                    throw new Error(`Failed to create blob for ${path}: ${blobResponse.status} - ${errorText}`);
                 }
 
                 const blobData = await blobResponse.json();
@@ -455,73 +541,88 @@ class WillTechAdmin {
                     type: 'blob',
                     sha: blobData.sha
                 });
+
+                this.showAlert(`✅ Created blob for: ${path}`, 'success');
+                
+            } catch (error) {
+                console.error(`Error creating blob for ${path}:`, error);
+                throw new Error(`Failed to create ${path}: ${error.message}`);
             }
-
-            // Create new tree
-            const treeResponse = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    base_tree: baseTreeSha,
-                    tree: tree
-                })
-            });
-
-            if (!treeResponse.ok) {
-                throw new Error('Tree creation failed');
-            }
-
-            const treeData = await treeResponse.json();
-
-            // Create new commit
-            const commitResponse2 = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Admin Panel Update - ${new Date().toLocaleString()}`,
-                    tree: treeData.sha,
-                    parents: [latestCommitSha]
-                })
-            });
-
-            if (!commitResponse2.ok) {
-                throw new Error('Commit creation failed');
-            }
-
-            const commitData2 = await commitResponse2.json();
-
-            // Update reference
-            const updateResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sha: commitData2.sha,
-                    force: false
-                })
-            });
-
-            if (!updateResponse.ok) {
-                throw new Error('Reference update failed');
-            }
-
-            return true;
-        } catch (error) {
-            console.error('GitHub commit error:', error);
-            throw error;
         }
+
+        // 4. Create new tree
+        this.showAlert('🌳 Creating file tree...', 'success');
+        const treeResponse = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                base_tree: baseTreeSha,
+                tree: tree
+            })
+        });
+
+        if (!treeResponse.ok) {
+            const errorText = await treeResponse.text();
+            throw new Error(`Tree creation failed: ${treeResponse.status} - ${errorText}`);
+        }
+
+        const treeData = await treeResponse.json();
+
+        // 5. Create new commit
+        this.showAlert('📝 Creating commit...', 'success');
+        const commitResponse2 = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `🔄 Admin Panel Update - ${new Date().toLocaleString('en-UG', {timeZone: 'Africa/Kampala'})}`,
+                tree: treeData.sha,
+                parents: [latestCommitSha]
+            })
+        });
+
+        if (!commitResponse2.ok) {
+            const errorText = await commitResponse2.text();
+            throw new Error(`Commit creation failed: ${commitResponse2.status} - ${errorText}`);
+        }
+
+        const commitData2 = await commitResponse2.json();
+
+        // 6. Update reference
+        this.showAlert('🔄 Updating repository...', 'success');
+        const updateResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sha: commitData2.sha,
+                force: false
+            })
+        });
+
+        if (!updateResponse.ok) {
+            const errorText = await updateResponse.text();
+            throw new Error(`Reference update failed: ${updateResponse.status} - ${errorText}`);
+        }
+
+        this.showAlert('✅ Successfully updated repository reference!', 'success');
+        return true;
+
+    } catch (error) {
+        console.error('GitHub deployment error:', error);
+        throw error;
     }
+}
 
     downloadBackup() {
         const dataStr = JSON.stringify(this.currentData, null, 2);
