@@ -97,7 +97,7 @@ class WillTechAdmin {
                 return;
             }
             
-            // Fallback: Extract data from existing files
+            // If no config file exists, extract from current site
             await this.extractDataFromCurrentSite();
             
         } catch (error) {
@@ -131,29 +131,197 @@ class WillTechAdmin {
     }
 
     async extractDataFromCurrentSite() {
-        // For products, we'll start with empty array
-        // In a real implementation, you'd extract from your current site structure
+        console.log('Extracting data from current website files...');
         
-        this.currentData = {
-            hero: {
-                title: "",
-                description: "",
-                whatsappLink: ""
-            },
+        try {
+            // Extract products from HTML
+            const products = await this.extractProductsFromHTML();
+            
+            this.currentData = {
+                hero: await this.extractHeroData(),
+                products: products,
+                content: await this.extractContentData(),
+                social: await this.extractSocialData(),
+                lastSynced: new Date().toISOString()
+            };
+            
+            console.log('Data extracted from current site:', this.currentData);
+            
+        } catch (error) {
+            console.error('Error extracting data from site:', error);
+            // Initialize with empty structure
+            this.currentData = this.getEmptyDataStructure();
+        }
+    }
+
+    async extractProductsFromHTML() {
+        console.log('Extracting products from HTML...');
+        
+        try {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const products = [];
+            const productCards = doc.querySelectorAll('.product-card');
+            
+            productCards.forEach((card, index) => {
+                try {
+                    const name = card.querySelector('h3')?.textContent?.trim();
+                    const description = card.querySelector('.product-description')?.textContent?.trim();
+                    const priceElement = card.querySelector('.current-price');
+                    const price = priceElement ? this.extractPriceFromText(priceElement.textContent) : '0';
+                    const image = card.querySelector('img')?.getAttribute('src') || '';
+                    const category = card.getAttribute('data-category') || 'electronics';
+                    
+                    // Extract badges
+                    const badges = [];
+                    const badgeElements = card.querySelectorAll('.product-badge');
+                    badgeElements.forEach(badge => {
+                        if (badge.classList.contains('badge-new')) badges.push('new');
+                        if (badge.classList.contains('badge-sale')) badges.push('sale');
+                        if (badge.classList.contains('badge-bestseller')) badges.push('bestseller');
+                        if (badge.classList.contains('badge-limited')) badges.push('limited');
+                    });
+                    
+                    // Extract rating
+                    const stars = card.querySelectorAll('.stars .fa-star, .stars .fa-star-half-alt');
+                    let rating = 5; // Default
+                    if (stars.length > 0) {
+                        rating = 0;
+                        stars.forEach(star => {
+                            if (star.classList.contains('fa-star')) rating += 1;
+                            if (star.classList.contains('fa-star-half-alt')) rating += 0.5;
+                        });
+                    }
+
+                    const productData = {
+                        id: Date.now() + index,
+                        name: name || 'Unnamed Product',
+                        description: description || '',
+                        price: price,
+                        image: image,
+                        category: category,
+                        featured: true,
+                        status: 'active',
+                        dateAdded: new Date().toISOString(),
+                        badges: badges,
+                        rating: rating,
+                        // Store original price if available
+                        originalPrice: this.extractPriceFromText(card.querySelector('.original-price')?.textContent) || null
+                    };
+                    
+                    if (productData.name && productData.name !== 'Unnamed Product') {
+                        products.push(productData);
+                    }
+                } catch (error) {
+                    console.log('Error parsing product card:', error);
+                }
+            });
+            
+            console.log(`Extracted ${products.length} products from HTML`);
+            return products;
+            
+        } catch (error) {
+            console.error('Error extracting products from HTML:', error);
+            return [];
+        }
+    }
+
+    extractPriceFromText(priceText) {
+        if (!priceText) return '0';
+        // Extract numbers from price text like "UGX 4,500,000"
+        const priceMatch = priceText.replace(/[^\d]/g, '');
+        return priceMatch || '0';
+    }
+
+    async extractHeroData() {
+        try {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            const heroSection = doc.querySelector('.hero');
+            return {
+                title: heroSection?.querySelector('h1')?.textContent?.trim() || '',
+                description: heroSection?.querySelector('p')?.textContent?.trim() || '',
+                whatsappLink: heroSection?.querySelector('.btn-primary[href*="wa.me"]')?.getAttribute('href') || ''
+            };
+        } catch (error) {
+            return { title: '', description: '', whatsappLink: '' };
+        }
+    }
+
+    async extractContentData() {
+        try {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            return {
+                storeName: doc.querySelector('title')?.textContent || "Will's Tech Store",
+                tagline: doc.querySelector('.header-slogan .tagline')?.textContent || 'Elevate Your Lifestyle With Authentic Tech',
+                description: doc.querySelector('meta[name="description"]')?.getAttribute('content') || '',
+                contactInfo: this.extractContactInfo(doc)
+            };
+        } catch (error) {
+            return { storeName: '', tagline: '', description: '', contactInfo: '' };
+        }
+    }
+
+    async extractSocialData() {
+        try {
+            const response = await fetch('index.html');
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            return this.extractSocialLinks(doc);
+        } catch (error) {
+            return { facebook: '', instagram: '', twitter: '', tiktok: '', youtube: '' };
+        }
+    }
+
+    extractSocialLinks(doc) {
+        const socialLinks = {
+            facebook: '',
+            instagram: '',
+            twitter: '',
+            tiktok: '',
+            youtube: ''
+        };
+        
+        // Extract from hero section
+        const heroLinks = doc.querySelectorAll('.hero .social-links a');
+        heroLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href.includes('facebook')) socialLinks.facebook = href;
+            else if (href.includes('instagram')) socialLinks.instagram = href;
+            else if (href.includes('twitter') || href.includes('x.com')) socialLinks.twitter = href;
+            else if (href.includes('tiktok')) socialLinks.tiktok = href;
+            else if (href.includes('youtube')) socialLinks.youtube = href;
+        });
+        
+        return socialLinks;
+    }
+
+    extractContactInfo(doc) {
+        const contactSection = doc.querySelector('.contact-info');
+        if (contactSection) {
+            return contactSection.textContent.trim();
+        }
+        return "WhatsApp: +256 751 924 844\nEmail: wills.tech.store.ug@gmail.com\nLocations: Kampala & Mbale, Uganda\nBusiness Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM";
+    }
+
+    getEmptyDataStructure() {
+        return {
+            hero: { title: '', description: '', whatsappLink: '' },
             products: [],
-            content: {
-                storeName: "",
-                tagline: "",
-                description: "",
-                contactInfo: ""
-            },
-            social: {
-                facebook: "",
-                instagram: "",
-                twitter: "",
-                tiktok: "",
-                youtube: ""
-            },
+            content: { storeName: '', tagline: '', description: '', contactInfo: '' },
+            social: { facebook: '', instagram: '', twitter: '', tiktok: '', youtube: '' },
             lastSynced: new Date().toISOString()
         };
     }
@@ -313,7 +481,7 @@ class WillTechAdmin {
             price: document.getElementById('productPrice').value,
             image: document.getElementById('productImage').value,
             featured: document.getElementById('productFeatured').checked,
-            status: 'active' // active, hidden, draft
+            status: 'active'
         };
 
         if (this.editingProductId) {
@@ -322,7 +490,8 @@ class WillTechAdmin {
             if (productIndex !== -1) {
                 this.currentData.products[productIndex] = {
                     ...this.currentData.products[productIndex],
-                    ...productData
+                    ...productData,
+                    dateUpdated: new Date().toISOString()
                 };
                 this.showAlert('Product updated successfully!', 'success');
             }
@@ -331,7 +500,9 @@ class WillTechAdmin {
             const newProduct = {
                 id: Date.now(),
                 ...productData,
-                dateAdded: new Date().toISOString()
+                dateAdded: new Date().toISOString(),
+                badges: ['new'],
+                rating: 5
             };
             
             if (!this.currentData.products) {
@@ -522,6 +693,10 @@ class WillTechAdmin {
     createProductCard(product) {
         const card = document.createElement('div');
         card.className = `product-card ${product.status === 'hidden' ? 'product-hidden' : ''}`;
+        
+        const formattedPrice = this.formatPrice(product.price);
+        const ratingStars = this.generateRatingStars(product.rating || 5);
+        
         card.innerHTML = `
             <div class="product-image">
                 ${product.image ? 
@@ -530,12 +705,24 @@ class WillTechAdmin {
                 }
                 ${product.featured ? '<div class="featured-badge">Featured</div>' : ''}
                 ${product.status === 'hidden' ? '<div class="hidden-badge">Hidden</div>' : ''}
+                ${product.badges && product.badges.length > 0 ? `
+                    <div class="product-badges">
+                        ${product.badges.map(badge => `<span class="product-badge badge-${badge}">${badge}</span>`).join('')}
+                    </div>
+                ` : ''}
             </div>
             <h3>${product.name}</h3>
             <p class="product-description">${product.description}</p>
-            <p><strong>UGX ${this.formatPrice(product.price)}</strong></p>
+            <p><strong>UGX ${formattedPrice}</strong></p>
             <p><small>Category: ${product.category}</small></p>
             <p><small>Added: ${new Date(product.dateAdded).toLocaleDateString()}</small></p>
+            ${product.rating ? `
+                <div class="product-rating">
+                    <div class="stars" aria-label="${product.rating} out of 5 stars">
+                        ${ratingStars}
+                    </div>
+                </div>
+            ` : ''}
             <div class="product-actions">
                 <button class="btn btn-primary" onclick="admin.editProduct(${product.id})">
                     <i class="fas fa-edit"></i> Edit
@@ -556,6 +743,27 @@ class WillTechAdmin {
         return card;
     }
 
+    generateRatingStars(rating) {
+        let stars = '';
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 !== 0;
+        
+        for (let i = 0; i < fullStars; i++) {
+            stars += '<i class="fas fa-star"></i>';
+        }
+        
+        if (hasHalfStar) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        }
+        
+        const emptyStars = 5 - Math.ceil(rating);
+        for (let i = 0; i < emptyStars; i++) {
+            stars += '<i class="far fa-star"></i>';
+        }
+        
+        return stars;
+    }
+
     editProduct(productId) {
         const product = this.currentData.products.find(p => p.id === productId);
         if (product) {
@@ -565,7 +773,7 @@ class WillTechAdmin {
             document.getElementById('productDescription').value = product.description;
             document.getElementById('productPrice').value = product.price;
             document.getElementById('productImage').value = product.image || '';
-            document.getElementById('productFeatured').checked = product.featured;
+            document.getElementById('productFeatured').checked = product.featured || false;
             
             // Set editing mode
             this.editingProductId = productId;
