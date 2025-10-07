@@ -8,6 +8,7 @@ class WillTechAdmin {
             repo: 'willstech-tempolary',
             branch: 'branch-test'
         };
+        this.editingProductId = null;
     }
 
     async init() {
@@ -96,7 +97,7 @@ class WillTechAdmin {
                 return;
             }
             
-            // Fallback: Extract data from index.html and other files
+            // Fallback: Extract data from existing files
             await this.extractDataFromCurrentSite();
             
         } catch (error) {
@@ -130,90 +131,37 @@ class WillTechAdmin {
     }
 
     async extractDataFromCurrentSite() {
-        // Load current index.html to extract data
-        const response = await fetch('index.html');
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        // Extract hero section
-        const heroTitle = doc.querySelector('h1')?.textContent || '';
-        const heroDescription = doc.querySelector('.hero p')?.textContent || '';
-        const whatsappButton = doc.querySelector('a.btn[href*="wa.me"]');
-        const whatsappLink = whatsappButton ? whatsappButton.getAttribute('href') : '';
-        
-        // Extract content
-        const storeName = doc.querySelector('title')?.textContent || "Will's Tech Store";
-        const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
-        
-        // Extract social links
-        const socialLinks = this.extractSocialLinks(doc);
-        
-        // Try to load products from script.js or existing data
-        const products = await this.extractProductsData();
+        // For products, we'll start with empty array
+        // In a real implementation, you'd extract from your current site structure
         
         this.currentData = {
             hero: {
-                title: heroTitle,
-                description: heroDescription,
-                whatsappLink: whatsappLink
+                title: "",
+                description: "",
+                whatsappLink: ""
             },
-            products: products,
+            products: [],
             content: {
-                storeName: storeName,
-                tagline: doc.querySelector('.tagline')?.textContent || '',
-                description: metaDescription,
-                contactInfo: this.extractContactInfo(doc)
+                storeName: "",
+                tagline: "",
+                description: "",
+                contactInfo: ""
             },
-            social: socialLinks,
+            social: {
+                facebook: "",
+                instagram: "",
+                twitter: "",
+                tiktok: "",
+                youtube: ""
+            },
             lastSynced: new Date().toISOString()
         };
-        
-        console.log('Data extracted from current site:', this.currentData);
-    }
-
-    async extractProductsData() {
-        // Try to load products from existing data file
-        const productsData = await this.fetchFileFromGitHub('data/products.json');
-        if (productsData) {
-            return productsData;
-        }
-        
-        // Fallback: extract from current HTML or return empty array
-        return [];
-    }
-
-    extractSocialLinks(doc) {
-        const socialLinks = {
-            facebook: '#',
-            instagram: '#',
-            twitter: '#',
-            tiktok: '#',
-            youtube: '#'
-        };
-        
-        const links = doc.querySelectorAll('a[href*="facebook"], a[href*="instagram"], a[href*="twitter"], a[href*="tiktok"], a[href*="youtube"]');
-        links.forEach(link => {
-            const href = link.getAttribute('href');
-            if (href.includes('facebook')) socialLinks.facebook = href;
-            if (href.includes('instagram')) socialLinks.instagram = href;
-            if (href.includes('twitter') || href.includes('x.com')) socialLinks.twitter = href;
-            if (href.includes('tiktok')) socialLinks.tiktok = href;
-            if (href.includes('youtube')) socialLinks.youtube = href;
-        });
-        
-        return socialLinks;
-    }
-
-    extractContactInfo(doc) {
-        // Extract from contact section or meta tags
-        return "WhatsApp: +256 751 924 844\nEmail: wills.tech.store.ug@gmail.com\nLocations: Kampala & Mbale, Uganda";
     }
 
     setupEventListeners() {
         console.log('Setting up event listeners...');
         
-        // Form submissions - now with immediate GitHub sync
+        // Form submissions
         const heroForm = document.getElementById('heroForm');
         const productForm = document.getElementById('productForm');
         const contentForm = document.getElementById('contentForm');
@@ -263,6 +211,12 @@ class WillTechAdmin {
                 this.switchProductTab(tabName);
             });
         });
+
+        // Cancel edit button
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => this.cancelEdit());
+        }
     }
 
     setupNavigation() {
@@ -303,6 +257,11 @@ class WillTechAdmin {
         
         document.querySelectorAll('#products .tab-content').forEach(content => content.classList.remove('active'));
         document.getElementById(tabName).classList.add('active');
+
+        // Reset form when switching to add product tab
+        if (tabName === 'add-product') {
+            this.cancelEdit();
+        }
     }
 
     populateForms() {
@@ -347,26 +306,46 @@ class WillTechAdmin {
     async handleProductForm(e) {
         e.preventDefault();
         
-        const newProduct = {
-            id: Date.now(),
+        const productData = {
             name: document.getElementById('productName').value,
             category: document.getElementById('productCategory').value,
             description: document.getElementById('productDescription').value,
             price: document.getElementById('productPrice').value,
             image: document.getElementById('productImage').value,
-            featured: true
+            featured: document.getElementById('productFeatured').checked,
+            status: 'active' // active, hidden, draft
         };
-        
-        if (!this.currentData.products) {
-            this.currentData.products = [];
+
+        if (this.editingProductId) {
+            // Update existing product
+            const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
+            if (productIndex !== -1) {
+                this.currentData.products[productIndex] = {
+                    ...this.currentData.products[productIndex],
+                    ...productData
+                };
+                this.showAlert('Product updated successfully!', 'success');
+            }
+        } else {
+            // Add new product
+            const newProduct = {
+                id: Date.now(),
+                ...productData,
+                dateAdded: new Date().toISOString()
+            };
+            
+            if (!this.currentData.products) {
+                this.currentData.products = [];
+            }
+            
+            this.currentData.products.push(newProduct);
+            this.showAlert('Product added successfully!', 'success');
         }
         
-        this.currentData.products.push(newProduct);
         await this.saveToGitHub();
         this.loadProducts();
-        
+        this.cancelEdit();
         e.target.reset();
-        this.showAlert('Product added successfully!', 'success');
     }
 
     async handleContentForm(e) {
@@ -444,14 +423,6 @@ class WillTechAdmin {
                 JSON.stringify(this.currentData, null, 2)
             );
             
-            // Also save products separately if needed
-            if (this.currentData.products) {
-                await this.updateFileOnGitHub(
-                    'data/products.json',
-                    JSON.stringify(this.currentData.products, null, 2)
-                );
-            }
-            
             this.showAlert('✅ Successfully saved to GitHub!', 'success');
             return true;
             
@@ -515,32 +486,68 @@ class WillTechAdmin {
 
         container.innerHTML = '';
         
-        this.currentData.products.forEach(product => {
+        const activeProducts = this.currentData.products.filter(p => p.status !== 'hidden');
+        const hiddenProducts = this.currentData.products.filter(p => p.status === 'hidden');
+        
+        // Display active products
+        activeProducts.forEach(product => {
             const productCard = this.createProductCard(product);
             container.appendChild(productCard);
         });
 
+        // Display hidden products section
+        if (hiddenProducts.length > 0) {
+            const hiddenSection = document.createElement('div');
+            hiddenSection.className = 'hidden-products-section';
+            hiddenSection.innerHTML = `
+                <h3 style="color: #666; margin: 2rem 0 1rem 0; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem;">
+                    <i class="fas fa-eye-slash"></i> Hidden Products (${hiddenProducts.length})
+                </h3>
+            `;
+            container.appendChild(hiddenSection);
+
+            hiddenProducts.forEach(product => {
+                const productCard = this.createProductCard(product);
+                hiddenSection.appendChild(productCard);
+            });
+        }
+
+        // Update products count
         const productsCountElement = document.getElementById('productsCount');
         if (productsCountElement) {
-            productsCountElement.textContent = this.currentData.products.length;
+            productsCountElement.textContent = `${activeProducts.length} active, ${hiddenProducts.length} hidden`;
         }
     }
 
     createProductCard(product) {
         const card = document.createElement('div');
-        card.className = 'product-card';
+        card.className = `product-card ${product.status === 'hidden' ? 'product-hidden' : ''}`;
         card.innerHTML = `
             <div class="product-image">
-                <i class="fas fa-box" style="font-size: 3rem; color: #ccc;"></i>
+                ${product.image ? 
+                    `<img src="${product.image}" alt="${product.name}" style="width: 100%; height: 120px; object-fit: cover;">` :
+                    `<i class="fas fa-box" style="font-size: 3rem; color: #ccc;"></i>`
+                }
+                ${product.featured ? '<div class="featured-badge">Featured</div>' : ''}
+                ${product.status === 'hidden' ? '<div class="hidden-badge">Hidden</div>' : ''}
             </div>
             <h3>${product.name}</h3>
-            <p>${product.description}</p>
+            <p class="product-description">${product.description}</p>
             <p><strong>UGX ${this.formatPrice(product.price)}</strong></p>
             <p><small>Category: ${product.category}</small></p>
+            <p><small>Added: ${new Date(product.dateAdded).toLocaleDateString()}</small></p>
             <div class="product-actions">
                 <button class="btn btn-primary" onclick="admin.editProduct(${product.id})">
                     <i class="fas fa-edit"></i> Edit
                 </button>
+                ${product.status === 'hidden' ? 
+                    `<button class="btn btn-success" onclick="admin.toggleProductVisibility(${product.id})">
+                        <i class="fas fa-eye"></i> Show
+                    </button>` :
+                    `<button class="btn btn-warning" onclick="admin.toggleProductVisibility(${product.id})">
+                        <i class="fas fa-eye-slash"></i> Hide
+                    </button>`
+                }
                 <button class="btn btn-danger" onclick="admin.deleteProduct(${product.id})">
                     <i class="fas fa-trash"></i> Delete
                 </button>
@@ -549,29 +556,84 @@ class WillTechAdmin {
         return card;
     }
 
-    async editProduct(productId) {
+    editProduct(productId) {
         const product = this.currentData.products.find(p => p.id === productId);
         if (product) {
+            // Populate form with product data
             document.getElementById('productName').value = product.name;
             document.getElementById('productCategory').value = product.category;
             document.getElementById('productDescription').value = product.description;
             document.getElementById('productPrice').value = product.price;
-            document.getElementById('productImage').value = product.image;
+            document.getElementById('productImage').value = product.image || '';
+            document.getElementById('productFeatured').checked = product.featured;
             
-            await this.deleteProduct(productId, false);
+            // Set editing mode
+            this.editingProductId = productId;
+            
+            // Update UI for edit mode
+            this.setEditMode(true);
+            
+            // Switch to add product tab (which now becomes edit product)
             this.switchProductTab('add-product');
+            
+            this.showAlert(`Editing: ${product.name}`, 'success');
         }
     }
 
-    async deleteProduct(productId, showAlert = true) {
+    setEditMode(isEdit) {
+        const formTitle = document.getElementById('productFormTitle');
+        const submitBtn = document.getElementById('productSubmitBtn');
+        const cancelBtn = document.getElementById('cancelEditBtn');
+        
+        if (formTitle) {
+            formTitle.textContent = isEdit ? 'Edit Product' : 'Add New Product';
+        }
+        
+        if (submitBtn) {
+            submitBtn.innerHTML = isEdit ? 
+                '<i class="fas fa-save"></i> Update Product' : 
+                '<i class="fas fa-plus"></i> Add Product';
+        }
+        
+        if (cancelBtn) {
+            cancelBtn.style.display = isEdit ? 'inline-block' : 'none';
+        }
+    }
+
+    cancelEdit() {
+        this.editingProductId = null;
+        this.setEditMode(false);
+        
+        // Clear the form
+        const productForm = document.getElementById('productForm');
+        if (productForm) {
+            productForm.reset();
+        }
+    }
+
+    async toggleProductVisibility(productId) {
+        const product = this.currentData.products.find(p => p.id === productId);
+        if (product) {
+            product.status = product.status === 'hidden' ? 'active' : 'hidden';
+            await this.saveToGitHub();
+            this.loadProducts();
+            
+            const action = product.status === 'hidden' ? 'hidden' : 'shown';
+            this.showAlert(`Product ${action} successfully!`, 'success');
+        }
+    }
+
+    async deleteProduct(productId) {
+        if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+            return;
+        }
+
         this.currentData.products = this.currentData.products.filter(p => p.id !== productId);
         const success = await this.saveToGitHub();
         
         if (success) {
             this.loadProducts();
-            if (showAlert) {
-                this.showAlert('Product deleted successfully!', 'success');
-            }
+            this.showAlert('Product deleted successfully!', 'success');
         }
     }
 
