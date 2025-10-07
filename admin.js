@@ -2,9 +2,15 @@
 class WillTechAdmin {
     constructor() {
         this.currentData = {};
+        this.githubToken = null;
+        this.repoConfig = {
+            owner: 'BarasaGodwilTech',
+            repo: 'willstech-tempolary',
+            branch: 'branch-test'
+        };
     }
 
-    init() {
+    async init() {
         console.log('Admin panel initializing...');
         
         // Check authentication first
@@ -15,59 +21,229 @@ class WillTechAdmin {
         }
 
         console.log('Authentication passed, loading data...');
-        this.loadData();
+        
+        // Load settings first
+        await this.loadSettings();
+        
+        // Then load current data from GitHub
+        await this.syncWithGitHub();
+        
         this.setupEventListeners();
         this.setupNavigation();
-        this.loadProducts();
         
         console.log('Admin panel fully initialized');
+    }
+
+    async loadSettings() {
+        // Load GitHub token and repo config from localStorage
+        this.githubToken = localStorage.getItem('willstech_github_token');
+        const savedRepoConfig = localStorage.getItem('willstech_repo_config');
+        if (savedRepoConfig) {
+            this.repoConfig = { ...this.repoConfig, ...JSON.parse(savedRepoConfig) };
+        }
+        
+        // Populate settings form if exists
+        if (document.getElementById('githubToken')) {
+            document.getElementById('githubToken').value = this.githubToken || '';
+        }
+        if (document.getElementById('repoOwner')) {
+            document.getElementById('repoOwner').value = this.repoConfig.owner;
+        }
+        if (document.getElementById('repoName')) {
+            document.getElementById('repoName').value = this.repoConfig.repo;
+        }
+        if (document.getElementById('branchName')) {
+            document.getElementById('branchName').value = this.repoConfig.branch;
+        }
+        
+        this.updateDeploymentTarget();
+    }
+
+    async syncWithGitHub() {
+        try {
+            this.showAlert('🔄 Syncing with GitHub repository...', 'success');
+            
+            if (!this.githubToken) {
+                this.showAlert('⚠️ Please set GitHub token in Settings tab first', 'error');
+                this.showTab('settings');
+                return;
+            }
+
+            // Load current data from GitHub files
+            await this.loadDataFromGitHub();
+            
+            // Populate forms with current data
+            this.populateForms();
+            this.loadProducts();
+            
+            this.showAlert('✅ Successfully synced with GitHub!', 'success');
+            
+        } catch (error) {
+            console.error('Sync failed:', error);
+            this.showAlert(`❌ Sync failed: ${error.message}`, 'error');
+        }
+    }
+
+    async loadDataFromGitHub() {
+        console.log('Loading data from GitHub repository...');
+        
+        try {
+            // Try to load from site-config.json first
+            const configData = await this.fetchFileFromGitHub('data/site-config.json');
+            if (configData) {
+                this.currentData = configData;
+                console.log('Loaded data from site-config.json');
+                return;
+            }
+            
+            // Fallback: Extract data from index.html and other files
+            await this.extractDataFromCurrentSite();
+            
+        } catch (error) {
+            console.error('Error loading from GitHub:', error);
+            throw new Error('Could not load data from repository');
+        }
+    }
+
+    async fetchFileFromGitHub(filePath) {
+        try {
+            const response = await fetch(
+                `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+
+            if (response.ok) {
+                const fileData = await response.json();
+                const content = atob(fileData.content);
+                return JSON.parse(content);
+            }
+            return null;
+        } catch (error) {
+            console.error(`Error fetching ${filePath}:`, error);
+            return null;
+        }
+    }
+
+    async extractDataFromCurrentSite() {
+        // Load current index.html to extract data
+        const response = await fetch('index.html');
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Extract hero section
+        const heroTitle = doc.querySelector('h1')?.textContent || '';
+        const heroDescription = doc.querySelector('.hero p')?.textContent || '';
+        const whatsappButton = doc.querySelector('a.btn[href*="wa.me"]');
+        const whatsappLink = whatsappButton ? whatsappButton.getAttribute('href') : '';
+        
+        // Extract content
+        const storeName = doc.querySelector('title')?.textContent || "Will's Tech Store";
+        const metaDescription = doc.querySelector('meta[name="description"]')?.getAttribute('content') || '';
+        
+        // Extract social links
+        const socialLinks = this.extractSocialLinks(doc);
+        
+        // Try to load products from script.js or existing data
+        const products = await this.extractProductsData();
+        
+        this.currentData = {
+            hero: {
+                title: heroTitle,
+                description: heroDescription,
+                whatsappLink: whatsappLink
+            },
+            products: products,
+            content: {
+                storeName: storeName,
+                tagline: doc.querySelector('.tagline')?.textContent || '',
+                description: metaDescription,
+                contactInfo: this.extractContactInfo(doc)
+            },
+            social: socialLinks,
+            lastSynced: new Date().toISOString()
+        };
+        
+        console.log('Data extracted from current site:', this.currentData);
+    }
+
+    async extractProductsData() {
+        // Try to load products from existing data file
+        const productsData = await this.fetchFileFromGitHub('data/products.json');
+        if (productsData) {
+            return productsData;
+        }
+        
+        // Fallback: extract from current HTML or return empty array
+        return [];
+    }
+
+    extractSocialLinks(doc) {
+        const socialLinks = {
+            facebook: '#',
+            instagram: '#',
+            twitter: '#',
+            tiktok: '#',
+            youtube: '#'
+        };
+        
+        const links = doc.querySelectorAll('a[href*="facebook"], a[href*="instagram"], a[href*="twitter"], a[href*="tiktok"], a[href*="youtube"]');
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href.includes('facebook')) socialLinks.facebook = href;
+            if (href.includes('instagram')) socialLinks.instagram = href;
+            if (href.includes('twitter') || href.includes('x.com')) socialLinks.twitter = href;
+            if (href.includes('tiktok')) socialLinks.tiktok = href;
+            if (href.includes('youtube')) socialLinks.youtube = href;
+        });
+        
+        return socialLinks;
+    }
+
+    extractContactInfo(doc) {
+        // Extract from contact section or meta tags
+        return "WhatsApp: +256 751 924 844\nEmail: wills.tech.store.ug@gmail.com\nLocations: Kampala & Mbale, Uganda";
     }
 
     setupEventListeners() {
         console.log('Setting up event listeners...');
         
-        // Form submissions
+        // Form submissions - now with immediate GitHub sync
         const heroForm = document.getElementById('heroForm');
         const productForm = document.getElementById('productForm');
         const contentForm = document.getElementById('contentForm');
         const socialForm = document.getElementById('socialForm');
+        const settingsForm = document.getElementById('settingsForm');
         
         if (heroForm) {
             heroForm.addEventListener('submit', (e) => this.handleHeroForm(e));
-            console.log('Hero form listener added');
         }
         
         if (productForm) {
             productForm.addEventListener('submit', (e) => this.handleProductForm(e));
-            console.log('Product form listener added');
         }
         
         if (contentForm) {
             contentForm.addEventListener('submit', (e) => this.handleContentForm(e));
-            console.log('Content form listener added');
         }
         
         if (socialForm) {
             socialForm.addEventListener('submit', (e) => this.handleSocialForm(e));
-            console.log('Social form listener added');
         }
         
-        // Deployment
-        const deployBtn = document.getElementById('deployBtn');
-        const backupBtn = document.getElementById('backupBtn');
-        const restoreBtn = document.getElementById('restoreBtn');
-        
-        if (deployBtn) {
-            deployBtn.addEventListener('click', () => this.deployChanges());
-            console.log('Deploy button listener added');
+        if (settingsForm) {
+            settingsForm.addEventListener('submit', (e) => this.handleSettingsForm(e));
         }
         
-        if (backupBtn) {
-            backupBtn.addEventListener('click', () => this.downloadBackup());
-        }
-        
-        if (restoreBtn) {
-            restoreBtn.addEventListener('click', () => this.restoreBackup());
+        // Sync button
+        const syncBtn = document.getElementById('syncBtn');
+        if (syncBtn) {
+            syncBtn.addEventListener('click', () => this.syncWithGitHub());
         }
         
         // Logout
@@ -77,7 +253,6 @@ class WillTechAdmin {
                 e.preventDefault();
                 this.logout();
             });
-            console.log('Logout button listener added');
         }
 
         // Product tabs
@@ -88,14 +263,10 @@ class WillTechAdmin {
                 this.switchProductTab(tabName);
             });
         });
-        console.log('Product tab listeners added');
     }
 
     setupNavigation() {
-        console.log('Setting up navigation...');
-        
         const navLinks = document.querySelectorAll('.nav-links a');
-        console.log('Found nav links:', navLinks.length);
         
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
@@ -103,149 +274,64 @@ class WillTechAdmin {
                 const target = link.getAttribute('href');
                 if (target && target.startsWith('#')) {
                     const tabName = target.substring(1);
-                    console.log('Navigation clicked:', tabName);
                     this.showTab(tabName);
                     
-                    // Update active states
                     document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
                     link.classList.add('active');
                 }
             });
         });
         
-        // Activate first tab by default
         if (navLinks.length > 0) {
             navLinks[0].classList.add('active');
         }
     }
 
     showTab(tabName) {
-        console.log('Showing tab:', tabName);
-        
-        // Hide all tabs
         const allTabs = document.querySelectorAll('.tab-content');
-        allTabs.forEach(tab => {
-            tab.classList.remove('active');
-        });
+        allTabs.forEach(tab => tab.classList.remove('active'));
         
-        // Show selected tab
         const targetTab = document.getElementById(tabName);
         if (targetTab) {
             targetTab.classList.add('active');
-            console.log('Tab activated:', tabName);
-        } else {
-            console.error('Tab not found:', tabName);
         }
     }
 
     switchProductTab(tabName) {
-        // Update tab buttons
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('active');
-        });
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
         document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
         
-        // Update tab content
-        document.querySelectorAll('#products .tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
+        document.querySelectorAll('#products .tab-content').forEach(content => content.classList.remove('active'));
         document.getElementById(tabName).classList.add('active');
-    }
-
-    loadData() {
-        console.log('Loading data from localStorage...');
-        
-        // Try to load existing data from localStorage
-        try {
-            const savedData = localStorage.getItem('willstech_data');
-            if (savedData) {
-                this.currentData = JSON.parse(savedData);
-                console.log('Data loaded successfully');
-            } else {
-                // Initialize with default data
-                console.log('No saved data, using defaults');
-                this.currentData = this.getDefaultData();
-                this.saveData();
-            }
-            
-            this.populateForms();
-        } catch (error) {
-            console.error('Error loading data:', error);
-            this.currentData = this.getDefaultData();
-            this.saveData();
-        }
-    }
-
-    getDefaultData() {
-        return {
-            hero: {
-                title: "Your Ultimate Online Tech Store Is Coming Soon!",
-                description: "We're working hard to bring you the ultimate tech shopping experience, delivering authentic and top-notch technologies and innovation to your doorstep without lifting a foot. Uganda, are you ready? Join our WhatsApp channel for exclusive early-bird deals!",
-                whatsappLink: "https://wa.me/256751924844?text=Hi%20Will's%20Tech!%20I%20want%20to%20join%20your%20channel.%20Thanks."
-            },
-            products: [
-                {
-                    id: 1,
-                    name: "iPhone 15 Pro",
-                    category: "smartphones",
-                    description: "Latest Apple flagship with titanium design and A17 Pro chip",
-                    price: "4500000",
-                    image: "public/iphone-15-pro.png",
-                    featured: true
-                },
-                {
-                    id: 2,
-                    name: "MacBook Pro M3",
-                    category: "laptops",
-                    description: "Professional laptop with M3 chip for demanding workflows",
-                    price: "8500000",
-                    image: "public/macbook-pro-m3-laptop.jpg",
-                    featured: true
-                }
-            ],
-            content: {
-                storeName: "Will's Tech Store",
-                tagline: "Elevate Your Lifestyle With Authentic Tech",
-                description: "Uganda's trusted tech store for 100% authentic smartphones, laptops & gadgets. Elevate Your Lifestyle With Authentic Tech. Free delivery around Kampala and Mbale. WhatsApp: +256 751 924 844",
-                contactInfo: "WhatsApp: +256 751 924 844\nEmail: wills.tech.store.ug@gmail.com\nLocations: Kampala & Mbale, Uganda\nBusiness Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM"
-            },
-            social: {
-                facebook: "#",
-                instagram: "https://instagram.com/willstech.store",
-                twitter: "https://x.com/willstech_store",
-                tiktok: "http://www.tiktok.com/@willstech.store",
-                youtube: "https://www.youtube.com/@Willstech.storeug"
-            }
-        };
     }
 
     populateForms() {
         // Populate hero form
-        if (document.getElementById('heroTitle')) {
-            document.getElementById('heroTitle').value = this.currentData.hero.title;
-            document.getElementById('heroDescription').value = this.currentData.hero.description;
-            document.getElementById('whatsappLink').value = this.currentData.hero.whatsappLink;
+        if (document.getElementById('heroTitle') && this.currentData.hero) {
+            document.getElementById('heroTitle').value = this.currentData.hero.title || '';
+            document.getElementById('heroDescription').value = this.currentData.hero.description || '';
+            document.getElementById('whatsappLink').value = this.currentData.hero.whatsappLink || '';
         }
 
         // Populate content form
-        if (document.getElementById('storeName')) {
-            document.getElementById('storeName').value = this.currentData.content.storeName;
-            document.getElementById('storeTagline').value = this.currentData.content.tagline;
-            document.getElementById('storeDescription').value = this.currentData.content.description;
-            document.getElementById('contactInfo').value = this.currentData.content.contactInfo;
+        if (document.getElementById('storeName') && this.currentData.content) {
+            document.getElementById('storeName').value = this.currentData.content.storeName || '';
+            document.getElementById('storeTagline').value = this.currentData.content.tagline || '';
+            document.getElementById('storeDescription').value = this.currentData.content.description || '';
+            document.getElementById('contactInfo').value = this.currentData.content.contactInfo || '';
         }
 
         // Populate social form
-        if (document.getElementById('facebookLink')) {
-            document.getElementById('facebookLink').value = this.currentData.social.facebook;
-            document.getElementById('instagramLink').value = this.currentData.social.instagram;
-            document.getElementById('twitterLink').value = this.currentData.social.twitter;
-            document.getElementById('tiktokLink').value = this.currentData.social.tiktok;
-            document.getElementById('youtubeLink').value = this.currentData.social.youtube;
+        if (document.getElementById('facebookLink') && this.currentData.social) {
+            document.getElementById('facebookLink').value = this.currentData.social.facebook || '';
+            document.getElementById('instagramLink').value = this.currentData.social.instagram || '';
+            document.getElementById('twitterLink').value = this.currentData.social.twitter || '';
+            document.getElementById('tiktokLink').value = this.currentData.social.tiktok || '';
+            document.getElementById('youtubeLink').value = this.currentData.social.youtube || '';
         }
     }
 
-    handleHeroForm(e) {
+    async handleHeroForm(e) {
         e.preventDefault();
         
         this.currentData.hero = {
@@ -254,15 +340,15 @@ class WillTechAdmin {
             whatsappLink: document.getElementById('whatsappLink').value
         };
         
-        this.saveData();
+        await this.saveToGitHub();
         this.showAlert('Hero section updated successfully!', 'success');
     }
 
-    handleProductForm(e) {
+    async handleProductForm(e) {
         e.preventDefault();
         
         const newProduct = {
-            id: Date.now(), // Simple ID generation
+            id: Date.now(),
             name: document.getElementById('productName').value,
             category: document.getElementById('productCategory').value,
             description: document.getElementById('productDescription').value,
@@ -271,16 +357,19 @@ class WillTechAdmin {
             featured: true
         };
         
+        if (!this.currentData.products) {
+            this.currentData.products = [];
+        }
+        
         this.currentData.products.push(newProduct);
-        this.saveData();
+        await this.saveToGitHub();
         this.loadProducts();
         
-        // Reset form
         e.target.reset();
         this.showAlert('Product added successfully!', 'success');
     }
 
-    handleContentForm(e) {
+    async handleContentForm(e) {
         e.preventDefault();
         
         this.currentData.content = {
@@ -290,11 +379,11 @@ class WillTechAdmin {
             contactInfo: document.getElementById('contactInfo').value
         };
         
-        this.saveData();
+        await this.saveToGitHub();
         this.showAlert('Content updated successfully!', 'success');
     }
 
-    handleSocialForm(e) {
+    async handleSocialForm(e) {
         e.preventDefault();
         
         this.currentData.social = {
@@ -305,13 +394,124 @@ class WillTechAdmin {
             youtube: document.getElementById('youtubeLink').value
         };
         
-        this.saveData();
+        await this.saveToGitHub();
         this.showAlert('Social links updated successfully!', 'success');
+    }
+
+    async handleSettingsForm(e) {
+        e.preventDefault();
+        
+        const token = document.getElementById('githubToken').value;
+        const owner = document.getElementById('repoOwner').value;
+        const repo = document.getElementById('repoName').value;
+        const branch = document.getElementById('branchName').value;
+        
+        if (!token) {
+            this.showAlert('❌ GitHub Token is required', 'error');
+            return;
+        }
+        
+        // Save settings
+        this.githubToken = token;
+        this.repoConfig = { owner, repo, branch };
+        
+        localStorage.setItem('willstech_github_token', token);
+        localStorage.setItem('willstech_repo_config', JSON.stringify(this.repoConfig));
+        
+        this.showAlert('Settings saved successfully!', 'success');
+        this.updateDeploymentTarget();
+        
+        // Sync with new settings
+        await this.syncWithGitHub();
+    }
+
+    async saveToGitHub() {
+        if (!this.githubToken) {
+            this.showAlert('❌ Please set GitHub token in Settings first', 'error');
+            this.showTab('settings');
+            return false;
+        }
+
+        try {
+            this.showAlert('💾 Saving to GitHub...', 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Save site configuration
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
+            );
+            
+            // Also save products separately if needed
+            if (this.currentData.products) {
+                await this.updateFileOnGitHub(
+                    'data/products.json',
+                    JSON.stringify(this.currentData.products, null, 2)
+                );
+            }
+            
+            this.showAlert('✅ Successfully saved to GitHub!', 'success');
+            return true;
+            
+        } catch (error) {
+            this.showAlert(`❌ Save failed: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    async updateFileOnGitHub(filePath, content) {
+        let existingSha = null;
+        
+        try {
+            const getResponse = await fetch(
+                `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                existingSha = fileData.sha;
+            }
+        } catch (error) {
+            // File doesn't exist, we'll create it
+        }
+
+        const putResponse = await fetch(
+            `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `🔄 Will's Tech Update - ${filePath} - ${new Date().toLocaleString('en-UG')}`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    branch: this.repoConfig.branch,
+                    sha: existingSha
+                })
+            }
+        );
+
+        if (!putResponse.ok) {
+            const errorText = await putResponse.text();
+            throw new Error(`Failed to update ${filePath}: ${putResponse.status}`);
+        }
+
+        return await putResponse.json();
     }
 
     loadProducts() {
         const container = document.getElementById('productsContainer');
-        if (!container) return;
+        if (!container || !this.currentData.products) return;
 
         container.innerHTML = '';
         
@@ -320,7 +520,6 @@ class WillTechAdmin {
             container.appendChild(productCard);
         });
 
-        // Update products count
         const productsCountElement = document.getElementById('productsCount');
         if (productsCountElement) {
             productsCountElement.textContent = this.currentData.products.length;
@@ -350,29 +549,29 @@ class WillTechAdmin {
         return card;
     }
 
-    editProduct(productId) {
+    async editProduct(productId) {
         const product = this.currentData.products.find(p => p.id === productId);
         if (product) {
-            // Populate form and switch to add product tab
             document.getElementById('productName').value = product.name;
             document.getElementById('productCategory').value = product.category;
             document.getElementById('productDescription').value = product.description;
             document.getElementById('productPrice').value = product.price;
             document.getElementById('productImage').value = product.image;
             
-            // Remove the product (will be re-added on save)
-            this.deleteProduct(productId, false);
+            await this.deleteProduct(productId, false);
             this.switchProductTab('add-product');
         }
     }
 
-    deleteProduct(productId, showAlert = true) {
+    async deleteProduct(productId, showAlert = true) {
         this.currentData.products = this.currentData.products.filter(p => p.id !== productId);
-        this.saveData();
-        this.loadProducts();
+        const success = await this.saveToGitHub();
         
-        if (showAlert) {
-            this.showAlert('Product deleted successfully!', 'success');
+        if (success) {
+            this.loadProducts();
+            if (showAlert) {
+                this.showAlert('Product deleted successfully!', 'success');
+            }
         }
     }
 
@@ -380,526 +579,23 @@ class WillTechAdmin {
         return new Intl.NumberFormat('en-UG').format(price);
     }
 
-    saveData() {
-        localStorage.setItem('willstech_data', JSON.stringify(this.currentData));
-    }
-
-<<<<<<< HEAD
-    async verifyGitHubToken(token) {
-    try {
-        const response = await fetch('https://api.github.com/user', {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        });
+    updateDeploymentTarget() {
+        const repo = `${this.repoConfig.owner}/${this.repoConfig.repo}`;
+        const targetElement = document.getElementById('deploymentTarget');
         
-        if (response.ok) {
-            const userData = await response.json();
-            console.log('✅ GitHub token verified for user:', userData.login);
-            return true;
-        } else {
-            console.error('❌ GitHub token verification failed:', response.status);
-            return false;
+        if (targetElement) {
+            targetElement.innerHTML = `
+                <strong>Repository:</strong> ${repo}<br>
+                <strong>Branch:</strong> ${this.repoConfig.branch}<br>
+                <strong>URL:</strong> https://github.com/${repo}/tree/${this.repoConfig.branch}
+            `;
         }
-    } catch (error) {
-        console.error('❌ Error verifying GitHub token:', error);
-        return false;
-    }
-}
-
-   async deployChanges() {
-    const token = prompt('🔒 Enter your GitHub token to update ACTUAL website files:');
-    
-    if (!token) {
-        this.showAlert('Deployment cancelled.', 'error');
-        return;
-    }
-
-    try {
-        this.showAlert('🚀 Starting FULL website deployment...', 'success');
-        
-        // Verify token first
-        const isValid = await this.verifyGitHubToken(token);
-        if (!isValid) {
-            this.showAlert('❌ Invalid GitHub token', 'error');
-            return;
-        }
-
-        this.showAlert('✅ Token verified! Generating files...', 'success');
-        
-        // Generate all updated files
-        const files = await this.generateUpdatedFiles();
-        
-        // Deploy each file
-        const fileEntries = Object.entries(files);
-        for (let i = 0; i < fileEntries.length; i++) {
-            const [filePath, content] = fileEntries[i];
-            this.showAlert(`📁 Updating: ${filePath} (${i + 1}/${fileEntries.length})`, 'success');
-            await this.updateFileOnGitHub(token, filePath, content);
-        }
-        
-        this.showAlert('🎉 SUCCESS! Entire website updated!', 'success');
-        this.showAlert('🌐 Your live site will refresh within 2-5 minutes', 'success');
-        this.showAlert('📊 Changes include: Hero section, Meta tags, Social links, Products', 'success');
-        
-    } catch (error) {
-        this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
-    }
-}
-
-    async generateUpdatedFiles() {
-    this.showAlert('📄 Generating updated website files...', 'success');
-    
-    try {
-        // Get current index.html to use as template
-        const currentHTML = await this.fetchCurrentFile('index.html');
-        
-        // Generate updated HTML with new content
-        const updatedHTML = this.updateHTMLContent(currentHTML);
-        
-        // Get current CSS
-        const currentCSS = await this.fetchCurrentFile('styles.css');
-        
-        // Get current JS
-        const currentJS = await this.fetchCurrentFile('script.js');
-        
-        const files = {
-            'index.html': updatedHTML,
-            'styles.css': currentCSS,
-            'script.js': currentJS,
-            'data/site-config.json': JSON.stringify({
-                hero: this.currentData.hero,
-                content: this.currentData.content,
-                social: this.currentData.social,
-                products: this.currentData.products,
-                lastUpdated: new Date().toISOString()
-            }, null, 2),
-            'data/products.json': JSON.stringify(this.currentData.products, null, 2)
-        };
-
-        this.showAlert('✅ Generated: index.html, styles.css, script.js + data files', 'success');
-        return files;
-        
-    } catch (error) {
-        this.showAlert('⚠️ Using fallback template', 'error');
-        // Fallback to data-only deployment
-        return {
-            'data/site-config.json': JSON.stringify(this.currentData, null, 2)
-        };
-    }
-}
-
-async fetchCurrentFile(filename) {
-    try {
-        const response = await fetch(filename);
-        if (!response.ok) throw new Error('File not found');
-        return await response.text();
-    } catch (error) {
-        throw new Error(`Cannot fetch ${filename}`);
-    }
-}
-
-updateHTMLContent(html) {
-    let updatedHTML = html;
-    
-    // Update meta tags
-    updatedHTML = updatedHTML.replace(
-        /<title>.*?<\/title>/,
-        `<title>${this.currentData.content.storeName} | Premium Gadgets & Tech in Uganda, Kampala | Mbale</title>`
-    );
-    
-    updatedHTML = updatedHTML.replace(
-        /<meta name="description" content=".*?"\/>/,
-        `<meta name="description" content="${this.currentData.content.description}"\/>`
-    );
-    
-    // Update hero section
-    updatedHTML = this.updateHeroSection(updatedHTML);
-    
-    // Update social links
-    updatedHTML = this.updateSocialLinks(updatedHTML);
-    
-    // Update WhatsApp links
-    updatedHTML = this.updateWhatsAppLinks(updatedHTML);
-    
-    return updatedHTML;
-}
-
-updateHeroSection(html) {
-    const newHeroContent = `
-                <h1>${this.escapeHTML(this.currentData.hero.title)}</h1>
-                <p>${this.escapeHTML(this.currentData.hero.description)}</p>
-                <div class="hero-buttons">
-                    <a href="${this.currentData.hero.whatsappLink}" class="btn btn-primary" rel="noopener noreferrer">
-                        <i class="fab fa-whatsapp" aria-hidden="true"></i> Join WhatsApp Channel
-                    </a>
-                    <a href="#notify" class="btn btn-outline">Notify Me at Launch</a>
-                </div>`;
-    
-    // Find and replace hero content
-    return html.replace(
-        /<h1>[\s\S]*?<\/h1>\s*<p>[\s\S]*?<\/p>\s*<div class="hero-buttons">[\s\S]*?<\/div>/,
-        newHeroContent
-    );
-}
-
-updateSocialLinks(html) {
-    let updatedHTML = html;
-    
-    // Update Instagram
-    if (this.currentData.social.instagram) {
-        updatedHTML = updatedHTML.replace(
-            /https:\/\/instagram\.com\/willstech\.store/g,
-            this.currentData.social.instagram
-        );
-    }
-    
-    // Update Twitter/X
-    if (this.currentData.social.twitter) {
-        updatedHTML = updatedHTML.replace(
-            /https:\/\/x\.com\/willstech_store/g,
-            this.currentData.social.twitter
-        );
-    }
-    
-    // Update TikTok
-    if (this.currentData.social.tiktok) {
-        updatedHTML = updatedHTML.replace(
-            /http:\/\/www\.tiktok\.com\/@willstech\.store/g,
-            this.currentData.social.tiktok
-        );
-    }
-    
-    // Update YouTube
-    if (this.currentData.social.youtube) {
-        updatedHTML = updatedHTML.replace(
-            /https:\/\/www\.youtube\.com\/@Willstech\.storeug/g,
-            this.currentData.social.youtube
-        );
-    }
-    
-    return updatedHTML;
-}
-
-updateWhatsAppLinks(html) {
-    let updatedHTML = html;
-    
-    // Update all WhatsApp links
-    const currentWhatsApp = 'https://wa.me/256751924844';
-    if (this.currentData.hero.whatsappLink) {
-        updatedHTML = updatedHTML.replace(
-            new RegExp(currentWhatsApp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-            this.currentData.hero.whatsappLink
-        );
-    }
-    
-    return updatedHTML;
-}
-
-escapeHTML(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-    async updateFileOnGitHub(token, filePath, content) {
-        const repo = 'BarasaGodwilTech/update-proposed';
-        const branch = 'main';
-
-        // First, check if file exists to get its SHA
-        let existingSha = null;
-=======
-    async deployChanges() {
-        const token = prompt('🔒 Enter your GitHub Personal Access Token:\n\n(This token is used once and not stored. Make sure it has "repo" permissions.)');
-        
-        if (!token) {
-            this.showAlert('Deployment cancelled. Token is required.', 'error');
-            return;
-        }
-
-        this.showAlert('Verifying GitHub token...', 'success');
-
-        try {
-            const isValid = await this.verifyGitHubToken(token);
-            if (!isValid) {
-                this.showAlert('❌ Invalid GitHub token. Please check:\n• Token has "repo" permissions\n• Token is not expired\n• Repository access is granted', 'error');
-                return;
-            }
-
-            this.showAlert('✅ Token verified! Generating updated files...', 'success');
-
-            const repo = 'BarasaGodwilTech/willstech-tempolary';
-            const branch = 'main';
-            
-            const updatedFiles = await this.generateUpdatedFiles();
-            this.showAlert('📁 Files generated! Committing to GitHub...', 'success');
-            
-            await this.commitToGitHub(token, repo, branch, updatedFiles);
-            
-            this.showAlert('🎉 Changes deployed successfully! Your live website will update within 2-5 minutes.', 'success');
-            
-        } catch (error) {
-            console.error('Deployment error:', error);
-            this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
-        }
-    }
-
-    async verifyGitHubToken(token) {
->>>>>>> parent of 9ae42f0 (updated js for admin pannel commits)
-        try {
-            const getResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}?ref=${branch}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-
-            if (getResponse.ok) {
-                const fileData = await getResponse.json();
-                existingSha = fileData.sha;
-            }
-        } catch (error) {
-            // File doesn't exist, we'll create it
-        }
-
-<<<<<<< HEAD
-        // Create or update the file
-        const putResponse = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: `🔄 Will's Tech Update - ${filePath} - ${new Date().toLocaleString('en-UG')}`,
-                content: btoa(unescape(encodeURIComponent(content))),
-                branch: branch,
-                sha: existingSha
-            })
-        });
-
-        if (!putResponse.ok) {
-            const errorText = await putResponse.text();
-            throw new Error(`Failed to update ${filePath}: ${putResponse.status}`);
-        }
-
-        return await putResponse.json();
-=======
-    async generateUpdatedFiles() {
-        // Generate updated HTML and data files
-        const files = {
-            'index.html': this.generateUpdatedIndexHTML(),
-            'data/products.json': JSON.stringify(this.currentData.products, null, 2),
-            'data/site-config.json': JSON.stringify({
-                hero: this.currentData.hero,
-                content: this.currentData.content,
-                social: this.currentData.social
-            }, null, 2)
-        };
-
-        return files;
-    }
-
-    generateUpdatedIndexHTML() {
-        // This would be your full updated HTML file
-        // For now, we'll create a simple version
-        return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${this.currentData.content.storeName} | Premium Tech Store</title>
-    <meta name="description" content="${this.currentData.content.description}">
-</head>
-<body>
-    <header>
-        <h1>${this.currentData.content.storeName}</h1>
-        <p>${this.currentData.content.tagline}</p>
-    </header>
-    
-    <section class="hero">
-        <h2>${this.currentData.hero.title}</h2>
-        <p>${this.currentData.hero.description}</p>
-        <a href="${this.currentData.hero.whatsappLink}" class="btn">Join WhatsApp Channel</a>
-    </section>
-    
-    <!-- Note: This is a simplified version. Your actual index.html would be more complex -->
-</body>
-</html>`;
-    }
-
-    async commitToGitHub(token, repo, branch, files) {
-        try {
-            // Get the latest commit SHA
-            const refResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            
-            if (!refResponse.ok) {
-                throw new Error(`Cannot access repository: ${refResponse.statusText}`);
-            }
-
-            const refData = await refResponse.json();
-            const latestCommitSha = refData.object.sha;
-
-            // Get the current tree
-            const commitResponse = await fetch(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, {
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json'
-                }
-            });
-            
-            const commitData = await commitResponse.json();
-            const baseTreeSha = commitData.tree.sha;
-
-            // Create blobs for each file
-            const tree = [];
-            for (const [path, content] of Object.entries(files)) {
-                const blobResponse = await fetch(`https://api.github.com/repos/${repo}/git/blobs`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content: btoa(unescape(encodeURIComponent(content))),
-                        encoding: 'base64'
-                    })
-                });
-
-                if (!blobResponse.ok) {
-                    throw new Error(`Failed to create blob for ${path}`);
-                }
-
-                const blobData = await blobResponse.json();
-                tree.push({
-                    path: path,
-                    mode: '100644',
-                    type: 'blob',
-                    sha: blobData.sha
-                });
-            }
-
-            // Create new tree
-            const treeResponse = await fetch(`https://api.github.com/repos/${repo}/git/trees`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    base_tree: baseTreeSha,
-                    tree: tree
-                })
-            });
-
-            if (!treeResponse.ok) {
-                throw new Error('Tree creation failed');
-            }
-
-            const treeData = await treeResponse.json();
-
-            // Create new commit
-            const commitResponse2 = await fetch(`https://api.github.com/repos/${repo}/git/commits`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `Admin Panel Update - ${new Date().toLocaleString()}`,
-                    tree: treeData.sha,
-                    parents: [latestCommitSha]
-                })
-            });
-
-            if (!commitResponse2.ok) {
-                throw new Error('Commit creation failed');
-            }
-
-            const commitData2 = await commitResponse2.json();
-
-            // Update reference
-            const updateResponse = await fetch(`https://api.github.com/repos/${repo}/git/refs/heads/${branch}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    sha: commitData2.sha,
-                    force: false
-                })
-            });
-
-            if (!updateResponse.ok) {
-                throw new Error('Reference update failed');
-            }
-
-            return true;
-        } catch (error) {
-            console.error('GitHub commit error:', error);
-            throw error;
-        }
->>>>>>> parent of 9ae42f0 (updated js for admin pannel commits)
-    }
-
-    downloadBackup() {
-        const dataStr = JSON.stringify(this.currentData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = `willstech-backup-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        this.showAlert('Backup downloaded successfully!', 'success');
-    }
-
-    restoreBackup() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        
-        input.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = event => {
-                try {
-                    const backupData = JSON.parse(event.target.result);
-                    this.currentData = backupData;
-                    this.saveData();
-                    this.populateForms();
-                    this.loadProducts();
-                    this.showAlert('Backup restored successfully!', 'success');
-                } catch (error) {
-                    this.showAlert('Invalid backup file', 'error');
-                }
-            };
-            
-            reader.readAsText(file);
-        };
-        
-        input.click();
     }
 
     showAlert(message, type) {
-        // Remove existing alerts
         const existingAlerts = document.querySelectorAll('.alert');
         existingAlerts.forEach(alert => alert.remove());
         
-        // Create new alert
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
         alert.textContent = message;
@@ -911,13 +607,11 @@ escapeHTML(text) {
             ${type === 'error' ? 'background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;' : ''}
         `;
         
-        // Add to main content
         const mainContent = document.querySelector('.main-content');
         if (mainContent) {
             mainContent.insertBefore(alert, mainContent.firstChild);
         }
         
-        // Auto remove after 5 seconds
         setTimeout(() => {
             alert.remove();
         }, 5000);
@@ -925,18 +619,7 @@ escapeHTML(text) {
 
     logout() {
         localStorage.removeItem('willstech_admin_auth');
-        localStorage.removeItem('willstech_data');
         window.location.href = 'admin-login.html';
-    }
-
-    // Temporary debug function
-    testAdmin() {
-        console.log('=== ADMIN PANEL DEBUG INFO ===');
-        console.log('Authentication:', localStorage.getItem('willstech_admin_auth'));
-        console.log('Nav links found:', document.querySelectorAll('.nav-links a').length);
-        console.log('Forms found:', document.querySelectorAll('form').length);
-        console.log('Current data:', this.currentData);
-        console.log('=== END DEBUG INFO ===');
     }
 }
 
