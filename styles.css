@@ -307,6 +307,7 @@
     color: var(--text);
   }
 
+
   .form-group input,
   .form-group select,
   .form-group textarea {
@@ -7304,7 +7305,7 @@ hero-content {
 }
 
 .contact-link {
-  color: var(--contact-accent);
+  color: var(--about-accent);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
