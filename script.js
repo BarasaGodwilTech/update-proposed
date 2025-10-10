@@ -77,31 +77,35 @@ function updatePageForLiveState() {
 
 // ===== END OF MISSING FUNCTIONS =====
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   try {
-    initPageLoader()
-    initScrollAnimations()
-    initCountdown()
-    initFormToggle()
-    initYouTubeAPI()
-    fetchPlaylistVideos()
-    initFloatingButtons()
-    initStatCounters()
-    initParallaxEffects()
-    initProductFilters()
-    initTestimonialSlider()
-    initContactForm()
-    initQuickView()
-    initMobileMenu()
-    initDropdownNavigation()
-    initModalActions()
-    initAboutSection()
-    initWhatsAppCTA()
-    initFeaturesSection()
+    // Load dynamic data first
+    await updateWebsiteWithDynamicData();
+    
+    // Then initialize all other functionality
+    initPageLoader();
+    initScrollAnimations();
+    initCountdown();
+    initFormToggle();
+    initYouTubeAPI();
+    fetchPlaylistVideos();
+    initFloatingButtons();
+    initStatCounters();
+    initParallaxEffects();
+    initProductFilters(); // This will now work with dynamic products
+    initTestimonialSlider();
+    initContactForm();
+    initQuickView();
+    initMobileMenu();
+    initDropdownNavigation();
+    initModalActions();
+    initAboutSection();
+    initWhatsAppCTA();
+    initFeaturesSection();
   } catch (error) {
-    console.error("Initialization error:", error)
+    console.error("Initialization error:", error);
   }
-})
+});
 
 function initDropdownNavigation() {
   const dropdowns = document.querySelectorAll(".dropdown")
@@ -953,13 +957,13 @@ function trackYouTubeError(errorMessage) {
 
 function initProductFilters() {
     const categoryBtns = document.querySelectorAll('.category-btn');
-    const productCards = document.querySelectorAll('.product-card');
     const productsGrid = document.querySelector('.products-grid');
 
-    if (!categoryBtns.length || !productCards.length) return;
+    if (!categoryBtns.length || !productsGrid) return;
 
-    // Filter products function
+    // Filter products function - now works with dynamically loaded products
     function filterProducts(category) {
+        const productCards = productsGrid.querySelectorAll('.product-card'); // Get fresh product cards
         let visibleCount = 0;
         
         productCards.forEach((card, index) => {
@@ -2285,6 +2289,187 @@ function initParallaxEffects() {
         if (!ticking) {
             requestAnimationFrame(updateParallax);
             ticking = true;
+        }
+    });
+}
+
+// Load dynamic data from site-config.json
+async function loadSiteData() {
+    try {
+        const response = await fetch('data/site-config.json');
+        if (!response.ok) {
+            throw new Error('Failed to load site data');
+        }
+        const siteData = await response.json();
+        return siteData;
+    } catch (error) {
+        console.error('Error loading site data:', error);
+        return null;
+    }
+}
+
+// Update website content with dynamic data
+async function updateWebsiteWithDynamicData() {
+    const siteData = await loadSiteData();
+    if (!siteData) {
+        console.log('Using default static content');
+        return;
+    }
+
+    // Update hero section
+    updateHeroSection(siteData.hero);
+    
+    // Update products section
+    updateProductsSection(siteData.products);
+    
+    // Update content
+    updateContent(siteData.content);
+    
+    // Update social links
+    updateSocialLinks(siteData.social);
+}
+
+function updateHeroSection(heroData) {
+    if (!heroData) return;
+    
+    const heroTitle = document.querySelector('.hero h1');
+    const heroDescription = document.querySelector('.hero p');
+    const whatsappButton = document.querySelector('.hero .btn-primary[href*="wa.me"]');
+    
+    if (heroTitle && heroData.title) heroTitle.textContent = heroData.title;
+    if (heroDescription && heroData.description) heroDescription.textContent = heroData.description;
+    if (whatsappButton && heroData.whatsappLink) whatsappButton.href = heroData.whatsappLink;
+}
+
+function updateProductsSection(productsData) {
+    if (!productsData || !Array.isArray(productsData)) return;
+    
+    const productsGrid = document.querySelector('.products-grid');
+    if (!productsGrid) return;
+    
+    // Clear existing products (keep the structure, just update content)
+    const existingProductCards = productsGrid.querySelectorAll('.product-card');
+    existingProductCards.forEach(card => card.remove());
+    
+    // Add products from site-config.json
+    productsData.forEach(product => {
+        if (product.status !== 'hidden') {
+            const productCard = createProductCard(product);
+            productsGrid.appendChild(productCard);
+        }
+    });
+}
+
+function createProductCard(product) {
+    const productCard = document.createElement('article');
+    productCard.className = 'product-card';
+    productCard.setAttribute('data-category', product.category);
+    
+    const formattedPrice = new Intl.NumberFormat('en-UG').format(product.price);
+    const ratingStars = generateRatingStars(product.rating || 5);
+    
+    productCard.innerHTML = `
+        <div class="product-image">
+            <img src="${product.image}" alt="${product.name}" loading="lazy">
+            <div class="product-badges">
+                ${product.badges ? product.badges.map(badge => 
+                    `<span class="product-badge badge-${badge}">${badge}</span>`
+                ).join('') : ''}
+            </div>
+            <div class="product-overlay">
+                <button class="quick-view-btn">
+                    <i class="fas fa-eye" aria-hidden="true"></i>
+                    Quick View
+                </button>
+            </div>
+        </div>
+        <div class="product-info">
+            <h3>${product.name}</h3>
+            <p class="product-description">${product.description}</p>
+            <div class="product-price">
+                <span class="current-price">UGX ${formattedPrice}</span>
+                ${product.originalPrice ? `<span class="original-price">UGX ${new Intl.NumberFormat('en-UG').format(product.originalPrice)}</span>` : ''}
+            </div>
+            <div class="product-rating">
+                <div class="stars" aria-label="${product.rating} out of 5 stars">
+                    ${ratingStars}
+                </div>
+                <span class="rating-count">(${Math.floor(Math.random() * 200) + 50} reviews)</span>
+            </div>
+            <div class="product-actions">
+                <button class="add-to-wishlist" aria-label="Add to wishlist">
+                    <i class="far fa-heart"></i>
+                </button>
+                <button class="buy-now-btn">
+                    <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                    Buy Now
+                </button>
+            </div>
+        </div>
+    `;
+    
+    return productCard;
+}
+
+function generateRatingStars(rating) {
+    let stars = '';
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    
+    for (let i = 0; i < fullStars; i++) {
+        stars += '<i class="fas fa-star"></i>';
+    }
+    
+    if (hasHalfStar) {
+        stars += '<i class="fas fa-star-half-alt"></i>';
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+        stars += '<i class="far fa-star"></i>';
+    }
+    
+    return stars;
+}
+
+function updateContent(contentData) {
+    if (!contentData) return;
+    
+    // Update page title
+    if (contentData.storeName) {
+        document.title = contentData.storeName;
+    }
+    
+    // Update meta description
+    const metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription && contentData.description) {
+        metaDescription.setAttribute('content', contentData.description);
+    }
+    
+    // Update tagline
+    const tagline = document.querySelector('.header-slogan .tagline');
+    if (tagline && contentData.tagline) {
+        tagline.textContent = contentData.tagline;
+    }
+}
+
+function updateSocialLinks(socialData) {
+    if (!socialData) return;
+    
+    // Update social links in hero section
+    const socialLinks = document.querySelectorAll('.hero .social-links a');
+    socialLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href.includes('facebook') && socialData.facebook) {
+            link.href = socialData.facebook;
+        } else if (href.includes('instagram') && socialData.instagram) {
+            link.href = socialData.instagram;
+        } else if ((href.includes('twitter') || href.includes('x.com')) && socialData.twitter) {
+            link.href = socialData.twitter;
+        } else if (href.includes('tiktok') && socialData.tiktok) {
+            link.href = socialData.tiktok;
+        } else if (href.includes('youtube') && socialData.youtube) {
+            link.href = socialData.youtube;
         }
     });
 }

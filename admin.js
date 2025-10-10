@@ -9,6 +9,7 @@ class WillTechAdmin {
             branch: 'branch-test'
         };
         this.editingProductId = null;
+        this.lastSavedData = {}; // Track last saved state for comparison
     }
 
     async init() {
@@ -73,6 +74,9 @@ class WillTechAdmin {
             // Load current data from GitHub files
             await this.loadDataFromGitHub();
             
+            // Store the initial state for comparison
+            this.lastSavedData = JSON.parse(JSON.stringify(this.currentData));
+            
             // Populate forms with current data
             this.populateForms();
             this.loadProducts();
@@ -120,7 +124,15 @@ class WillTechAdmin {
 
             if (response.ok) {
                 const fileData = await response.json();
-                const content = atob(fileData.content);
+                // Handle both string content (new files) and object content (existing files)
+                let content;
+                if (typeof fileData.content === 'string') {
+                    content = atob(fileData.content);
+                } else if (fileData.content && fileData.content.content) {
+                    content = atob(fileData.content.content);
+                } else {
+                    content = '';
+                }
                 return JSON.parse(content);
             }
             return null;
@@ -362,6 +374,23 @@ class WillTechAdmin {
             syncBtn.addEventListener('click', () => this.syncWithGitHub());
         }
         
+        // Deploy button
+        const deployBtn = document.getElementById('deployBtn');
+        if (deployBtn) {
+            deployBtn.addEventListener('click', () => this.deployChanges());
+        }
+        
+        // Backup buttons
+        const backupBtn = document.getElementById('backupBtn');
+        if (backupBtn) {
+            backupBtn.addEventListener('click', () => this.downloadBackup());
+        }
+        
+        const restoreBtn = document.getElementById('restoreBtn');
+        if (restoreBtn) {
+            restoreBtn.addEventListener('click', () => this.restoreBackup());
+        }
+        
         // Logout
         const logoutBtn = document.getElementById('logout');
         if (logoutBtn) {
@@ -461,14 +490,20 @@ class WillTechAdmin {
     async handleHeroForm(e) {
         e.preventDefault();
         
-        this.currentData.hero = {
+        const newHeroData = {
             title: document.getElementById('heroTitle').value,
             description: document.getElementById('heroDescription').value,
             whatsappLink: document.getElementById('whatsappLink').value
         };
         
-        await this.saveToGitHub();
-        this.showAlert('Hero section updated successfully!', 'success');
+        // Check if hero data actually changed
+        if (this.hasDataChanged('hero', newHeroData)) {
+            this.currentData.hero = newHeroData;
+            await this.saveHeroChanges();
+            this.showAlert('Hero section updated successfully!', 'success');
+        } else {
+            this.showAlert('No changes detected in hero section.', 'info');
+        }
     }
 
     async handleProductForm(e) {
@@ -488,12 +523,20 @@ class WillTechAdmin {
             // Update existing product
             const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
             if (productIndex !== -1) {
+                const oldProduct = this.currentData.products[productIndex];
                 this.currentData.products[productIndex] = {
-                    ...this.currentData.products[productIndex],
+                    ...oldProduct,
                     ...productData,
                     dateUpdated: new Date().toISOString()
                 };
-                this.showAlert('Product updated successfully!', 'success');
+                
+                // Check if product actually changed
+                if (this.hasProductChanged(oldProduct, this.currentData.products[productIndex])) {
+                    await this.saveProductChanges(this.currentData.products[productIndex]);
+                    this.showAlert('Product updated successfully!', 'success');
+                } else {
+                    this.showAlert('No changes detected in product.', 'info');
+                }
             }
         } else {
             // Add new product
@@ -510,10 +553,10 @@ class WillTechAdmin {
             }
             
             this.currentData.products.push(newProduct);
+            await this.saveNewProduct(newProduct);
             this.showAlert('Product added successfully!', 'success');
         }
         
-        await this.saveToGitHub();
         this.loadProducts();
         this.cancelEdit();
         e.target.reset();
@@ -522,21 +565,27 @@ class WillTechAdmin {
     async handleContentForm(e) {
         e.preventDefault();
         
-        this.currentData.content = {
+        const newContentData = {
             storeName: document.getElementById('storeName').value,
             tagline: document.getElementById('storeTagline').value,
             description: document.getElementById('storeDescription').value,
             contactInfo: document.getElementById('contactInfo').value
         };
         
-        await this.saveToGitHub();
-        this.showAlert('Content updated successfully!', 'success');
+        // Check if content data actually changed
+        if (this.hasDataChanged('content', newContentData)) {
+            this.currentData.content = newContentData;
+            await this.saveContentChanges();
+            this.showAlert('Content updated successfully!', 'success');
+        } else {
+            this.showAlert('No changes detected in content.', 'info');
+        }
     }
 
     async handleSocialForm(e) {
         e.preventDefault();
         
-        this.currentData.social = {
+        const newSocialData = {
             facebook: document.getElementById('facebookLink').value,
             instagram: document.getElementById('instagramLink').value,
             twitter: document.getElementById('twitterLink').value,
@@ -544,8 +593,14 @@ class WillTechAdmin {
             youtube: document.getElementById('youtubeLink').value
         };
         
-        await this.saveToGitHub();
-        this.showAlert('Social links updated successfully!', 'success');
+        // Check if social data actually changed
+        if (this.hasDataChanged('social', newSocialData)) {
+            this.currentData.social = newSocialData;
+            await this.saveSocialChanges();
+            this.showAlert('Social links updated successfully!', 'success');
+        } else {
+            this.showAlert('No changes detected in social links.', 'info');
+        }
     }
 
     async handleSettingsForm(e) {
@@ -575,7 +630,8 @@ class WillTechAdmin {
         await this.syncWithGitHub();
     }
 
-    async saveToGitHub() {
+    // NEW: Intelligent save methods for specific changes
+    async saveHeroChanges() {
         if (!this.githubToken) {
             this.showAlert('❌ Please set GitHub token in Settings first', 'error');
             this.showTab('settings');
@@ -583,74 +639,203 @@ class WillTechAdmin {
         }
 
         try {
-            this.showAlert('💾 Saving to GitHub...', 'success');
+            this.showAlert('💾 Updating hero section...', 'success');
             
             // Update sync timestamp
             this.currentData.lastUpdated = new Date().toISOString();
             
-            // Save site configuration
+            // Update site-config.json with only hero changes
             await this.updateFileOnGitHub(
                 'data/site-config.json',
                 JSON.stringify(this.currentData, null, 2)
             );
             
-            this.showAlert('✅ Successfully saved to GitHub!', 'success');
+            // Update last saved state
+            this.lastSavedData.hero = JSON.parse(JSON.stringify(this.currentData.hero));
+            
+            this.showAlert('✅ Hero section updated successfully!', 'success');
             return true;
             
         } catch (error) {
-            this.showAlert(`❌ Save failed: ${error.message}`, 'error');
+            this.showAlert(`❌ Hero update failed: ${error.message}`, 'error');
             return false;
         }
     }
 
-    async updateFileOnGitHub(filePath, content) {
-        let existingSha = null;
-        
+    async saveContentChanges() {
+        if (!this.githubToken) {
+            this.showAlert('❌ Please set GitHub token in Settings first', 'error');
+            this.showTab('settings');
+            return false;
+        }
+
         try {
-            const getResponse = await fetch(
-                `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
-                }
+            this.showAlert('💾 Updating website content...', 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Update site-config.json with content changes
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
             );
-
-            if (getResponse.ok) {
-                const fileData = await getResponse.json();
-                existingSha = fileData.sha;
-            }
+            
+            // Update last saved state
+            this.lastSavedData.content = JSON.parse(JSON.stringify(this.currentData.content));
+            
+            this.showAlert('✅ Content updated successfully!', 'success');
+            return true;
+            
         } catch (error) {
-            // File doesn't exist, we'll create it
+            this.showAlert(`❌ Content update failed: ${error.message}`, 'error');
+            return false;
         }
-
-        const putResponse = await fetch(
-            `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    message: `🔄 Will's Tech Update - ${filePath} - ${new Date().toLocaleString('en-UG')}`,
-                    content: btoa(unescape(encodeURIComponent(content))),
-                    branch: this.repoConfig.branch,
-                    sha: existingSha
-                })
-            }
-        );
-
-        if (!putResponse.ok) {
-            const errorText = await putResponse.text();
-            throw new Error(`Failed to update ${filePath}: ${putResponse.status}`);
-        }
-
-        return await putResponse.json();
     }
 
+    async saveSocialChanges() {
+        if (!this.githubToken) {
+            this.showAlert('❌ Please set GitHub token in Settings first', 'error');
+            this.showTab('settings');
+            return false;
+        }
+
+        try {
+            this.showAlert('💾 Updating social links...', 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Update site-config.json with social changes
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
+            );
+            
+            // Update last saved state
+            this.lastSavedData.social = JSON.parse(JSON.stringify(this.currentData.social));
+            
+            this.showAlert('✅ Social links updated successfully!', 'success');
+            return true;
+            
+        } catch (error) {
+            this.showAlert(`❌ Social links update failed: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    async saveProductChanges(updatedProduct) {
+        if (!this.githubToken) {
+            this.showAlert('❌ Please set GitHub token in Settings first', 'error');
+            this.showTab('settings');
+            return false;
+        }
+
+        try {
+            this.showAlert(`💾 Updating product: ${updatedProduct.name}...`, 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Update site-config.json with product changes
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
+            );
+            
+            this.showAlert(`✅ Product "${updatedProduct.name}" updated successfully!`, 'success');
+            return true;
+            
+        } catch (error) {
+            this.showAlert(`❌ Product update failed: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    async saveNewProduct(newProduct) {
+        if (!this.githubToken) {
+            this.showAlert('❌ Please set GitHub token in Settings first', 'error');
+            this.showTab('settings');
+            return false;
+        }
+
+        try {
+            this.showAlert(`💾 Adding new product: ${newProduct.name}...`, 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Update site-config.json with new product
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
+            );
+            
+            this.showAlert(`✅ Product "${newProduct.name}" added successfully!`, 'success');
+            return true;
+            
+        } catch (error) {
+            this.showAlert(`❌ Product addition failed: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    async toggleProductVisibility(productId) {
+        const product = this.currentData.products.find(p => p.id === productId);
+        if (product) {
+            product.status = product.status === 'hidden' ? 'active' : 'hidden';
+            await this.saveProductChanges(product);
+            
+            const action = product.status === 'hidden' ? 'hidden' : 'shown';
+            this.showAlert(`Product ${action} successfully!`, 'success');
+        }
+    }
+
+    async deleteProduct(productId) {
+        if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+            return;
+        }
+
+        const product = this.currentData.products.find(p => p.id === productId);
+        if (!product) return;
+
+        this.currentData.products = this.currentData.products.filter(p => p.id !== productId);
+        
+        try {
+            this.showAlert(`💾 Deleting product: ${product.name}...`, 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Update site-config.json
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
+            );
+            
+            this.loadProducts();
+            this.showAlert(`✅ Product "${product.name}" deleted successfully!`, 'success');
+            
+        } catch (error) {
+            this.showAlert(`❌ Product deletion failed: ${error.message}`, 'error');
+            // Revert the change if deletion failed
+            this.currentData.products.push(product);
+            this.loadProducts();
+        }
+    }
+
+    // NEW: Data comparison methods
+    hasDataChanged(section, newData) {
+        if (!this.lastSavedData[section]) return true;
+        
+        return JSON.stringify(this.lastSavedData[section]) !== JSON.stringify(newData);
+    }
+
+    hasProductChanged(oldProduct, newProduct) {
+        return JSON.stringify(oldProduct) !== JSON.stringify(newProduct);
+    }
+
+    // Load products display
     loadProducts() {
         const container = document.getElementById('productsContainer');
         if (!container || !this.currentData.products) return;
@@ -819,47 +1004,192 @@ class WillTechAdmin {
         }
     }
 
-    async toggleProductVisibility(productId) {
-        const product = this.currentData.products.find(p => p.id === productId);
-        if (product) {
-            product.status = product.status === 'hidden' ? 'active' : 'hidden';
-            await this.saveToGitHub();
-            this.loadProducts();
-            
-            const action = product.status === 'hidden' ? 'hidden' : 'shown';
-            this.showAlert(`Product ${action} successfully!`, 'success');
-        }
-    }
-
-    async deleteProduct(productId) {
-        if (!confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
-            return;
-        }
-
-        this.currentData.products = this.currentData.products.filter(p => p.id !== productId);
-        const success = await this.saveToGitHub();
-        
-        if (success) {
-            this.loadProducts();
-            this.showAlert('Product deleted successfully!', 'success');
-        }
-    }
-
     formatPrice(price) {
         return new Intl.NumberFormat('en-UG').format(price);
     }
 
+    async updateFileOnGitHub(filePath, content) {
+        let existingSha = null;
+        
+        try {
+            const getResponse = await fetch(
+                `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                existingSha = fileData.sha;
+            }
+        } catch (error) {
+            // File doesn't exist, we'll create it
+        }
+
+        const putResponse = await fetch(
+            `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `🔄 Will's Tech Update - ${filePath} - ${new Date().toLocaleString('en-UG')}`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    branch: this.repoConfig.branch,
+                    sha: existingSha
+                })
+            }
+        );
+
+        if (!putResponse.ok) {
+            const errorText = await putResponse.text();
+            throw new Error(`Failed to update ${filePath}: ${putResponse.status}`);
+        }
+
+        return await putResponse.json();
+    }
+
+    async deployChanges() {
+        const token = document.getElementById('githubToken')?.value;
+        const repoOwner = document.getElementById('repoOwner')?.value || 'BarasaGodwilTech';
+        const repoName = document.getElementById('repoName')?.value || 'willstech-tempolary';
+        const branch = document.getElementById('branchName')?.value || 'branch-test';
+        
+        if (!token) {
+            this.showAlert('❌ Please enter your GitHub Personal Access Token in the Settings tab', 'error');
+            this.showTab('settings');
+            return;
+        }
+        
+        const repo = `${repoOwner}/${repoName}`;
+        
+        try {
+            this.showAlert(`🚀 Starting deployment to ${repo} (${branch})...`, 'success');
+            
+            const isValid = await this.verifyGitHubAccess(token, repoOwner, repoName, branch);
+            if (!isValid) {
+                this.showAlert('❌ Cannot access repository. Check token permissions and repository name.', 'error');
+                return;
+            }
+
+            this.showAlert('✅ Repository access verified!', 'success');
+            
+            // Update sync timestamp
+            this.currentData.lastUpdated = new Date().toISOString();
+            
+            // Save site configuration
+            await this.updateFileOnGitHub(
+                'data/site-config.json',
+                JSON.stringify(this.currentData, null, 2)
+            );
+            
+            this.showAlert(`🎉 SUCCESS! Deployed to ${repo} on branch: ${branch}`, 'success');
+            this.showAlert('🌐 Your changes will be live soon!', 'success');
+            
+            // Update deployment target display
+            this.updateDeploymentTarget();
+            
+        } catch (error) {
+            this.showAlert(`❌ Deployment failed: ${error.message}`, 'error');
+        }
+    }
+
+    async verifyGitHubAccess(token, repoOwner, repoName, branch) {
+        const repo = `${repoOwner}/${repoName}`;
+        
+        try {
+            // Test repository access
+            const repoResponse = await fetch(`https://api.github.com/repos/${repo}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!repoResponse.ok) {
+                throw new Error(`Repository not found or no access: ${repoResponse.status}`);
+            }
+            
+            // Test branch access
+            const branchResponse = await fetch(`https://api.github.com/repos/${repo}/branches/${branch}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            });
+            
+            if (!branchResponse.ok) {
+                this.showAlert(`⚠️ Branch "${branch}" not found. It will be created on first commit.`, 'success');
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('GitHub access verification failed:', error);
+            return false;
+        }
+    }
+
     updateDeploymentTarget() {
-        const repo = `${this.repoConfig.owner}/${this.repoConfig.repo}`;
+        const repoOwner = document.getElementById('repoOwner')?.value || 'BarasaGodwilTech';
+        const repoName = document.getElementById('repoName')?.value || 'willstech-tempolary';
+        const branch = document.getElementById('branchName')?.value || 'branch-test';
+        
+        const repo = `${repoOwner}/${repoName}`;
         const targetElement = document.getElementById('deploymentTarget');
         
         if (targetElement) {
             targetElement.innerHTML = `
                 <strong>Repository:</strong> ${repo}<br>
-                <strong>Branch:</strong> ${this.repoConfig.branch}<br>
-                <strong>URL:</strong> https://github.com/${repo}/tree/${this.repoConfig.branch}
+                <strong>Branch:</strong> ${branch}<br>
+                <strong>URL:</strong> https://github.com/${repo}/tree/${branch}
             `;
         }
+    }
+
+    downloadBackup() {
+        const dataStr = JSON.stringify(this.currentData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `willstech-backup-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        this.showAlert('Backup downloaded successfully!', 'success');
+    }
+
+    restoreBackup() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = event => {
+                try {
+                    const backupData = JSON.parse(event.target.result);
+                    this.currentData = backupData;
+                    this.populateForms();
+                    this.loadProducts();
+                    this.showAlert('Backup restored successfully!', 'success');
+                } catch (error) {
+                    this.showAlert('Invalid backup file', 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        };
+        
+        input.click();
     }
 
     showAlert(message, type) {
@@ -875,6 +1205,7 @@ class WillTechAdmin {
             margin-bottom: 1rem;
             ${type === 'success' ? 'background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;' : ''}
             ${type === 'error' ? 'background: #fee2e2; color: #991b1b; border: 1px solid #fecaca;' : ''}
+            ${type === 'info' ? 'background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd;' : ''}
         `;
         
         const mainContent = document.querySelector('.main-content');
