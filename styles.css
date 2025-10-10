@@ -1,3 +1,440 @@
+/* ==== Dark Theme Variables ==== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Updated color scheme for dark mode */
+    --primary: #4f8cff;
+    --primary-dark: #3a7cff;
+    --primary-light: #6ba1ff;
+    --secondary: #1e3a8a;
+    --secondary-dark: #172554;
+    --accent: #fbbf24;
+    --accent-dark: #f59e0b;
+    --accent-light: #fcd34d;
+    
+    /* Neutral colors for dark mode */
+    --text: #e2e8f0;
+    --text-light: #cbd5e1;
+    --text-lighter: #94a3b8;
+    --light: #0f172a;
+    --gray-50: #1e293b;
+    --gray-100: #1e293b;
+    --gray-200: #334155;
+    --gray-300: #475569;
+    --dark-gray: #64748b;
+    
+    /* Gradients for dark mode */
+    --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    --gradient-hero: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 50%, var(--accent) 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    --gradient-card: linear-gradient(135deg, var(--light) 0%, var(--gray-50) 100%);
+    
+    /* Section-specific dark mode colors */
+    --contact-bg: #0f172a;
+    --contact-card-bg: #1e293b;
+    --contact-primary: #4f8cff;
+    --contact-accent: #10b981;
+    --contact-text: #e2e8f0;
+    --contact-border: #334155;
+    
+    --testimonial-bg: #0f172a;
+    --testimonial-card-bg: #1e293b;
+    --testimonial-primary: #4f8cff;
+    --testimonial-accent: #fbbf24;
+    --testimonial-text: #e2e8f0;
+    --testimonial-border: #334155;
+    --testimonial-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    
+    --about-bg: #0f172a;
+    --about-card-bg: #1e293b;
+    --about-primary: #4f8cff;
+    --about-accent: #fbbf24;
+    --about-text: #e2e8f0;
+    --about-border: #334155;
+    
+    --notify-bg: #1e40af;
+    --notify-gradient: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e3a8a 100%);
+    --notify-card-bg: rgba(255, 255, 255, 0.1);
+    --notify-primary: #ffffff;
+    --notify-accent: #fbbf24;
+    --notify-text: #ffffff;
+    --notify-border: rgba(255, 255, 255, 0.2);
+    
+    --countdown-bg: #0f172a;
+    --countdown-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --countdown-primary: #4f8cff;
+    --countdown-accent: #fbbf24;
+    --countdown-text: #e2e8f0;
+    --countdown-card-bg: #1e293b;
+    --countdown-border: #334155;
+    --countdown-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    
+    --features-bg: #0f172a;
+    --features-card-bg: #1e293b;
+    --features-primary: #4f8cff;
+    --features-accent: #fbbf24;
+    --features-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --features-text: #e2e8f0;
+    --features-border: #334155;
+    --features-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --features-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
+    
+    --products-bg: #0f172a;
+    --products-card-bg: #1e293b;
+    --products-primary: #4f8cff;
+    --products-accent: #fbbf24;
+    --products-danger: #f87171;
+    --products-success: #34d399;
+    --products-text: #e2e8f0;
+    --products-border: #334155;
+    --products-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    --products-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
+    
+    --youtube-bg: #0f172a;
+    --youtube-primary: #ff6b6b;
+    --youtube-dark: #ff5252;
+    --youtube-gradient: linear-gradient(135deg, #ff6b6b 0%, #ff5252 50%, #ff3838 100%);
+    --youtube-card-bg: #1e293b;
+    --youtube-text: #e2e8f0;
+    --youtube-border: #334155;
+    --youtube-shadow: 0 10px 30px rgba(255, 0, 0, 0.2);
+    --youtube-shadow-hover: 0 20px 40px rgba(255, 0, 0, 0.3);
+  }
+
+  /* ==== Global Dark Mode Styles ==== */
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: var(--text);
+  }
+
+  /* ==== Header Dark Mode ==== */
+  .site-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  /* ==== Hero Section Dark Mode ==== */
+  .hero {
+    background: linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.9)),
+      url("https://images.unsplash.com/photo-1530893609608-32a9af3aa95c?q=80&w=2728&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D");
+    background-size: cover;
+    background-position: center;
+  }
+
+  /* ==== Features Section Dark Mode ==== */
+  .features {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .feature-card {
+    background: var(--features-card-bg);
+    border-color: var(--features-border);
+  }
+
+  .feature-card h3 {
+    color: var(--features-primary);
+  }
+
+  .feature-card p,
+  .feature-list li {
+    color: var(--text-light);
+  }
+
+  .features-cta {
+    background: var(--features-card-bg);
+    border-color: var(--features-border);
+  }
+
+  .features-cta p {
+    color: var(--text-light);
+  }
+
+  /* ==== WhatsApp CTA Dark Mode ==== */
+  .whatsapp-cta {
+    background: linear-gradient(135deg, #128c7e 0%, #075e54 100%);
+  }
+
+  /* ==== Countdown Dark Mode ==== */
+  .countdown {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .countdown-header h2,
+  .countdown-header p,
+  .progress-label,
+  .timer-label,
+  .launch-detail span {
+    color: var(--text);
+  }
+
+  .timer-item,
+  .launch-info {
+    background: var(--countdown-card-bg);
+    border-color: var(--countdown-border);
+  }
+
+  .countdown-subtitle {
+    background: rgba(79, 140, 255, 0.2);
+    color: var(--countdown-primary);
+  }
+
+  /* ==== Notify Section Dark Mode ==== */
+  .notify-section {
+    background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+  }
+
+  .form-container iframe {
+    background: #1e293b;
+  }
+
+  /* ==== YouTube Section Dark Mode ==== */
+  .youtube-section {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .video-controls-panel,
+  .video-item {
+    background: var(--youtube-card-bg);
+    border-color: var(--youtube-border);
+  }
+
+  .video-title {
+    color: var(--text);
+  }
+
+  .video-meta {
+    color: var(--text-light);
+  }
+
+  /* ==== Products Section Dark Mode ==== */
+  .products-section {
+    background: linear-gradient(135deg, var(--products-bg) 0%, #1e293b 100%);
+  }
+
+  .product-card,
+  .products-cta {
+    background: var(--products-card-bg);
+    border-color: var(--products-border);
+    color: var(--text);
+  }
+
+  .product-info h3 {
+    color: var(--products-primary);
+  }
+
+  .product-description {
+    color: var(--text-light);
+  }
+
+  .category-btn {
+    background: var(--products-card-bg);
+    border-color: var(--products-border);
+    color: var(--text);
+  }
+
+  .products-header p {
+    color: var(--text-light);
+  }
+
+  .products-cta p {
+    color: var(--text-light);
+  }
+
+  .product-image {
+    background: #0f172a;
+  }
+
+  /* ==== About Section Dark Mode ==== */
+  .about-section {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .about-story p {
+    color: var(--text);
+  }
+
+  .highlight-item {
+    background: var(--about-card-bg);
+    border-color: var(--about-border);
+  }
+
+  .highlight-content p {
+    color: var(--text-light);
+  }
+
+  .about-stats {
+    background: var(--about-card-bg);
+    border-color: var(--about-border);
+  }
+
+  .about-cta {
+    background: linear-gradient(135deg, #1e40af, #3730a3);
+  }
+
+  /* ==== Testimonials Section Dark Mode ==== */
+  .testimonials-section {
+    background: linear-gradient(135deg, var(--testimonial-bg) 0%, #1e293b 100%);
+  }
+
+  .testimonial-card,
+  .testimonial-stats {
+    background: var(--testimonial-card-bg);
+    border-color: var(--testimonial-border);
+    color: var(--text);
+  }
+
+  .testimonial-content p {
+    color: var(--text);
+  }
+
+  .author-info span {
+    color: var(--text-light);
+  }
+
+  .dot {
+    background: var(--text-light);
+  }
+
+  /* ==== Contact Section Dark Mode ==== */
+  .contact-section {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+
+  .contact-item,
+  .contact-form {
+    background: var(--contact-card-bg);
+    border-color: var(--contact-border);
+    color: var(--text);
+  }
+
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    background: var(--contact-card-bg);
+    border-color: var(--contact-border);
+    color: var(--text);
+  }
+
+  .form-group label {
+    background: var(--contact-card-bg);
+    color: var(--contact-primary);
+  }
+
+  /* ==== Statistics Section Dark Mode ==== */
+  .stats-section {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  }
+
+  /* ==== Modal Dark Mode ==== */
+  .modal-overlay {
+    background: var(--products-card-bg);
+    color: var(--text);
+  }
+
+  .modal-product-image {
+    background: #0f172a;
+  }
+
+  .product-header h2 {
+    color: var(--products-primary);
+  }
+
+  .modal .product-description {
+    color: var(--text-light);
+  }
+
+  .product-features li {
+    color: var(--text-light);
+  }
+
+  /* ==== Form Elements Dark Mode ==== */
+  input, select, textarea {
+    background-color: var(--gray-50);
+    border-color: var(--gray-300);
+    color: var(--text);
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.1);
+  }
+
+  /* ==== Button Adjustments for Dark Mode ==== */
+  .btn-outline {
+    border-color: var(--text);
+    color: var(--text);
+  }
+
+  .btn-outline:hover {
+    background: var(--text);
+    color: var(--light);
+  }
+
+  /* ==== Footer Dark Mode (if you have one) ==== */
+  .site-footer {
+    background: var(--light);
+    color: var(--text);
+  }
+
+  /* ==== Additional Utility Classes for Dark Mode ==== */
+  .dark-mode-text {
+    color: var(--text) !important;
+  }
+
+  .dark-mode-bg {
+    background: var(--light) !important;
+  }
+
+  .dark-mode-card {
+    background: var(--gray-50) !important;
+    border-color: var(--gray-300) !important;
+  }
+}
+
+/* ==== Manual Dark Mode Toggle (Optional) ==== */
+/* Uncomment if you want to add a manual dark mode toggle */
+
+/*
+.dark-mode-toggle {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  background: var(--primary);
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
+}
+
+.dark-mode-toggle:hover {
+  transform: scale(1.1);
+}
+
+body.dark-mode {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not(.light-mode) {
+    color-scheme: dark;
+  }
+}
+
+body.light-mode {
+  color-scheme: light;
+}
+*/
+
+
 /* Prevent horizontal scrolling */
 html, body {
     max-width: 100%;
@@ -6868,7 +7305,7 @@ hero-content {
 }
 
 .contact-link {
-  color: var(--contact-accent);
+  color: var(--about-accent);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
