@@ -123,7 +123,7 @@
       "name": "iPhone 13 Pro",
       "sku": "tthtbmv",
       "category": "laptops",
-      "description": "xfmknhxv,nv,nvx",
+      "description": "xfmknhxv,nv,nvx.",
       "price": "800000",
       "originalPrice": "900000",
       "image": "public/macbook-pro-m3-laptop.jpg",
@@ -142,7 +142,7 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T16:20:52.682Z",
-      "dateUpdated": "2025-10-14T16:33:35.501Z"
+      "dateUpdated": "2025-10-14T16:37:21.604Z"
     }
   ],
   "content": {
@@ -158,5 +158,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T16:33:35.502Z"
+  "lastUpdated": "2025-10-14T16:37:21.604Z"
 }
