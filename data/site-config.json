@@ -14,7 +14,10 @@
       "image": "public/iphone-15-pro.png",
       "featured": true,
       "status": "active",
-      "badges": ["new", "sale"],
+      "badges": [
+        "new",
+        "sale"
+      ],
       "rating": 5
     },
     {
@@ -26,7 +29,9 @@
       "image": "public/macbook-pro-m3-laptop.jpg",
       "featured": true,
       "status": "active",
-      "badges": ["bestseller"],
+      "badges": [
+        "bestseller"
+      ],
       "rating": 5
     },
     {
@@ -37,7 +42,7 @@
       "image": "public/playstation-5-gaming-console.jpg",
       "category": "gaming",
       "featured": true,
-      "status": "hidden",
+      "status": "active",
       "dateAdded": "2025-10-10T15:33:25.738Z",
       "badges": [
         "limited"
@@ -75,5 +80,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2024-01-01T00:00:00.000Z"
+  "lastUpdated": "2025-10-14T06:24:50.978Z"
 }
