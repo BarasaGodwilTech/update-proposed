@@ -337,10 +337,11 @@ function updatePageForLiveState() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // Load dynamic data first
-    await updateWebsiteWithDynamicData();
+    // Initialize onboarding first
+    initOnboardingSystem();
     
-    // Then initialize all other functionality
+    // Then load other functionality
+    await updateWebsiteWithDynamicData();
     initPageLoader();
     initScrollAnimations();
     initCountdown();
