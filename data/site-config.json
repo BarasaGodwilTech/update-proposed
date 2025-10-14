@@ -101,33 +101,29 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T17:32:49.598Z"
+      "dateUpdated": "2025-10-14T17:32:49.597Z"
     },
     {
-      "id": 1760458852682,
-      "name": "",
-      "sku": "",
-      "category": "",
-      "description": "",
-      "price": 0,
-      "originalPrice": null,
-      "image": "",
-      "stock": "in-stock",
-      "rating": 5,
-      "reviewCount": 0,
-      "badges": [
-        "new"
-      ],
-      "features": [
-        "fdsajdagkjfsgk",
-        "dtuktsfghjsjn",
-        "fryuuuuuuuukgjkh"
-      ],
-      "specifications": {},
-      "featured": false,
+      "id": 1,
+      "name": "iPhone 15 Pro",
+      "category": "smartphones",
+      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
+      "price": 4600000,
+      "image": "public/iphone-15-pro.png",
+      "featured": true,
       "status": "active",
-      "dateAdded": "2025-10-14T16:20:52.682Z",
-      "dateUpdated": "2025-10-14T17:02:15.172Z"
+      "badges": [
+        "new",
+        "sale"
+      ],
+      "rating": 5,
+      "dateUpdated": "2025-10-14T17:25:40.438Z",
+      "sku": "",
+      "originalPrice": null,
+      "stock": "pre-order",
+      "reviewCount": 0,
+      "features": [],
+      "specifications": {}
     }
   ],
   "content": {
@@ -143,5 +139,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:34:09.471Z"
+  "lastUpdated": "2025-10-14T17:35:22.915Z"
 }
