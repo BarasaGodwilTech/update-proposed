@@ -104,7 +104,7 @@
       "name": "iPhone 15 Pro",
       "sku": "APP-IPHONE-121",
       "category": "smartphones",
-      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB ",
+      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB godwill",
       "price": 4600000,
       "originalPrice": 6000000,
       "image": "public/iphone-15-pro.png",
@@ -123,7 +123,7 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T17:27:11.895Z"
+      "dateUpdated": "2025-10-14T17:31:42.855Z"
     },
     {
       "id": 1760458852682,
@@ -165,5 +165,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:27:11.895Z"
+  "lastUpdated": "2025-10-14T17:31:42.855Z"
 }
