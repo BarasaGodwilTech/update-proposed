@@ -91,6 +91,31 @@
       "status": "active",
       "dateAdded": "2025-10-14T13:49:22.728Z",
       "dateUpdated": "2025-10-14T14:05:59.603Z"
+    },
+    {
+      "id": 1760450969824,
+      "name": "iPhone 15 Pro",
+      "sku": "APP-IPHONE-121",
+      "category": "smartphones",
+      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB ",
+      "price": "4600000",
+      "originalPrice": "6000000",
+      "image": "public/iphone-15-pro.png",
+      "stock": "pre-order",
+      "rating": 5,
+      "reviewCount": 57,
+      "badges": [
+        "limited"
+      ],
+      "features": [
+        "DGNBMJ",
+        "CGHKJL,XCGJ",
+        "CHGKJLHCL"
+      ],
+      "specifications": {},
+      "featured": true,
+      "status": "active",
+      "dateAdded": "2025-10-14T14:09:29.824Z"
     }
   ],
   "content": {
@@ -106,5 +131,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T14:05:59.603Z"
+  "lastUpdated": "2025-10-14T14:09:29.824Z"
 }
