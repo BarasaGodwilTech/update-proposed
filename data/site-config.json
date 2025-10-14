@@ -19,7 +19,7 @@
         "sale"
       ],
       "rating": 5,
-      "dateUpdated": "2025-10-14T17:01:22.601Z",
+      "dateUpdated": "2025-10-14T17:01:49.461Z",
       "sku": "",
       "originalPrice": null,
       "stock": "in-stock",
@@ -126,14 +126,14 @@
     },
     {
       "id": 1760458852682,
-      "name": "iPhone 13 Pro",
-      "sku": "tthtbmv",
-      "category": "laptops",
-      "description": "xfmknhxv,nv,nvx.",
-      "price": "800000",
-      "originalPrice": "900000",
-      "image": "public/macbook-pro-m3-laptop.jpg",
-      "stock": "pre-order",
+      "name": "",
+      "sku": "",
+      "category": "",
+      "description": "",
+      "price": 0,
+      "originalPrice": null,
+      "image": "",
+      "stock": "in-stock",
       "rating": 5,
       "reviewCount": 0,
       "badges": [
@@ -145,10 +145,10 @@
         "fryuuuuuuuukgjkh"
       ],
       "specifications": {},
-      "featured": true,
+      "featured": false,
       "status": "active",
       "dateAdded": "2025-10-14T16:20:52.682Z",
-      "dateUpdated": "2025-10-14T16:37:21.604Z"
+      "dateUpdated": "2025-10-14T17:02:15.172Z"
     }
   ],
   "content": {
@@ -164,5 +164,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:01:22.602Z"
+  "lastUpdated": "2025-10-14T17:02:15.172Z"
 }
