@@ -4,117 +4,7 @@
     "description": "We're working hard to bring you the ultimate tech shopping experience, delivering authentic and top-notch technologies and innovation to your doorstep without lifting a foot. Uganda, are you ready? Join our WhatsApp channel for exclusive early-bird deals!",
     "whatsappLink": "https://wa.me/256751924844?text=Hi%20Will's%20Tech!%20I%20want%20to%20join%20your%20channel.%20Thanks."
   },
-  "products": [
-    {
-      "id": 3,
-      "name": "PlayStation 5",
-      "description": "Next-gen gaming console with ultra-high speed SSD",
-      "price": "2800000",
-      "image": "public/playstation-5-gaming-console.jpg",
-      "category": "gaming",
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-10T15:33:25.738Z",
-      "badges": [
-        "limited"
-      ],
-      "rating": 4.5,
-      "originalPrice": "0",
-      "dateUpdated": "2025-10-14T17:25:12.077Z"
-    },
-    {
-      "id": 4,
-      "name": "AirPods Pro",
-      "description": "Premium wireless earbuds with active noise cancellation.",
-      "price": "950000",
-      "image": "public/airpods-pro-wireless-earbuds.jpg",
-      "category": "accessories",
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-10T15:33:25.738Z",
-      "badges": [
-        "bestseller"
-      ],
-      "rating": 5,
-      "originalPrice": "0",
-      "dateUpdated": "2025-10-14T17:25:12.077Z"
-    },
-    {
-      "id": 1760449762728,
-      "name": "iPhone 15 Pro",
-      "sku": "APP-IPHONE-121",
-      "category": "smartphones",
-      "description": "IPHONE 15",
-      "price": "4600000",
-      "originalPrice": "6000000",
-      "image": "public/iphone-15-pro.png",
-      "stock": "in-stock",
-      "rating": 3,
-      "reviewCount": 400,
-      "badges": [
-        "new",
-        "bestseller"
-      ],
-      "features": [],
-      "specifications": {},
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-14T13:49:22.728Z",
-      "dateUpdated": "2025-10-14T16:12:02.383Z"
-    },
-    {
-      "id": 1760450969824,
-      "name": "iPhone 15 Pro",
-      "sku": "APP-IPHONE-121",
-      "category": "smartphones",
-      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB godwill",
-      "price": 4600000,
-      "originalPrice": 6000000,
-      "image": "public/iphone-15-pro.png",
-      "stock": "limited",
-      "rating": 5,
-      "reviewCount": 57,
-      "badges": [
-        "limited"
-      ],
-      "features": [
-        "DGNBMJ",
-        "CGHKJL,XCGJ",
-        "CHGKJLHCL"
-      ],
-      "specifications": {},
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T17:32:49.598Z"
-    },
-    {
-      "id": 1760458852682,
-      "name": "",
-      "sku": "",
-      "category": "",
-      "description": "",
-      "price": 0,
-      "originalPrice": null,
-      "image": "",
-      "stock": "in-stock",
-      "rating": 5,
-      "reviewCount": 0,
-      "badges": [
-        "new"
-      ],
-      "features": [
-        "fdsajdagkjfsgk",
-        "dtuktsfghjsjn",
-        "fryuuuuuuuukgjkh"
-      ],
-      "specifications": {},
-      "featured": false,
-      "status": "active",
-      "dateAdded": "2025-10-14T16:20:52.682Z",
-      "dateUpdated": "2025-10-14T17:02:15.172Z"
-    }
-  ],
+  "products": [],
   "content": {
     "storeName": "Will's Tech Store",
     "tagline": "Elevate Your Lifestyle With Authentic Tech",
@@ -128,5 +18,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:36:25.452Z"
+  "lastUpdated": "2025-10-14T17:46:52.516Z"
 }
