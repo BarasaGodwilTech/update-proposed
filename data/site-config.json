@@ -13,7 +13,7 @@
       "price": "4500000",
       "image": "public/iphone-15-pro.png",
       "featured": true,
-      "status": "active",
+      "status": "hidden",
       "badges": [
         "new",
         "sale"
@@ -80,5 +80,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T06:24:50.978Z"
+  "lastUpdated": "2025-10-14T08:38:01.429Z"
 }
