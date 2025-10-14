@@ -34,7 +34,7 @@
         "bestseller"
       ],
       "rating": 5,
-      "dateUpdated": "2025-10-14T16:24:28.109Z"
+      "dateUpdated": "2025-10-14T16:24:28.112Z"
     },
     {
       "id": 3,
@@ -141,7 +141,8 @@
       "specifications": {},
       "featured": true,
       "status": "active",
-      "dateAdded": "2025-10-14T16:20:52.682Z"
+      "dateAdded": "2025-10-14T16:20:52.682Z",
+      "dateUpdated": "2025-10-14T16:33:35.501Z"
     }
   ],
   "content": {
@@ -157,5 +158,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T16:24:28.111Z"
+  "lastUpdated": "2025-10-14T16:33:35.502Z"
 }
