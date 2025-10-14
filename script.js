@@ -4,18 +4,15 @@ if (window.location.pathname.includes('admin.html') &&
     window.location.href = 'admin-login.html';
 }
 
-// Admin authentication check - Add this at the TOP of your script.js file
-if (window.location.pathname.includes('admin.html') && 
-    !localStorage.getItem('willstech_admin_auth')) {
-    window.location.href = 'admin-login.html';
-}
-
 // ===== ONBOARDING GUIDE FUNCTIONALITY =====
+// ==== FIXED ONBOARDING GUIDE FUNCTIONALITY ====
 function initOnboardingSystem() {
     // Check if user has seen the guide before
     const hasSeenGuide = localStorage.getItem('willstech_guide_seen');
     
-    // For testing purposes, you can force show the guide by removing the condition
+    // For testing purposes, you can force show the guide by:
+    // localStorage.removeItem('willstech_guide_seen');
+    
     if (!hasSeenGuide) {
         setTimeout(() => {
             showOnboarding();
@@ -30,6 +27,7 @@ function showOnboarding() {
     const overlay = document.getElementById('onboardingOverlay');
     if (overlay) {
         overlay.classList.add('active');
+        overlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
     }
 }
@@ -38,6 +36,7 @@ function hideOnboarding() {
     const overlay = document.getElementById('onboardingOverlay');
     if (overlay) {
         overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
     }
 }
@@ -48,6 +47,11 @@ function initOnboarding() {
     const backBtn = document.getElementById('backBtn');
     const progressDots = document.querySelectorAll('.progress-dot');
     
+    if (!skipBtn || !nextBtn || !backBtn) {
+        console.warn('Onboarding elements not found');
+        return;
+    }
+    
     let currentStep = 0;
     const totalSteps = 4; // Welcome + 3 tour steps
     
@@ -55,6 +59,7 @@ function initOnboarding() {
     skipBtn.addEventListener('click', function() {
         localStorage.setItem('willstech_guide_seen', 'true');
         hideOnboarding();
+        showCompletionMessage();
     });
     
     // Next button functionality
@@ -64,8 +69,8 @@ function initOnboarding() {
             startInteractiveTour();
             currentStep = 1;
             updateProgressDots();
-            nextBtn.textContent = 'Next';
-            backBtn.style.display = 'inline-block';
+            nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
+            backBtn.style.display = 'inline-flex';
         } else if (currentStep < totalSteps - 1) {
             // Continue to next step
             currentStep++;
@@ -73,7 +78,7 @@ function initOnboarding() {
             updateProgressDots();
             
             if (currentStep === totalSteps - 1) {
-                nextBtn.textContent = 'Got It!';
+                nextBtn.innerHTML = 'Got It! <i class="fas fa-check"></i>';
             }
         } else {
             // End tour
@@ -94,24 +99,20 @@ function initOnboarding() {
                 backBtn.style.display = 'none';
             }
             
-            nextBtn.textContent = 'Next';
+            nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
         } else if (currentStep === 1) {
             // Go back to welcome screen
             currentStep = 0;
             hideTourHighlights();
             updateProgressDots();
             backBtn.style.display = 'none';
-            nextBtn.textContent = 'Take the Tour';
+            nextBtn.innerHTML = 'Take the Tour <i class="fas fa-arrow-right"></i>';
         }
     });
     
     function updateProgressDots() {
         progressDots.forEach((dot, index) => {
-            if (index <= currentStep) {
-                dot.classList.add('active');
-            } else {
-                dot.classList.remove('active');
-            }
+            dot.classList.toggle('active', index === currentStep);
         });
     }
     
@@ -235,14 +236,17 @@ function initOnboarding() {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #164e63;
+            background: var(--primary);
             color: white;
             padding: 12px 20px;
             border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: var(--shadow-lg);
             z-index: 1000;
             font-family: 'Work Sans', sans-serif;
             animation: slideInRight 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         `;
         completionMsg.innerHTML = '<i class="fas fa-check-circle"></i> You\'re all set! Enjoy exploring Will\'s Tech Store';
         
@@ -260,7 +264,7 @@ function initOnboarding() {
     }
 }
 
-// ===== END ONBOARDING GUIDE =====
+// ==== END ONBOARDING GUIDE ====
 
 // Your existing script.js code continues below...
 // [YOUR EXISTING SCRIPT.JS CODE HERE]

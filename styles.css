@@ -8921,6 +8921,50 @@ timer-item span.changing {
     }
 }
 
+/* Add to your onboarding CSS */
+.onboarding-buttons {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.onboarding-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    font-family: 'Work Sans', sans-serif;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.onboarding-btn-primary {
+    background: var(--primary);
+    color: var(--light);
+}
+
+.onboarding-btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.onboarding-btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+}
+
+.onboarding-btn-outline:hover {
+    background: var(--primary);
+    color: var(--light);
+    transform: translateY(-2px);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .onboarding-container {

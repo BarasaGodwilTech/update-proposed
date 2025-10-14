@@ -1427,21 +1427,22 @@
     <script src="script.js"></script>
 
     <!-- Onboarding Overlay -->
-<div class="onboarding-overlay" id="onboardingOverlay">
+     <!-- Add this before the closing </body> tag -->
+<div id="onboardingOverlay" class="onboarding-overlay" aria-hidden="true">
     <div class="onboarding-container">
         <div class="onboarding-header">
-            <h2>Welcome to the New Will's Tech Store! 🚀</h2>
-            <p>We've made some exciting improvements to enhance your experience</p>
+            <h2>Welcome to Will's Tech Store! 👋</h2>
+            <p>Let us show you around our enhanced shopping experience</p>
         </div>
         
         <div class="onboarding-content">
             <div class="feature-item">
                 <div class="feature-icon">
-                    <i class="fas fa-shopping-bag"></i>
+                    <i class="fas fa-gift"></i>
                 </div>
                 <div class="feature-text">
                     <h3>Enhanced Product Showcase</h3>
-                    <p>Browse our premium collection with improved filtering, quick view options, and detailed product information.</p>
+                    <p>Browse our premium collection with improved filtering and quick view options</p>
                 </div>
             </div>
             
@@ -1451,49 +1452,44 @@
                 </div>
                 <div class="feature-text">
                     <h3>WhatsApp Integration</h3>
-                    <p>Get exclusive deals, instant support, and personalized recommendations directly through WhatsApp.</p>
+                    <p>Get exclusive deals and instant support directly through WhatsApp</p>
                 </div>
             </div>
             
             <div class="feature-item">
                 <div class="feature-icon">
-                    <i class="fas fa-video"></i>
+                    <i class="fab fa-youtube"></i>
                 </div>
                 <div class="feature-text">
                     <h3>Video Reviews & Unboxings</h3>
-                    <p>Watch authentic product reviews and unboxings from our YouTube channel directly on the site.</p>
+                    <p>Watch authentic product reviews directly on our site</p>
                 </div>
-            </div>
-            
-            <div class="feature-item">
-                <div class="feature-icon">
-                    <i class="fas fa-rocket"></i>
-                </div>
-                <div class="feature-text">
-                    <h3>Launch Countdown</h3>
-                    <p>Track our official launch date with an interactive countdown and get notified for exclusive early-bird offers.</p>
-                </div>
-            </div>
-            
-            <div class="progress-indicator">
-                <div class="progress-dot active"></div>
-                <div class="progress-dot"></div>
-                <div class="progress-dot"></div>
             </div>
         </div>
         
         <div class="onboarding-footer">
-            <button class="skip-btn" id="skipBtn">Skip Tour</button>
-            <div>
-                <button class="btn btn-outline" id="backBtn" style="display: none;">Back</button>
-                <button class="btn btn-primary" id="nextBtn">Take the Tour</button>
+            <button id="skipBtn" class="skip-btn">Skip Tour</button>
+            <div class="onboarding-buttons">
+                <button id="backBtn" class="onboarding-btn onboarding-btn-outline" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button id="nextBtn" class="onboarding-btn onboarding-btn-primary">
+                    Take the Tour <i class="fas fa-arrow-right"></i>
+                </button>
             </div>
         </div>
+        
+        <div class="progress-indicator">
+            <div class="progress-dot active"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+            <div class="progress-dot"></div>
+        </div>
     </div>
+    
+    <!-- Container for tour highlights -->
+    <div id="tourHighlights"></div>
 </div>
-
-<!-- Interactive Tour Elements -->
-<div id="tourHighlights"></div>
 
 </body>
 </html>
