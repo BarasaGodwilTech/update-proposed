@@ -67,6 +67,21 @@
       "rating": 5,
       "originalPrice": "0",
       "dateUpdated": "2025-10-14T08:53:52.421Z"
+    },
+    {
+      "id": 1760432865733,
+      "name": "iPhone 13 Pro",
+      "category": "smartphones",
+      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
+      "price": "600000",
+      "image": "public/iphone-15-pro.png",
+      "featured": true,
+      "status": "active",
+      "dateAdded": "2025-10-14T09:07:45.733Z",
+      "badges": [
+        "new"
+      ],
+      "rating": 5
     }
   ],
   "content": {
@@ -82,5 +97,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T08:57:35.997Z"
+  "lastUpdated": "2025-10-14T09:07:45.734Z"
 }
