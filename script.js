@@ -1714,103 +1714,7 @@ function closeQuickViewModal() {
         // Focus will naturally return to the trigger element
     }
 
-function initQuickView() {
-    const quickViewBtns = document.querySelectorAll('.quick-view-btn');
-    const modal = document.getElementById('quickViewModal');
-    const closeBtn = document.querySelector('.modal-close');
-
-    // Create modal if it doesn't exist
-    if (!modal) {
-        createQuickViewModal();
-        return;
-    }
-
-    const productData = {
-        "iPhone 15 Pro": {
-            image: "public/iphone-15-pro.png",
-            title: "iPhone 15 Pro",
-            description: "The iPhone 15 Pro features a titanium design, A17 Pro chip, and advanced camera system. Experience the future of mobile technology with this premium device with professional-grade capabilities.",
-            price: "UGX 4,500,000",
-            originalPrice: "UGX 5,000,000",
-            rating: "(128 reviews)",
-            stars: 5,
-            features: [
-                "Titanium design",
-                "A17 Pro chip",
-                "Professional camera system",
-                "5G capable",
-                "Face ID"
-            ],
-            stock: "In Stock",
-            sku: "APP-IP15P-256"
-        },
-        "MacBook Pro M3": {
-            image: "public/macbook-pro-m3-laptop.jpg",
-            title: "MacBook Pro M3",
-            description: "Supercharged by the M3 chip, this MacBook Pro delivers exceptional performance for professionals and creators. Perfect for demanding workflows with enhanced graphics and processing power.",
-            price: "UGX 8,500,000",
-            originalPrice: "",
-            rating: "(89 reviews)",
-            stars: 5,
-            features: [
-                "M3 chip",
-                "Liquid Retina XDR display",
-                "Up to 22 hours battery",
-                "8GB Unified Memory",
-                "512GB SSD Storage"
-            ],
-            stock: "In Stock",
-            sku: "APP-MBP-M3-512"
-        },
-        "PlayStation 5": {
-            image: "public/playstation-5-gaming-console.jpg",
-            title: "PlayStation 5",
-            description: "Experience next-generation gaming with the PlayStation 5. Featuring ultra-high speed SSD, haptic feedback, and stunning 4K graphics for immersive gaming experiences.",
-            price: "UGX 2,800,000",
-            originalPrice: "",
-            rating: "(156 reviews)",
-            stars: 4.5,
-            features: [
-                "4K Gaming",
-                "Ultra-high speed SSD",
-                "Haptic feedback",
-                "3D Audio",
-                "Backward compatibility"
-            ],
-            stock: "Limited Stock",
-            sku: "SONY-PS5-STD"
-        },
-        "AirPods Pro": {
-            image: "public/airpods-pro-wireless-earbuds.jpg",
-            title: "AirPods Pro",
-            description: "Premium wireless earbuds with active noise cancellation, spatial audio, and all-day battery life. Perfect for music lovers and professionals seeking crystal-clear audio quality.",
-            price: "UGX 950,000",
-            originalPrice: "",
-            rating: "(203 reviews)",
-            stars: 5,
-            features: [
-                "Active Noise Cancellation",
-                "Spatial Audio",
-                "Sweat and water resistant",
-                "Up to 6 hours battery",
-                "Wireless charging case"
-            ],
-            stock: "In Stock",
-            sku: "APP-AIRPODS-PRO"
-        }
-    };
-
-    // Add event listeners to quick view buttons
-   quickViewBtn.addEventListener('click', function() {
-    const productCard = this.closest('.product-card');
-    const productId = productCard.getAttribute('data-product-id');
-    
-    // Try to get product from admin panel data first
-    const product = getProductFromAdminData(productId) || getProductFromCard(productCard);
-    openQuickViewModal(product);
-});
-
-// Helper function to get product from admin panel data
+    // Helper function to get product from admin panel data
 function getProductFromAdminData(productId) {
     // This should access your siteData from admin panel
     if (window.siteData && window.siteData.products) {
@@ -2027,6 +1931,57 @@ function updateWhatsAppButton(product) {
     }
 }
 
+function initQuickView() {
+    const quickViewBtns = document.querySelectorAll('.quick-view-btn');
+    const modal = document.getElementById('quickViewModal');
+    const closeBtn = document.querySelector('.modal-close');
+
+    // Create modal if it doesn't exist
+    if (!modal) {
+        createQuickViewModal();
+        return;
+    }
+
+    // Add event listeners to quick view buttons
+    quickViewBtns.forEach(quickViewBtn => {
+        quickViewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const productCard = this.closest('.product-card');
+            const productName = productCard.querySelector('h3')?.textContent || '';
+            
+            // Try to get product from admin panel data first
+            const product = getProductFromAdminData(productName) || getProductFromCard(productCard);
+            
+            if (product) {
+                openQuickViewModal(product);
+            } else {
+                console.error('Product data not found for:', productName);
+                showNotification('Product information not available', 'error');
+            }
+        });
+    });
+
+    // Close modal functionality
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeQuickViewModal);
+    }
+
+    // Close modal when clicking outside
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeQuickViewModal();
+            }
+        });
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+            closeQuickViewModal();
+        }
+    });
+}
 
     function trapFocus(modal) {
         const focusableElements = modal.querySelectorAll(
@@ -2101,19 +2056,12 @@ function updateWhatsAppButton(product) {
                                     <!-- Features will be generated here -->
                                 </ul>
                             </div>
-
-                            <div class="product-specifications">
-                                <h3>Specifications</h3>
-                                <div id="modalProductSpecifications">
-                                    <!-- Specifications will be generated here -->
-                                </div>
-                            </div>
                             
                             <div class="modal-actions">
-                                <button class="btn btn-primary whatsapp-order">
+                                <a href="#" class="btn btn-primary whatsapp-order">
                                     <i class="fab fa-whatsapp" aria-hidden="true"></i>
                                     Order on WhatsApp
-                                </button>
+                                </a>
                                 <button class="btn btn-outline add-to-wishlist-modal">
                                     <i class="far fa-heart" aria-hidden="true"></i>
                                     Add to Wishlist
@@ -2127,9 +2075,6 @@ function updateWhatsAppButton(product) {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    setupQuickViewModal();
-}
-
 }
 
 // Track quick view events
@@ -2973,3 +2918,14 @@ function updateSocialLinks(socialData) {
         }
     });
 }
+
+// Add this temporarily to debug
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Quick view buttons found:', document.querySelectorAll('.quick-view-btn').length);
+    
+    document.querySelectorAll('.quick-view-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            console.log('Quick view button clicked!');
+        });
+    });
+});
