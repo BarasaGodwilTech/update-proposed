@@ -466,7 +466,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     initOnboardingSystem();
     
     // Then load other functionality
-    await updateWebsiteWithDynamicData();
+    await updateWebsiteWithDynamicData(); // This loads products from admin panel
+    
+    // Initialize all components
     initPageLoader();
     initScrollAnimations();
     initCountdown();
@@ -476,16 +478,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     initFloatingButtons();
     initStatCounters();
     initParallaxEffects();
-    initProductFilters(); // This will now work with dynamic products
+    initProductFilters(); // This creates product cards
     initTestimonialSlider();
     initContactForm();
-    initQuickView();
     initMobileMenu();
     initDropdownNavigation();
     initModalActions();
     initAboutSection();
     initWhatsAppCTA();
     initFeaturesSection();
+    
+    // INIT QUICK VIEW AFTER PRODUCTS ARE LOADED - with better timing
+    setTimeout(() => {
+        initQuickView();
+        initModalActions(); // Ensure modal actions are initialized
+    }, 2500); // Increased delay to ensure everything is loaded
+    
   } catch (error) {
     console.error("Initialization error:", error);
   }
@@ -1715,11 +1723,18 @@ function closeQuickViewModal() {
     }
 
     // Helper function to get product from admin panel data
-function getProductFromAdminData(productId) {
+function getProductFromAdminData(productName) {
     // This should access your siteData from admin panel
     if (window.siteData && window.siteData.products) {
-        return window.siteData.products.find(p => p.id == productId);
+        const product = window.siteData.products.find(p => p.name === productName);
+        if (product) {
+            console.log('Found product in admin data:', product.name);
+        } else {
+            console.log('Product not found in admin data:', productName);
+        }
+        return product;
     }
+    console.log('No site data available');
     return null;
 }
 
@@ -1768,6 +1783,186 @@ function getFeaturesFromCard(productCard) {
     // You might need to add features to your product cards
     return ['Premium Quality', 'Authentic Product', 'Warranty Included'];
 }
+// ===== ENHANCED QUICK VIEW HELPER FUNCTIONS =====
+
+// Helper function to get product from card data with better extraction
+function getProductFromCard(productCard) {
+    const name = productCard.querySelector('h3')?.textContent || '';
+    const description = productCard.querySelector('.product-description')?.textContent || '';
+    const priceText = productCard.querySelector('.current-price')?.textContent || '0';
+    const price = parseInt(priceText.replace(/[^\d]/g, '')) || 0;
+    const image = productCard.querySelector('img')?.src || '';
+    
+    // Extract original price if available
+    const originalPriceText = productCard.querySelector('.original-price')?.textContent;
+    const originalPrice = originalPriceText ? parseInt(originalPriceText.replace(/[^\d]/g, '')) : null;
+    
+    // Extract rating
+    const stars = productCard.querySelectorAll('.stars .fa-star, .stars .fa-star-half-alt');
+    let rating = 5;
+    if (stars.length > 0) {
+        rating = 0;
+        stars.forEach(star => {
+            if (star.classList.contains('fa-star')) rating += 1;
+            if (star.classList.contains('fa-star-half-alt')) rating += 0.5;
+        });
+    }
+    
+    // Extract review count
+    const ratingCountText = productCard.querySelector('.rating-count')?.textContent || '(0 reviews)';
+    const reviewCountMatch = ratingCountText.match(/\((\d+)\s+reviews?\)/);
+    const reviewCount = reviewCountMatch ? parseInt(reviewCountMatch[1]) : 0;
+    
+    // Extract badges
+    const badges = [];
+    const badgeElements = productCard.querySelectorAll('.product-badge');
+    badgeElements.forEach(badge => {
+        if (badge.classList.contains('badge-new')) badges.push('new');
+        if (badge.classList.contains('badge-sale')) badges.push('sale');
+        if (badge.classList.contains('badge-bestseller')) badges.push('bestseller');
+        if (badge.classList.contains('badge-limited')) badges.push('limited');
+    });
+
+    return {
+        name: name,
+        description: description,
+        price: price,
+        originalPrice: originalPrice,
+        image: image,
+        rating: rating,
+        reviewCount: reviewCount,
+        badges: badges,
+        stock: 'in-stock',
+        sku: 'N/A',
+        features: ['Premium Quality', 'Authentic Product', 'Warranty Included']
+    };
+}
+
+function updateWhatsAppButton(product) {
+    const whatsappBtn = document.querySelector('.whatsapp-order');
+    if (whatsappBtn && product) {
+        const productName = encodeURIComponent(product.name || product.title || 'Product');
+        const productPrice = encodeURIComponent(`UGX ${formatPrice(product.price || 0)}`);
+        const message = `Hi Will's Tech! I want to order: ${productName} for ${productPrice}. Please provide more details.`;
+        whatsappBtn.href = `https://wa.me/256751924844?text=${encodeURIComponent(message)}`;
+    }
+}
+
+function trapFocus(modal) {
+    const focusableElements = modal.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusableElements.length === 0) return;
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    function handleKeydown(e) {
+        if (e.key === 'Tab') {
+            if (e.shiftKey) {
+                if (document.activeElement === firstElement) {
+                    e.preventDefault();
+                    lastElement.focus();
+                }
+            } else {
+                if (document.activeElement === lastElement) {
+                    e.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    }
+
+    modal.addEventListener('keydown', handleKeydown);
+    firstElement.focus();
+}
+
+function removeFocusTrap() {
+    // Focus will naturally return to the trigger element
+}
+
+function formatPrice(price) {
+    return new Intl.NumberFormat('en-UG').format(price);
+}
+
+function getStockStatusText(stock) {
+    const statusMap = {
+        'in-stock': 'In Stock',
+        'out-of-stock': 'Out of Stock', 
+        'pre-order': 'Pre-Order',
+        'limited': 'Limited Stock'
+    };
+    return statusMap[stock] || 'In Stock';
+}
+
+function trackQuickView(productName) {
+    console.log(`Quick view opened for: ${productName}`);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'view_item', {
+            'event_category': 'Quick View',
+            'event_label': productName,
+            'value': 1
+        });
+    }
+}
+
+function initModalActions() {
+    // WhatsApp order button
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.whatsapp-order')) {
+            e.preventDefault();
+            const modal = document.getElementById('quickViewModal');
+            const productTitle = document.getElementById('modalProductTitle')?.textContent;
+            const productPrice = document.getElementById('modalProductPrice')?.textContent;
+            
+            if (productTitle && productPrice) {
+                const message = `Hi Will's Tech! I want to order: ${productTitle} - ${productPrice}. Please provide more details.`;
+                const whatsappUrl = `https://wa.me/256751924844?text=${encodeURIComponent(message)}`;
+                
+                window.open(whatsappUrl, '_blank');
+                trackModalAction('whatsapp_order', productTitle);
+            }
+            
+            closeQuickViewModal();
+        }
+
+        // Add to wishlist from modal
+        if (e.target.closest('.add-to-wishlist-modal')) {
+            e.preventDefault();
+            const productTitle = document.getElementById('modalProductTitle')?.textContent;
+            
+            if (productTitle) {
+                // Find the corresponding product card and trigger wishlist
+                const productCards = document.querySelectorAll('.product-card');
+                productCards.forEach(card => {
+                    if (card.querySelector('h3').textContent === productTitle) {
+                        const wishlistBtn = card.querySelector('.add-to-wishlist');
+                        if (wishlistBtn) {
+                            wishlistBtn.click();
+                        }
+                    }
+                });
+                
+                trackModalAction('wishlist_from_modal', productTitle);
+            }
+            
+            closeQuickViewModal();
+        }
+    });
+}
+
+function trackModalAction(action, productName) {
+    console.log(`Modal ${action}: ${productName}`);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', action, {
+            'event_category': 'Quick View Modal',
+            'event_label': productName,
+            'value': 1
+        });
+    }
+}
 
     // Close modal functionality
     if (closeBtn) {
@@ -1791,9 +1986,13 @@ function getFeaturesFromCard(productCard) {
     });
 
     function openQuickViewModal(product) {
-    if (!modal) return;
+    const modal = document.getElementById('quickViewModal');
+    if (!modal) {
+        console.error('Quick view modal not found');
+        return;
+    }
 
-    // Update modal content
+    // Update modal content with product data
     const elements = {
         image: document.getElementById('modalProductImage'),
         title: document.getElementById('modalProductTitle'),
@@ -1805,21 +2004,21 @@ function getFeaturesFromCard(productCard) {
         features: document.getElementById('modalProductFeatures'),
         stock: document.getElementById('modalProductStock'),
         sku: document.getElementById('modalProductSKU'),
-        discount: document.getElementById('modalProductDiscount') // Add this if it exists
+        discount: document.getElementById('modalProductDiscount')
     };
 
-    // Set product data from admin panel
+    // Set product data
     if (elements.image) {
         elements.image.src = product.image || '/placeholder.svg';
-        elements.image.alt = product.name || product.title;
+        elements.image.alt = product.name || 'Product image';
     }
     
-    if (elements.title) elements.title.textContent = product.name || product.title;
-    if (elements.description) elements.description.textContent = product.description;
+    if (elements.title) elements.title.textContent = product.name || 'Product';
+    if (elements.description) elements.description.textContent = product.description || 'No description available';
     
     // Format and set pricing
     if (elements.price) {
-        elements.price.textContent = `UGX ${formatPrice(product.price)}`;
+        elements.price.textContent = `UGX ${formatPrice(product.price || 0)}`;
     }
     
     // Handle original price and discount
@@ -1845,7 +2044,7 @@ function getFeaturesFromCard(productCard) {
         elements.rating.textContent = `(${product.reviewCount || 0} reviews)`;
     }
     
-    // Set stock status with proper formatting
+    // Set stock status
     if (elements.stock) {
         elements.stock.textContent = getStockStatusText(product.stock);
         elements.stock.className = `stock-status ${product.stock || 'in-stock'}`;
@@ -1874,7 +2073,7 @@ function getFeaturesFromCard(productCard) {
         }
     }
 
-    // Generate features list from admin panel data
+    // Generate features list
     if (elements.features) {
         elements.features.innerHTML = '';
         
@@ -1885,14 +2084,22 @@ function getFeaturesFromCard(productCard) {
                 elements.features.appendChild(li);
             });
         } else {
-            // Fallback if no features
-            const li = document.createElement('li');
-            li.innerHTML = `<i class="fas fa-check" aria-hidden="true"></i> Premium quality product`;
-            elements.features.appendChild(li);
+            // Fallback features
+            const defaultFeatures = [
+                'Premium quality product',
+                'Authentic and genuine',
+                'Warranty included',
+                'Fast delivery available'
+            ];
+            defaultFeatures.forEach(feature => {
+                const li = document.createElement('li');
+                li.innerHTML = `<i class="fas fa-check" aria-hidden="true"></i> ${feature}`;
+                elements.features.appendChild(li);
+            });
         }
     }
 
-    // Update WhatsApp order button with product details
+    // Update WhatsApp order button
     updateWhatsAppButton(product);
 
     // Show modal
@@ -1904,7 +2111,7 @@ function getFeaturesFromCard(productCard) {
     trapFocus(modal);
 
     // Track quick view event
-    trackQuickView(product.name || product.title);
+    trackQuickView(product.name || 'Unknown Product');
 }
 
 // Add these helper functions if they don't exist:
@@ -1932,55 +2139,93 @@ function updateWhatsAppButton(product) {
 }
 
 function initQuickView() {
-    const quickViewBtns = document.querySelectorAll('.quick-view-btn');
-    const modal = document.getElementById('quickViewModal');
-    const closeBtn = document.querySelector('.modal-close');
-
-    // Create modal if it doesn't exist
-    if (!modal) {
+    console.log('Initializing quick view...');
+    
+    // Ensure modal exists
+    if (!document.getElementById('quickViewModal')) {
+        console.log('Creating quick view modal...');
         createQuickViewModal();
-        return;
     }
 
-    // Add event listeners to quick view buttons
-    quickViewBtns.forEach(quickViewBtn => {
-        quickViewBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const productCard = this.closest('.product-card');
-            const productName = productCard.querySelector('h3')?.textContent || '';
-            
-            // Try to get product from admin panel data first
-            const product = getProductFromAdminData(productName) || getProductFromCard(productCard);
-            
-            if (product) {
-                openQuickViewModal(product);
-            } else {
-                console.error('Product data not found for:', productName);
-                showNotification('Product information not available', 'error');
-            }
+    // Wait for products to be fully rendered
+    setTimeout(() => {
+        const quickViewBtns = document.querySelectorAll('.quick-view-btn');
+        console.log('Quick view buttons found:', quickViewBtns.length);
+
+        // Add event listeners to quick view buttons
+        quickViewBtns.forEach(quickViewBtn => {
+            // Remove existing listeners to prevent duplicates
+            quickViewBtn.replaceWith(quickViewBtn.cloneNode(true));
         });
-    });
 
-    // Close modal functionality
-    if (closeBtn) {
-        closeBtn.addEventListener('click', closeQuickViewModal);
-    }
+        // Re-select buttons after cloning
+        const freshQuickViewBtns = document.querySelectorAll('.quick-view-btn');
+        
+        freshQuickViewBtns.forEach(quickViewBtn => {
+            quickViewBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Quick view button clicked!');
+                
+                const productCard = this.closest('.product-card');
+                if (!productCard) {
+                    console.error('Product card not found');
+                    return;
+                }
+                
+                const productName = productCard.querySelector('h3')?.textContent || '';
+                console.log('Product name:', productName);
+                
+                // Try to get product from admin panel data first
+                let product = null;
+                if (window.siteData && window.siteData.products) {
+                    product = window.siteData.products.find(p => 
+                        p.name === productName || 
+                        p.name?.includes(productName) || 
+                        productName.includes(p.name)
+                    );
+                }
+                
+                // Fallback to card data
+                if (!product) {
+                    product = getProductFromCard(productCard);
+                }
+                
+                if (product) {
+                    console.log('Opening quick view for:', product.name);
+                    openQuickViewModal(product);
+                } else {
+                    console.error('Product data not found for:', productName);
+                    showNotification('Product information not available', 'error');
+                }
+            });
+        });
 
-    // Close modal when clicking outside
-    if (modal) {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+        // Close modal functionality
+        const closeBtn = document.querySelector('.modal-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeQuickViewModal);
+        }
+
+        // Close modal when clicking outside
+        const modal = document.getElementById('quickViewModal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeQuickViewModal();
+                }
+            });
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal && modal.classList.contains('active')) {
                 closeQuickViewModal();
             }
         });
-    }
 
-    // Close modal with Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) {
-            closeQuickViewModal();
-        }
-    });
+        console.log('Quick view initialization complete');
+    }, 2000); // Increased delay to ensure products are loaded
 }
 
     function trapFocus(modal) {
@@ -2761,6 +3006,10 @@ async function updateWebsiteWithDynamicData() {
         return;
     }
 
+    // Store site data globally for quick view access
+    window.siteData = siteData; // ← ADD THIS LINE
+    console.log('Site data loaded and stored globally:', siteData);
+
     // Update hero section
     updateHeroSection(siteData.hero);
     
@@ -2792,8 +3041,11 @@ function updateProductsSection(productsData) {
     const productsGrid = document.querySelector('.products-grid');
     if (!productsGrid) return;
     
+    console.log('Updating products section with:', productsData.length, 'products');
+    
     // Clear existing products (keep the structure, just update content)
     const existingProductCards = productsGrid.querySelectorAll('.product-card');
+    console.log('Removing existing product cards:', existingProductCards.length);
     existingProductCards.forEach(card => card.remove());
     
     // Add products from site-config.json
@@ -2803,6 +3055,8 @@ function updateProductsSection(productsData) {
             productsGrid.appendChild(productCard);
         }
     });
+    
+    console.log('Products section updated. Total cards:', productsGrid.querySelectorAll('.product-card').length);
 }
 
 function createProductCard(product) {
@@ -2918,6 +3172,16 @@ function updateSocialLinks(socialData) {
         }
     });
 }
+
+// Manual re-initialization function
+function reinitQuickView() {
+    console.log('Manually re-initializing quick view...');
+    initQuickView();
+}
+
+// Make it globally available
+window.reinitQuickView = reinitQuickView;
+
 
 // Add this temporarily to debug
 document.addEventListener('DOMContentLoaded', function() {
