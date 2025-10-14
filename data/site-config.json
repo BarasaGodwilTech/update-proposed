@@ -7,19 +7,25 @@
   "products": [
     {
       "id": 1,
-      "name": "iPhone 15 Pro",
-      "category": "smartphones",
-      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
-      "price": "4600000",
-      "image": "public/iphone-15-pro.png",
-      "featured": true,
+      "name": "",
+      "category": "",
+      "description": "",
+      "price": 0,
+      "image": "",
+      "featured": false,
       "status": "active",
       "badges": [
         "new",
         "sale"
       ],
       "rating": 5,
-      "dateUpdated": "2025-10-14T13:45:38.887Z"
+      "dateUpdated": "2025-10-14T17:01:22.601Z",
+      "sku": "",
+      "originalPrice": null,
+      "stock": "in-stock",
+      "reviewCount": 0,
+      "features": [],
+      "specifications": {}
     },
     {
       "id": 2,
@@ -158,5 +164,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T16:37:21.604Z"
+  "lastUpdated": "2025-10-14T17:01:22.602Z"
 }
