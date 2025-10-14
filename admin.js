@@ -31,6 +31,7 @@ class WillTechAdmin {
         await this.syncWithGitHub();
         
         this.setupEventListeners();
+        this.setupEditFormListener(); // ADD THIS LINE
         this.setupNavigation();
         
         console.log('Admin panel fully initialized');
@@ -355,6 +356,24 @@ class WillTechAdmin {
         if (productForm) {
             productForm.addEventListener('submit', (e) => this.handleProductForm(e));
         }
+
+        // ADD THIS LINE for the edit form:
+    const editProductForm = document.getElementById('editProductForm');
+    if (editProductForm) {
+        editProductForm.addEventListener('submit', (e) => this.handleEditProductForm(e));
+    }
+    
+    if (contentForm) {
+        contentForm.addEventListener('submit', (e) => this.handleContentForm(e));
+    }
+    
+    if (socialForm) {
+        socialForm.addEventListener('submit', (e) => this.handleSocialForm(e));
+    }
+    
+    if (settingsForm) {
+        settingsForm.addEventListener('submit', (e) => this.handleSettingsForm(e));
+    }
         
         if (contentForm) {
             contentForm.addEventListener('submit', (e) => this.handleContentForm(e));
@@ -416,6 +435,95 @@ class WillTechAdmin {
         }
     }
 
+    // Add this method to switch to edit tab
+showEditTab() {
+    // Hide all tabs first
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    
+    // Show the edit tab
+    const editTab = document.querySelector('[data-tab="edit-product"]');
+    if (editTab) {
+        editTab.style.display = 'block';
+        editTab.classList.add('active');
+    }
+    
+    // Hide other tab contents and show edit form
+    document.querySelectorAll('#products .tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById('edit-product').classList.add('active');
+}
+
+// Add this method to reset tabs to normal state
+resetProductTabs() {
+    // Show all tabs except edit tab
+    document.querySelectorAll('.tab').forEach(tab => {
+        const tabName = tab.getAttribute('data-tab');
+        if (tabName !== 'edit-product') {
+            tab.style.display = 'block';
+        } else {
+            tab.style.display = 'none';
+        }
+    });
+    
+    // Reset active states
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector('[data-tab="products-list"]').classList.add('active');
+    
+    // Reset tab contents
+    document.querySelectorAll('#products .tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById('products-list').classList.add('active');
+}
+
+// Handle edit form submission
+async handleEditProductForm(e) {
+    e.preventDefault();
+    
+    const productData = {
+        name: document.getElementById('editProductName').value,
+        category: document.getElementById('editProductCategory').value,
+        description: document.getElementById('editProductDescription').value,
+        price: document.getElementById('editProductPrice').value,
+        image: document.getElementById('editProductImage').value,
+        featured: document.getElementById('editProductFeatured').checked,
+        status: 'active'
+    };
+
+    if (this.editingProductId) {
+        // Update existing product
+        const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
+        if (productIndex !== -1) {
+            const oldProduct = this.currentData.products[productIndex];
+            this.currentData.products[productIndex] = {
+                ...oldProduct,
+                ...productData,
+                dateUpdated: new Date().toISOString()
+            };
+            
+            // Check if product actually changed
+            if (this.hasProductChanged(oldProduct, this.currentData.products[productIndex])) {
+                await this.saveProductChanges(this.currentData.products[productIndex]);
+                this.showAlert('Product updated successfully!', 'success');
+                this.cancelEdit(); // Go back to products list
+            } else {
+                this.showAlert('No changes detected in product.', 'info');
+            }
+        }
+    }
+}
+
+// Setup edit form listener
+setupEditFormListener() {
+    const editForm = document.getElementById('editProductForm');
+    if (editForm) {
+        editForm.addEventListener('submit', (e) => this.handleEditProductForm(e));
+    }
+}
+
     setupNavigation() {
         const navLinks = document.querySelectorAll('.nav-links a');
         
@@ -448,18 +556,27 @@ class WillTechAdmin {
         }
     }
 
-    switchProductTab(tabName) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-        
-        document.querySelectorAll('#products .tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(tabName).classList.add('active');
+    // NEW VERSION - REPLACE WITH THIS:
+switchProductTab(tabName) {
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    
+    document.querySelectorAll('#products .tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
 
-        // Reset form when switching to add product tab
-        if (tabName === 'add-product') {
-            this.cancelEdit();
+    // Reset form when switching to add product tab
+    if (tabName === 'add-product') {
+        const productForm = document.getElementById('productForm');
+        if (productForm) {
+            productForm.reset();
         }
     }
+    
+    // Cancel edit if switching away from edit tab
+    if (tabName !== 'edit-product' && this.editingProductId) {
+        this.cancelEdit();
+    }
+}
 
     populateForms() {
         // Populate hero form
@@ -949,60 +1066,40 @@ class WillTechAdmin {
         return stars;
     }
 
+    // NEW VERSION - REPLACE WITH THIS:
+
     editProduct(productId) {
-        const product = this.currentData.products.find(p => p.id === productId);
-        if (product) {
-            // Populate form with product data
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productCategory').value = product.category;
-            document.getElementById('productDescription').value = product.description;
-            document.getElementById('productPrice').value = product.price;
-            document.getElementById('productImage').value = product.image || '';
-            document.getElementById('productFeatured').checked = product.featured || false;
-            
-            // Set editing mode
-            this.editingProductId = productId;
-            
-            // Update UI for edit mode
-            this.setEditMode(true);
-            
-            // Switch to add product tab (which now becomes edit product)
-            this.switchProductTab('add-product');
-            
-            this.showAlert(`Editing: ${product.name}`, 'success');
-        }
+    const product = this.currentData.products.find(p => p.id === productId);
+    if (product) {
+        // Populate edit form with product data
+        document.getElementById('editProductName').value = product.name;
+        document.getElementById('editProductCategory').value = product.category;
+        document.getElementById('editProductDescription').value = product.description;
+        document.getElementById('editProductPrice').value = product.price;
+        document.getElementById('editProductImage').value = product.image || '';
+        document.getElementById('editProductFeatured').checked = product.featured || false;
+        
+        // Set editing mode
+        this.editingProductId = productId;
+        
+        // Switch to edit tab
+        this.showEditTab();
+        
+        this.showAlert(`Editing: ${product.name}`, 'success');
     }
+}
 
-    setEditMode(isEdit) {
-        const formTitle = document.getElementById('productFormTitle');
-        const submitBtn = document.getElementById('productSubmitBtn');
-        const cancelBtn = document.getElementById('cancelEditBtn');
-        
-        if (formTitle) {
-            formTitle.textContent = isEdit ? 'Edit Product' : 'Add New Product';
-        }
-        
-        if (submitBtn) {
-            submitBtn.innerHTML = isEdit ? 
-                '<i class="fas fa-save"></i> Update Product' : 
-                '<i class="fas fa-plus"></i> Add Product';
-        }
-        
-        if (cancelBtn) {
-            cancelBtn.style.display = isEdit ? 'inline-block' : 'none';
-        }
+    // NEW VERSION - REPLACE WITH THIS:
+cancelEdit() {
+    this.editingProductId = null;
+    this.resetProductTabs();
+    
+    // Clear the edit form
+    const editForm = document.getElementById('editProductForm');
+    if (editForm) {
+        editForm.reset();
     }
-
-    cancelEdit() {
-        this.editingProductId = null;
-        this.setEditMode(false);
-        
-        // Clear the form
-        const productForm = document.getElementById('productForm');
-        if (productForm) {
-            productForm.reset();
-        }
-    }
+}
 
     formatPrice(price) {
         return new Intl.NumberFormat('en-UG').format(price);
