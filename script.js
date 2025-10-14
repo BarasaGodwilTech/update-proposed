@@ -77,21 +77,21 @@ const tourSteps = [
         title: "Product Showcase",
         description: "Browse our premium tech collection. Use category filters to find exactly what you need, and click 'Quick View' to see product details instantly.",
         element: "#products",
-        position: "bottom",
+        position: "top-center",
         scroll: true
     },
     {
         title: "Quick View Feature",
         description: "Click the 'Quick View' button on any product to see detailed information, features, and pricing without leaving the page.",
         element: ".product-card:first-child .quick-view-btn",
-        position: "top",
+        position: "center",
         scroll: true
     },
     {
         title: "WhatsApp Integration",
         description: "Get instant support and exclusive deals. Click any WhatsApp button to start a conversation with our team directly.",
         element: ".whatsapp-cta",
-        position: "top",
+        position: "top-center",
         scroll: true
     },
     {
@@ -173,38 +173,49 @@ function highlightTourElement(step) {
 function positionTooltip(step, targetElement) {
     const tooltip = document.getElementById('tourTooltip');
     const targetRect = targetElement.getBoundingClientRect();
-    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
 
+    // Always position tooltip in a visible area
     let top, left;
     const arrow = tooltip.querySelector('.tooltip-arrow');
+    
+    // Calculate available space around the element
+    const spaceAbove = targetRect.top;
+    const spaceBelow = viewportHeight - targetRect.bottom;
+    const spaceLeft = targetRect.left;
+    const spaceRight = viewportWidth - targetRect.right;
 
-    switch (step.position) {
-        case 'top':
-            top = targetRect.top - tooltipRect.height - 20;
-            left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
-            arrow.className = 'tooltip-arrow top';
-            break;
-        case 'bottom':
-            top = targetRect.bottom + 20;
-            left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
-            arrow.className = 'tooltip-arrow';
-            break;
-        case 'left':
-            top = targetRect.top + (targetRect.height - tooltipRect.height) / 2;
-            left = targetRect.left - tooltipRect.width - 20;
-            break;
-        case 'right':
-            top = targetRect.top + (targetRect.height - tooltipRect.height) / 2;
-            left = targetRect.right + 20;
-            break;
+    // Choose the position with most space
+    if (spaceBelow >= 200 || spaceBelow >= spaceAbove) {
+        // Position below with center alignment
+        top = targetRect.bottom + 20;
+        left = Math.max(20, targetRect.left + (targetRect.width - 350) / 2);
+        arrow.className = 'tooltip-arrow top';
+    } else {
+        // Position above with center alignment
+        top = targetRect.top - 320; // Account for tooltip height
+        left = Math.max(20, targetRect.left + (targetRect.width - 350) / 2);
+        arrow.className = 'tooltip-arrow';
     }
 
-    // Ensure tooltip stays within viewport
-    left = Math.max(20, Math.min(left, window.innerWidth - tooltipRect.width - 20));
-    top = Math.max(20, Math.min(top, window.innerHeight - tooltipRect.height - 20));
+    // Ensure tooltip stays within viewport boundaries
+    left = Math.max(20, Math.min(left, viewportWidth - 350 - 20)); // 350px is tooltip width
+    top = Math.max(20, Math.min(top, viewportHeight - 400 - 20)); // 400px is approximate tooltip height
+
+    // If tooltip would be off-screen, position it in the center of the viewport
+    if (top < 20 || top > viewportHeight - 400) {
+        top = Math.max(50, (viewportHeight - 400) / 2);
+        left = Math.max(20, (viewportWidth - 350) / 2);
+        arrow.style.display = 'none'; // Hide arrow when centered
+    } else {
+        arrow.style.display = 'block';
+    }
 
     tooltip.style.top = `${top}px`;
     tooltip.style.left = `${left}px`;
+    tooltip.style.opacity = '1';
+    tooltip.style.visibility = 'visible';
 }
 
 function nextTourStep() {
@@ -297,6 +308,80 @@ document.addEventListener('keydown', (e) => {
         nextTourStep();
     } else if (e.key === 'ArrowLeft') {
         previousTourStep();
+    }
+});
+
+function ensureTooltipVisibility() {
+    const tooltip = document.getElementById('tourTooltip');
+    if (!tooltip || currentTourStep === undefined) return;
+
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // Check if tooltip is partially out of viewport
+    const isOutOfViewport = 
+        tooltipRect.top < 0 ||
+        tooltipRect.bottom > viewportHeight ||
+        tooltipRect.left < 0 ||
+        tooltipRect.right > viewportWidth;
+
+    if (isOutOfViewport) {
+        // Reposition to center of viewport
+        tooltip.style.top = '50%';
+        tooltip.style.left = '50%';
+        tooltip.style.transform = 'translate(-50%, -50%)';
+        
+        // Hide arrow when centered
+        const arrow = tooltip.querySelector('.tooltip-arrow');
+        if (arrow) {
+            arrow.style.display = 'none';
+        }
+    }
+}
+
+// Update the showTourStep function to include visibility check:
+function showTourStep(stepIndex) {
+    const step = tourSteps[stepIndex];
+    if (!step) return;
+
+    // Update step indicator
+    document.getElementById('currentStep').textContent = stepIndex + 1;
+    document.getElementById('totalSteps').textContent = tourSteps.length;
+
+    // Update tooltip content
+    document.getElementById('tooltipTitle').textContent = step.title;
+    document.getElementById('tooltipDescription').textContent = step.description;
+
+    // Update button states
+    const prevBtn = document.getElementById('prevStepBtn');
+    const nextBtn = document.getElementById('nextStepBtn');
+    
+    prevBtn.style.display = stepIndex === 0 ? 'none' : 'inline-flex';
+    nextBtn.innerHTML = stepIndex === tourSteps.length - 1 ? 
+        'Finish Tour <i class="fas fa-check"></i>' : 
+        'Next <i class="fas fa-arrow-right"></i>';
+
+    // Highlight target element
+    highlightTourElement(step);
+    
+    // Ensure tooltip is visible after a short delay
+    setTimeout(ensureTooltipVisibility, 100);
+}
+
+// Add this to handle window resizing during the tour
+window.addEventListener('resize', () => {
+    if (document.getElementById('tourSteps')?.classList.contains('active')) {
+        ensureTooltipVisibility();
+        
+        // Reposition for current step
+        const step = tourSteps[currentTourStep];
+        if (step) {
+            const targetElement = document.querySelector(step.element);
+            if (targetElement) {
+                positionTooltip(step, targetElement);
+            }
+        }
     }
 });
 
