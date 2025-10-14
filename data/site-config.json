@@ -6,124 +6,30 @@
   },
   "products": [
     {
-      "id": 2,
-      "name": "MacBook Pro M3",
-      "category": "laptops",
-      "description": "Professional laptop with M3 chip for demanding workflows.",
-      "price": "8100000",
-      "image": "public/macbook-pro-m3-laptop.jpg",
-      "featured": true,
-      "status": "active",
-      "badges": [
-        "bestseller"
-      ],
-      "rating": 5,
-      "dateUpdated": "2025-10-14T17:25:12.077Z"
-    },
-    {
-      "id": 3,
-      "name": "PlayStation 5",
-      "description": "Next-gen gaming console with ultra-high speed SSD",
-      "price": "2800000",
-      "image": "public/playstation-5-gaming-console.jpg",
-      "category": "gaming",
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-10T15:33:25.738Z",
-      "badges": [
-        "limited"
-      ],
-      "rating": 4.5,
-      "originalPrice": "0",
-      "dateUpdated": "2025-10-14T17:25:12.077Z"
-    },
-    {
-      "id": 4,
-      "name": "AirPods Pro",
-      "description": "Premium wireless earbuds with active noise cancellation.",
-      "price": "950000",
-      "image": "public/airpods-pro-wireless-earbuds.jpg",
-      "category": "accessories",
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-10T15:33:25.738Z",
-      "badges": [
-        "bestseller"
-      ],
-      "rating": 5,
-      "originalPrice": "0",
-      "dateUpdated": "2025-10-14T17:25:12.077Z"
-    },
-    {
-      "id": 1760449762728,
-      "name": "iPhone 15 Pro",
-      "sku": "APP-IPHONE-121",
+      "id": 1760465465949,
+      "name": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
+      "sku": "",
       "category": "smartphones",
-      "description": "IPHONE 15",
-      "price": "4600000",
-      "originalPrice": "6000000",
-      "image": "public/iphone-15-pro.png",
-      "stock": "in-stock",
-      "rating": 3,
-      "reviewCount": 400,
-      "badges": [
-        "new",
-        "bestseller"
-      ],
-      "features": [],
-      "specifications": {},
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-14T13:49:22.728Z",
-      "dateUpdated": "2025-10-14T16:12:02.383Z"
-    },
-    {
-      "id": 1760450969824,
-      "name": "iPhone 15 Pro",
-      "sku": "APP-IPHONE-121",
-      "category": "smartphones",
-      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB godwill",
-      "price": 4600000,
-      "originalPrice": 6000000,
-      "image": "public/iphone-15-pro.png",
-      "stock": "limited",
+      "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
+      "price": 1200000,
+      "originalPrice": 1500000,
+      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
+      "stock": "out-of-stock",
       "rating": 5,
-      "reviewCount": 57,
+      "reviewCount": 29,
       "badges": [
-        "limited"
+        "new"
       ],
       "features": [
-        "DGNBMJ",
-        "CGHKJL,XCGJ",
-        "CHGKJLHCL"
+        "new",
+        "durable",
+        "all you need"
       ],
       "specifications": {},
       "featured": true,
       "status": "active",
-      "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T17:32:49.597Z"
-    },
-    {
-      "id": 1,
-      "name": "iPhone 15 Pro",
-      "category": "smartphones",
-      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
-      "price": 4600000,
-      "image": "public/iphone-15-pro.png",
-      "featured": true,
-      "status": "active",
-      "badges": [
-        "new",
-        "sale"
-      ],
-      "rating": 5,
-      "dateUpdated": "2025-10-14T17:25:40.438Z",
-      "sku": "",
-      "originalPrice": null,
-      "stock": "pre-order",
-      "reviewCount": 0,
-      "features": [],
-      "specifications": {}
+      "dateAdded": "2025-10-14T18:11:05.949Z",
+      "dateUpdated": "2025-10-14T18:13:53.830Z"
     }
   ],
   "content": {
@@ -139,5 +45,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:35:22.915Z"
+  "lastUpdated": "2025-10-14T18:13:53.832Z"
 }
