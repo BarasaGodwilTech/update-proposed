@@ -6,22 +6,6 @@
   },
   "products": [
     {
-      "id": 1,
-      "name": "iPhone 15 Pro",
-      "category": "smartphones",
-      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
-      "price": "4600000",
-      "image": "public/iphone-15-pro.png",
-      "featured": true,
-      "status": "active",
-      "badges": [
-        "new",
-        "sale"
-      ],
-      "rating": 5,
-      "dateUpdated": "2025-10-14T13:45:38.887Z"
-    },
-    {
       "id": 2,
       "name": "MacBook Pro M3",
       "category": "laptops",
@@ -34,7 +18,7 @@
         "bestseller"
       ],
       "rating": 5,
-      "dateUpdated": "2025-10-14T09:43:04.727Z"
+      "dateUpdated": "2025-10-14T17:25:12.077Z"
     },
     {
       "id": 3,
@@ -50,7 +34,8 @@
         "limited"
       ],
       "rating": 4.5,
-      "originalPrice": "0"
+      "originalPrice": "0",
+      "dateUpdated": "2025-10-14T17:25:12.077Z"
     },
     {
       "id": 4,
@@ -67,7 +52,7 @@
       ],
       "rating": 5,
       "originalPrice": "0",
-      "dateUpdated": "2025-10-14T08:53:52.421Z"
+      "dateUpdated": "2025-10-14T17:25:12.077Z"
     },
     {
       "id": 1760449762728,
@@ -90,18 +75,18 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T13:49:22.728Z",
-      "dateUpdated": "2025-10-14T14:05:59.603Z"
+      "dateUpdated": "2025-10-14T16:12:02.383Z"
     },
     {
       "id": 1760450969824,
       "name": "iPhone 15 Pro",
       "sku": "APP-IPHONE-121",
       "category": "smartphones",
-      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB ",
-      "price": "4600000",
-      "originalPrice": "6000000",
+      "description": "IK;D;DYKCK,HC,VC,,,,,,,,,,,,GDNB godwill",
+      "price": 4600000,
+      "originalPrice": 6000000,
       "image": "public/iphone-15-pro.png",
-      "stock": "pre-order",
+      "stock": "limited",
       "rating": 5,
       "reviewCount": 57,
       "badges": [
@@ -116,32 +101,29 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T14:46:21.722Z"
+      "dateUpdated": "2025-10-14T17:32:49.597Z"
     },
     {
-      "id": 1760453717856,
+      "id": 1,
       "name": "iPhone 15 Pro",
-      "sku": "APP-IPHONE-121",
       "category": "smartphones",
-      "description": "ckh.d.gfkzkjuhxkhjnmvx",
-      "price": "4000000",
-      "originalPrice": "9000000",
+      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
+      "price": 4600000,
       "image": "public/iphone-15-pro.png",
-      "stock": "limited",
-      "rating": 3,
-      "reviewCount": 40,
-      "badges": [
-        "limited"
-      ],
-      "features": [
-        "xhhhkxskx",
-        "fhksksxkx",
-        "fxhkxkxk"
-      ],
-      "specifications": {},
       "featured": true,
       "status": "active",
-      "dateAdded": "2025-10-14T14:55:17.856Z"
+      "badges": [
+        "new",
+        "sale"
+      ],
+      "rating": 5,
+      "dateUpdated": "2025-10-14T17:25:40.438Z",
+      "sku": "",
+      "originalPrice": null,
+      "stock": "pre-order",
+      "reviewCount": 0,
+      "features": [],
+      "specifications": {}
     }
   ],
   "content": {
@@ -157,5 +139,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T14:55:17.856Z"
+  "lastUpdated": "2025-10-14T17:35:22.915Z"
 }
