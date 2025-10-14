@@ -405,6 +405,32 @@
     margin: 0.25rem 0;
 }
 
+.image-upload-section {
+    border: 2px dashed #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f9f9f9;
+    margin: 10px 0;
+}
+
+.image-upload-section:hover {
+    border-color: #007bff;
+}
+
+.image-preview {
+    margin-top: 10px;
+    text-align: center;
+}
+
+.image-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    background: white;
+}
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -597,6 +623,18 @@ We're working hard to bring you the ultimate tech shopping experience, deliverin
                     <label for="productImage">Image URL *</label>
                     <input type="text" id="productImage" class="form-control" required>
                 </div>
+
+                <!-- Add this upload section -->
+<div class="form-group">
+    <label for="productImageUpload">Or Upload Image (818x818px)</label>
+    <input type="file" id="productImageUpload" name="productImageUpload" class="form-control" accept="image/*">
+    <div id="productImagePreview" style="margin-top: 10px; display: none;">
+        <img id="productPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
+    </div>
+    <button type="button" id="uploadProductImageBtn" class="btn btn-secondary" style="margin-top: 10px;">
+        <i class="fas fa-upload"></i> Upload Image
+    </button>
+</div>
                 
                 <div class="form-group">
                     <label for="productStock">Stock Status</label>
@@ -711,6 +749,18 @@ We're working hard to bring you the ultimate tech shopping experience, deliverin
                     <input type="text" id="editProductImage" class="form-control" required>
                 </div>
                 
+                <!-- Add this upload section -->
+<div class="form-group">
+    <label for="editProductImageUpload">Or Upload Image (818x818px)</label>
+    <input type="file" id="editProductImageUpload" name="editProductImageUpload" class="form-control" accept="image/*">
+    <div id="editProductImagePreview" style="margin-top: 10px; display: none;">
+        <img id="editProductPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
+    </div>
+    <button type="button" id="uploadEditProductImageBtn" class="btn btn-secondary" style="margin-top: 10px;">
+        <i class="fas fa-upload"></i> Upload Image
+    </button>
+</div>
+
                 <div class="form-group">
                     <label for="editProductStock">Stock Status</label>
                     <select id="editProductStock" class="form-control">
@@ -973,6 +1023,10 @@ Business Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM</textarea>
                   <i class="fas fa-eye"></i> Preview
                     </button>
                 </div>
+                <!-- Add this button in your products tab -->
+<button class="btn btn-danger" onclick="admin.clearAllProducts()">
+    <i class="fas fa-trash"></i> Clear All Products
+</button>
               </div>
              </div>
             </div>

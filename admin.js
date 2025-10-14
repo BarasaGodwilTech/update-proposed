@@ -33,6 +33,7 @@ class WillTechAdmin {
         this.setupEventListeners();
         this.setupEditFormListener(); // ADD THIS LINE
         this.setupNavigation();
+        this.setupImageUpload(); // ADD THIS LINE
         
         console.log('Admin panel fully initialized');
     }
@@ -1625,6 +1626,228 @@ debugEditFormValues() {
         this.loadProducts();
         this.showAlert('All products shown successfully!', 'success');
     }
+
+    // Add this method to your WillTechAdmin class
+async clearAllProducts() {
+    if (!confirm('⚠️ Are you sure you want to clear ALL products? This cannot be undone!')) {
+        return;
+    }
+    
+    try {
+        this.showAlert('🗑️ Clearing all products...', 'success');
+        
+        // Clear all products from current data
+        this.currentData.products = [];
+        this.currentData.lastUpdated = new Date().toISOString();
+        
+        // Save empty products array to GitHub
+        await this.updateFileOnGitHub(
+            'data/site-config.json',
+            JSON.stringify(this.currentData, null, 2)
+        );
+        
+        // Update last saved state
+        this.lastSavedData.products = [];
+        
+        // Reload products display
+        this.loadProducts();
+        
+        this.showAlert('✅ All products cleared successfully!', 'success');
+        
+    } catch (error) {
+        this.showAlert(`❌ Failed to clear products: ${error.message}`, 'error');
+    }
+}
+
+// Add these methods to your WillTechAdmin class
+
+// Image upload functionality
+setupImageUpload() {
+    // Add product form upload
+    const uploadBtn = document.getElementById('uploadProductImageBtn');
+    const fileInput = document.getElementById('productImageUpload');
+    const preview = document.getElementById('productImagePreview');
+    const previewImg = document.getElementById('productPreviewImg');
+    const urlInput = document.getElementById('productImage');
+
+    if (uploadBtn && fileInput) {
+        uploadBtn.addEventListener('click', () => this.handleImageUpload(fileInput, preview, previewImg, urlInput));
+    }
+
+    // Edit product form upload
+    const editUploadBtn = document.getElementById('uploadEditProductImageBtn');
+    const editFileInput = document.getElementById('editProductImageUpload');
+    const editPreview = document.getElementById('editProductImagePreview');
+    const editPreviewImg = document.getElementById('editProductPreviewImg');
+    const editUrlInput = document.getElementById('editProductImage');
+
+    if (editUploadBtn && editFileInput) {
+        editUploadBtn.addEventListener('click', () => this.handleImageUpload(editFileInput, editPreview, editPreviewImg, editUrlInput));
+    }
+
+    // Preview when URL changes
+    if (urlInput) {
+        urlInput.addEventListener('input', (e) => {
+            if (e.target.value) {
+                preview.style.display = 'block';
+                previewImg.src = e.target.value;
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    }
+
+    if (editUrlInput) {
+        editUrlInput.addEventListener('input', (e) => {
+            if (e.target.value) {
+                editPreview.style.display = 'block';
+                editPreviewImg.src = e.target.value;
+            } else {
+                editPreview.style.display = 'none';
+            }
+        });
+    }
+}
+
+async handleImageUpload(fileInput, preview, previewImg, urlInput) {
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        this.showAlert('Please select an image file first', 'error');
+        return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        this.showAlert('Please select a valid image file', 'error');
+        return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        this.showAlert('Image size should be less than 5MB', 'error');
+        return;
+    }
+
+    try {
+        this.showAlert('🔄 Processing image...', 'success');
+        
+        // Resize image to 818x818
+        const resizedImage = await this.resizeImage(file, 818, 818);
+        
+        // Upload to GitHub
+        const imageUrl = await this.uploadImageToGitHub(resizedImage, file.name);
+        
+        // Update URL input and show preview
+        urlInput.value = imageUrl;
+        previewImg.src = imageUrl;
+        preview.style.display = 'block';
+        
+        this.showAlert('✅ Image uploaded successfully!', 'success');
+        
+    } catch (error) {
+        this.showAlert(`❌ Image upload failed: ${error.message}`, 'error');
+    }
+}
+
+resizeImage(file, maxWidth, maxHeight) {
+    return new Promise((resolve, reject) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calculate new dimensions while maintaining aspect ratio
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = Math.round((width * maxHeight) / height);
+                    height = maxHeight;
+                }
+            }
+            
+            // Set canvas dimensions
+            canvas.width = maxWidth;
+            canvas.height = maxHeight;
+            
+            // Create a white background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, maxWidth, maxHeight);
+            
+            // Center the image on canvas
+            const x = (maxWidth - width) / 2;
+            const y = (maxHeight - height) / 2;
+            
+            // Draw resized image
+            ctx.drawImage(img, x, y, width, height);
+            
+            // Convert to blob
+            canvas.toBlob(blob => {
+                resolve(blob);
+            }, 'image/jpeg', 0.8);
+        };
+        
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+async uploadImageToGitHub(imageBlob, originalFileName) {
+    if (!this.githubToken) {
+        throw new Error('GitHub token not set. Please configure settings first.');
+    }
+
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExtension = 'jpg'; // Always save as JPG after resizing
+    const fileName = `product-${timestamp}.${fileExtension}`;
+    const filePath = `public/images/products/${fileName}`;
+
+    // Convert blob to base64
+    const base64Image = await this.blobToBase64(imageBlob);
+
+    // Upload to GitHub
+    const response = await fetch(
+        `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}`,
+        {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${this.githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `📸 Add product image - ${fileName}`,
+                content: base64Image.split(',')[1], // Remove data:image/jpeg;base64, prefix
+                branch: this.repoConfig.branch
+            })
+        }
+    );
+
+    if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Upload failed');
+    }
+
+    // Return the raw image URL (GitHub CDN)
+    return `https://raw.githubusercontent.com/${this.repoConfig.owner}/${this.repoConfig.repo}/${this.repoConfig.branch}/${filePath}`;
+}
+
+blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
 
 } // <-- This is the closing brace of the WillTechAdmin class
 
