@@ -6,29 +6,23 @@ if (window.location.pathname.includes('admin.html') &&
 
 // ===== ONBOARDING GUIDE FUNCTIONALITY =====
 // ==== FIXED ONBOARDING GUIDE FUNCTIONALITY ====
+// ==== PROFESSIONAL ONBOARDING GUIDE ====
 function initOnboardingSystem() {
-    // Check if user has seen the guide before
     const hasSeenGuide = localStorage.getItem('willstech_guide_seen');
-    
-    // For testing purposes, you can force show the guide by:
-    // localStorage.removeItem('willstech_guide_seen');
     
     if (!hasSeenGuide) {
         setTimeout(() => {
             showOnboarding();
-        }, 2000); // Show after 2 seconds
+        }, 1500);
     }
-    
-    // Initialize onboarding functionality
-    initOnboarding();
 }
 
 function showOnboarding() {
     const overlay = document.getElementById('onboardingOverlay');
     if (overlay) {
         overlay.classList.add('active');
-        overlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        initOnboardingEvents();
     }
 }
 
@@ -36,235 +30,277 @@ function hideOnboarding() {
     const overlay = document.getElementById('onboardingOverlay');
     if (overlay) {
         overlay.classList.remove('active');
-        overlay.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        cleanupTour();
     }
 }
 
-function initOnboarding() {
-    const skipBtn = document.getElementById('skipBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const backBtn = document.getElementById('backBtn');
-    const progressDots = document.querySelectorAll('.progress-dot');
-    
-    if (!skipBtn || !nextBtn || !backBtn) {
-        console.warn('Onboarding elements not found');
-        return;
+function initOnboardingEvents() {
+    const startTourBtn = document.getElementById('startTourBtn');
+    const skipTourBtn = document.getElementById('skipTourBtn');
+    const closeTourBtn = document.getElementById('closeTourBtn');
+    const prevStepBtn = document.getElementById('prevStepBtn');
+    const nextStepBtn = document.getElementById('nextStepBtn');
+
+    if (startTourBtn) {
+        startTourBtn.addEventListener('click', startGuidedTour);
     }
-    
-    let currentStep = 0;
-    const totalSteps = 4; // Welcome + 3 tour steps
-    
-    // Skip button functionality
-    skipBtn.addEventListener('click', function() {
-        localStorage.setItem('willstech_guide_seen', 'true');
-        hideOnboarding();
-        showCompletionMessage();
-    });
-    
-    // Next button functionality
-    nextBtn.addEventListener('click', function() {
-        if (currentStep === 0) {
-            // Start the interactive tour
-            startInteractiveTour();
-            currentStep = 1;
-            updateProgressDots();
-            nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
-            backBtn.style.display = 'inline-flex';
-        } else if (currentStep < totalSteps - 1) {
-            // Continue to next step
-            currentStep++;
-            showTourStep(currentStep);
-            updateProgressDots();
-            
-            if (currentStep === totalSteps - 1) {
-                nextBtn.innerHTML = 'Got It! <i class="fas fa-check"></i>';
-            }
-        } else {
-            // End tour
+
+    if (skipTourBtn) {
+        skipTourBtn.addEventListener('click', () => {
             localStorage.setItem('willstech_guide_seen', 'true');
             hideOnboarding();
             showCompletionMessage();
-        }
-    });
-    
-    // Back button functionality
-    backBtn.addEventListener('click', function() {
-        if (currentStep > 1) {
-            currentStep--;
-            showTourStep(currentStep);
-            updateProgressDots();
-            
-            if (currentStep === 1) {
-                backBtn.style.display = 'none';
-            }
-            
-            nextBtn.innerHTML = 'Next <i class="fas fa-arrow-right"></i>';
-        } else if (currentStep === 1) {
-            // Go back to welcome screen
-            currentStep = 0;
-            hideTourHighlights();
-            updateProgressDots();
-            backBtn.style.display = 'none';
-            nextBtn.innerHTML = 'Take the Tour <i class="fas fa-arrow-right"></i>';
-        }
-    });
-    
-    function updateProgressDots() {
-        progressDots.forEach((dot, index) => {
-            dot.classList.toggle('active', index === currentStep);
         });
     }
-    
-    function startInteractiveTour() {
-        // Show first tour step
-        showTourStep(1);
+
+    if (closeTourBtn) {
+        closeTourBtn.addEventListener('click', () => {
+            localStorage.setItem('willstech_guide_seen', 'true');
+            hideOnboarding();
+            showCompletionMessage();
+        });
     }
-    
-    function showTourStep(step) {
-        // Clear previous highlights
-        hideTourHighlights();
-        
-        switch(step) {
-            case 1:
-                highlightProductsSection();
-                break;
-            case 2:
-                highlightWhatsAppSection();
-                break;
-            case 3:
-                highlightYouTubeSection();
-                break;
-        }
+
+    if (prevStepBtn) {
+        prevStepBtn.addEventListener('click', previousTourStep);
     }
-    
-    function highlightProductsSection() {
-        const productsSection = document.getElementById('products');
-        if (productsSection) {
-            const rect = productsSection.getBoundingClientRect();
-            
-            // Create highlight box
-            const highlightBox = document.createElement('div');
-            highlightBox.className = 'highlight-box';
-            highlightBox.style.width = `${rect.width}px`;
-            highlightBox.style.height = `${rect.height}px`;
-            highlightBox.style.top = `${rect.top + window.scrollY}px`;
-            highlightBox.style.left = `${rect.left}px`;
-            
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip';
-            tooltip.innerHTML = '<strong>Enhanced Product Showcase</strong><br>Browse our premium collection with improved filtering and quick view options';
-            tooltip.style.top = `${rect.top + window.scrollY - 120}px`;
-            tooltip.style.left = `${rect.left + rect.width/2 - 125}px`;
-            
-            document.getElementById('tourHighlights').appendChild(highlightBox);
-            document.getElementById('tourHighlights').appendChild(tooltip);
-            
-            // Scroll to section
-            productsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-    
-    function highlightWhatsAppSection() {
-        const whatsappSection = document.querySelector('.whatsapp-cta');
-        if (whatsappSection) {
-            const rect = whatsappSection.getBoundingClientRect();
-            
-            // Create highlight box
-            const highlightBox = document.createElement('div');
-            highlightBox.className = 'highlight-box';
-            highlightBox.style.width = `${rect.width}px`;
-            highlightBox.style.height = `${rect.height}px`;
-            highlightBox.style.top = `${rect.top + window.scrollY}px`;
-            highlightBox.style.left = `${rect.left}px`;
-            
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip';
-            tooltip.innerHTML = '<strong>WhatsApp Integration</strong><br>Get exclusive deals and instant support directly through WhatsApp';
-            tooltip.style.top = `${rect.top + window.scrollY - 120}px`;
-            tooltip.style.left = `${rect.left + rect.width/2 - 125}px`;
-            
-            document.getElementById('tourHighlights').appendChild(highlightBox);
-            document.getElementById('tourHighlights').appendChild(tooltip);
-            
-            // Scroll to section
-            whatsappSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-    
-    function highlightYouTubeSection() {
-        const youtubeSection = document.querySelector('.youtube-section');
-        if (youtubeSection) {
-            const rect = youtubeSection.getBoundingClientRect();
-            
-            // Create highlight box
-            const highlightBox = document.createElement('div');
-            highlightBox.className = 'highlight-box';
-            highlightBox.style.width = `${rect.width}px`;
-            highlightBox.style.height = `${rect.height}px`;
-            highlightBox.style.top = `${rect.top + window.scrollY}px`;
-            highlightBox.style.left = `${rect.left}px`;
-            
-            // Create tooltip
-            const tooltip = document.createElement('div');
-            tooltip.className = 'tooltip';
-            tooltip.innerHTML = '<strong>Video Reviews & Unboxings</strong><br>Watch authentic product reviews directly on our site';
-            tooltip.style.top = `${rect.top + window.scrollY - 120}px`;
-            tooltip.style.left = `${rect.left + rect.width/2 - 125}px`;
-            
-            document.getElementById('tourHighlights').appendChild(highlightBox);
-            document.getElementById('tourHighlights').appendChild(tooltip);
-            
-            // Scroll to section
-            youtubeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
-    
-    function hideTourHighlights() {
-        const tourHighlights = document.getElementById('tourHighlights');
-        if (tourHighlights) {
-            tourHighlights.innerHTML = '';
-        }
-    }
-    
-    function showCompletionMessage() {
-        // Show a subtle completion message
-        const completionMsg = document.createElement('div');
-        completionMsg.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-lg);
-            z-index: 1000;
-            font-family: 'Work Sans', sans-serif;
-            animation: slideInRight 0.5s ease-out;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        `;
-        completionMsg.innerHTML = '<i class="fas fa-check-circle"></i> You\'re all set! Enjoy exploring Will\'s Tech Store';
-        
-        document.body.appendChild(completionMsg);
-        
-        // Remove after 5 seconds
-        setTimeout(() => {
-            completionMsg.style.animation = 'slideOutRight 0.5s ease-in forwards';
-            setTimeout(() => {
-                if (document.body.contains(completionMsg)) {
-                    document.body.removeChild(completionMsg);
-                }
-            }, 500);
-        }, 5000);
+
+    if (nextStepBtn) {
+        nextStepBtn.addEventListener('click', nextTourStep);
     }
 }
 
-// ==== END ONBOARDING GUIDE ====
+// Tour Configuration
+const tourSteps = [
+    {
+        title: "Product Showcase",
+        description: "Browse our premium tech collection. Use category filters to find exactly what you need, and click 'Quick View' to see product details instantly.",
+        element: "#products",
+        position: "bottom",
+        scroll: true
+    },
+    {
+        title: "Quick View Feature",
+        description: "Click the 'Quick View' button on any product to see detailed information, features, and pricing without leaving the page.",
+        element: ".product-card:first-child .quick-view-btn",
+        position: "top",
+        scroll: true
+    },
+    {
+        title: "WhatsApp Integration",
+        description: "Get instant support and exclusive deals. Click any WhatsApp button to start a conversation with our team directly.",
+        element: ".whatsapp-cta",
+        position: "top",
+        scroll: true
+    },
+    {
+        title: "Video Demonstrations",
+        description: "Watch authentic product reviews and unboxings. Our video section helps you make informed decisions.",
+        element: ".youtube-section",
+        position: "bottom",
+        scroll: true
+    },
+    {
+        title: "Easy Ordering",
+        description: "Ready to purchase? Click 'Buy Now' on any product to order instantly through WhatsApp with secure payment options.",
+        element: ".product-card:first-child .buy-now-btn",
+        position: "top",
+        scroll: true
+    }
+];
+
+let currentTourStep = 0;
+
+function startGuidedTour() {
+    // Hide welcome screen, show tour
+    document.getElementById('welcomeScreen').classList.remove('active');
+    document.getElementById('tourSteps').classList.add('active');
+    
+    // Start with first step
+    showTourStep(0);
+}
+
+function showTourStep(stepIndex) {
+    const step = tourSteps[stepIndex];
+    if (!step) return;
+
+    // Update step indicator
+    document.getElementById('currentStep').textContent = stepIndex + 1;
+    document.getElementById('totalSteps').textContent = tourSteps.length;
+
+    // Update tooltip content
+    document.getElementById('tooltipTitle').textContent = step.title;
+    document.getElementById('tooltipDescription').textContent = step.description;
+
+    // Update button states
+    const prevBtn = document.getElementById('prevStepBtn');
+    const nextBtn = document.getElementById('nextStepBtn');
+    
+    prevBtn.style.display = stepIndex === 0 ? 'none' : 'inline-flex';
+    nextBtn.textContent = stepIndex === tourSteps.length - 1 ? 'Finish Tour' : 'Next';
+
+    // Highlight target element
+    highlightTourElement(step);
+}
+
+function highlightTourElement(step) {
+    // Cleanup previous highlights
+    cleanupTourHighlights();
+
+    const targetElement = document.querySelector(step.element);
+    if (!targetElement) {
+        console.warn('Tour element not found:', step.element);
+        return;
+    }
+
+    // Add highlight class
+    targetElement.classList.add('highlight-element');
+
+    // Scroll to element if needed
+    if (step.scroll) {
+        targetElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'center'
+        });
+    }
+
+    // Position tooltip
+    positionTooltip(step, targetElement);
+}
+
+function positionTooltip(step, targetElement) {
+    const tooltip = document.getElementById('tourTooltip');
+    const targetRect = targetElement.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+
+    let top, left;
+    const arrow = tooltip.querySelector('.tooltip-arrow');
+
+    switch (step.position) {
+        case 'top':
+            top = targetRect.top - tooltipRect.height - 20;
+            left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
+            arrow.className = 'tooltip-arrow top';
+            break;
+        case 'bottom':
+            top = targetRect.bottom + 20;
+            left = targetRect.left + (targetRect.width - tooltipRect.width) / 2;
+            arrow.className = 'tooltip-arrow';
+            break;
+        case 'left':
+            top = targetRect.top + (targetRect.height - tooltipRect.height) / 2;
+            left = targetRect.left - tooltipRect.width - 20;
+            break;
+        case 'right':
+            top = targetRect.top + (targetRect.height - tooltipRect.height) / 2;
+            left = targetRect.right + 20;
+            break;
+    }
+
+    // Ensure tooltip stays within viewport
+    left = Math.max(20, Math.min(left, window.innerWidth - tooltipRect.width - 20));
+    top = Math.max(20, Math.min(top, window.innerHeight - tooltipRect.height - 20));
+
+    tooltip.style.top = `${top}px`;
+    tooltip.style.left = `${left}px`;
+}
+
+function nextTourStep() {
+    if (currentTourStep < tourSteps.length - 1) {
+        currentTourStep++;
+        showTourStep(currentTourStep);
+    } else {
+        finishTour();
+    }
+}
+
+function previousTourStep() {
+    if (currentTourStep > 0) {
+        currentTourStep--;
+        showTourStep(currentTourStep);
+    }
+}
+
+function finishTour() {
+    localStorage.setItem('willstech_guide_seen', 'true');
+    hideOnboarding();
+    showCompletionMessage();
+}
+
+function cleanupTour() {
+    cleanupTourHighlights();
+    currentTourStep = 0;
+    
+    // Reset to welcome screen
+    document.getElementById('welcomeScreen').classList.add('active');
+    document.getElementById('tourSteps').classList.remove('active');
+}
+
+function cleanupTourHighlights() {
+    const highlightedElements = document.querySelectorAll('.highlight-element');
+    highlightedElements.forEach(el => {
+        el.classList.remove('highlight-element');
+    });
+}
+
+function showCompletionMessage() {
+    const completionMsg = document.createElement('div');
+    completionMsg.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--primary);
+        color: white;
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow-xl);
+        z-index: 1000;
+        font-family: 'Work Sans', sans-serif;
+        animation: slideInRight 0.5s ease-out;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        max-width: 300px;
+    `;
+    completionMsg.innerHTML = `
+        <i class="fas fa-check-circle" style="font-size: 1.5rem;"></i>
+        <div>
+            <strong>You're all set! 🎉</strong>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;">
+                Enjoy exploring Will's Tech Store
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(completionMsg);
+    
+    setTimeout(() => {
+        completionMsg.style.animation = 'slideOutRight 0.5s ease-in forwards';
+        setTimeout(() => {
+            if (document.body.contains(completionMsg)) {
+                document.body.removeChild(completionMsg);
+            }
+        }, 500);
+    }, 5000);
+}
+
+// Keyboard navigation for tour
+document.addEventListener('keydown', (e) => {
+    const tourActive = document.getElementById('tourSteps')?.classList.contains('active');
+    if (!tourActive) return;
+
+    if (e.key === 'Escape') {
+        finishTour();
+    } else if (e.key === 'ArrowRight') {
+        nextTourStep();
+    } else if (e.key === 'ArrowLeft') {
+        previousTourStep();
+    }
+});
+
+// ==== END PROFESSIONAL ONBOARDING GUIDE ====
 
 // Your existing script.js code continues below...
 // [YOUR EXISTING SCRIPT.JS CODE HERE]
