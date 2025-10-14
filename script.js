@@ -1801,25 +1801,69 @@ function initQuickView() {
     };
 
     // Add event listeners to quick view buttons
-    quickViewBtns.forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const productCard = btn.closest('.product-card');
-            if (!productCard) return;
-            
-            const productTitle = productCard.querySelector('h3').textContent;
-            const product = productData[productTitle];
+   quickViewBtn.addEventListener('click', function() {
+    const productCard = this.closest('.product-card');
+    const productId = productCard.getAttribute('data-product-id');
+    
+    // Try to get product from admin panel data first
+    const product = getProductFromAdminData(productId) || getProductFromCard(productCard);
+    openQuickViewModal(product);
+});
 
-            if (product) {
-                openQuickViewModal(product);
-            } else {
-                console.warn('Product data not found for:', productTitle);
-                showNotification('Product details not available', 'error');
-            }
+// Helper function to get product from admin panel data
+function getProductFromAdminData(productId) {
+    // This should access your siteData from admin panel
+    if (window.siteData && window.siteData.products) {
+        return window.siteData.products.find(p => p.id == productId);
+    }
+    return null;
+}
+
+// Fallback function to get product from HTML card
+function getProductFromCard(productCard) {
+    return {
+        name: productCard.querySelector('h3')?.textContent || '',
+        description: productCard.querySelector('.product-description')?.textContent || '',
+        price: extractPrice(productCard.querySelector('.current-price')?.textContent),
+        originalPrice: extractPrice(productCard.querySelector('.original-price')?.textContent),
+        image: productCard.querySelector('img')?.src || '',
+        rating: getRatingFromStars(productCard),
+        reviewCount: getReviewCount(productCard),
+        stock: 'in-stock', // Default
+        sku: '', // You might need to add this to your HTML
+        features: getFeaturesFromCard(productCard)
+    };
+}
+
+function extractPrice(priceText) {
+    if (!priceText) return 0;
+    return parseInt(priceText.replace(/[^\d]/g, '')) || 0;
+}
+
+function getRatingFromStars(productCard) {
+    const stars = productCard.querySelectorAll('.stars .fa-star, .stars .fa-star-half-alt');
+    let rating = 5;
+    if (stars.length > 0) {
+        rating = 0;
+        stars.forEach(star => {
+            if (star.classList.contains('fa-star')) rating += 1;
+            if (star.classList.contains('fa-star-half-alt')) rating += 0.5;
         });
-    });
+    }
+    return rating;
+}
+
+function getReviewCount(productCard) {
+    const ratingText = productCard.querySelector('.rating-count')?.textContent;
+    if (!ratingText) return 0;
+    const match = ratingText.match(/\((\d+)\s+reviews?\)/);
+    return match ? parseInt(match[1]) : 0;
+}
+
+function getFeaturesFromCard(productCard) {
+    // You might need to add features to your product cards
+    return ['Premium Quality', 'Authentic Product', 'Warranty Included'];
+}
 
     // Close modal functionality
     if (closeBtn) {
@@ -1843,80 +1887,145 @@ function initQuickView() {
     });
 
     function openQuickViewModal(product) {
-        if (!modal) return;
+    if (!modal) return;
 
-        // Update modal content
-        const elements = {
-            image: document.getElementById('modalProductImage'),
-            title: document.getElementById('modalProductTitle'),
-            description: document.getElementById('modalProductDescription'),
-            price: document.getElementById('modalProductPrice'),
-            originalPrice: document.getElementById('modalProductOriginalPrice'),
-            rating: document.getElementById('modalProductRating'),
-            stars: document.getElementById('modalProductStars'),
-            features: document.getElementById('modalProductFeatures'),
-            stock: document.getElementById('modalProductStock'),
-            sku: document.getElementById('modalProductSKU')
-        };
+    // Update modal content
+    const elements = {
+        image: document.getElementById('modalProductImage'),
+        title: document.getElementById('modalProductTitle'),
+        description: document.getElementById('modalProductDescription'),
+        price: document.getElementById('modalProductPrice'),
+        originalPrice: document.getElementById('modalProductOriginalPrice'),
+        rating: document.getElementById('modalProductRating'),
+        stars: document.getElementById('modalProductStars'),
+        features: document.getElementById('modalProductFeatures'),
+        stock: document.getElementById('modalProductStock'),
+        sku: document.getElementById('modalProductSKU'),
+        discount: document.getElementById('modalProductDiscount') // Add this if it exists
+    };
 
-        // Set product data
-        if (elements.image) elements.image.src = product.image;
-        if (elements.image) elements.image.alt = product.title;
-        if (elements.title) elements.title.textContent = product.title;
-        if (elements.description) elements.description.textContent = product.description;
-        if (elements.price) elements.price.textContent = product.price;
+    // Set product data from admin panel
+    if (elements.image) {
+        elements.image.src = product.image || '/placeholder.svg';
+        elements.image.alt = product.name || product.title;
+    }
+    
+    if (elements.title) elements.title.textContent = product.name || product.title;
+    if (elements.description) elements.description.textContent = product.description;
+    
+    // Format and set pricing
+    if (elements.price) {
+        elements.price.textContent = `UGX ${formatPrice(product.price)}`;
+    }
+    
+    // Handle original price and discount
+    if (elements.originalPrice) {
+        if (product.originalPrice && product.originalPrice > product.price) {
+            elements.originalPrice.textContent = `UGX ${formatPrice(product.originalPrice)}`;
+            elements.originalPrice.style.display = 'inline';
+            
+            // Calculate and show discount
+            const discount = Math.round((1 - product.price / product.originalPrice) * 100);
+            if (elements.discount) {
+                elements.discount.textContent = `Save ${discount}%`;
+                elements.discount.style.display = 'inline';
+            }
+        } else {
+            elements.originalPrice.style.display = 'none';
+            if (elements.discount) elements.discount.style.display = 'none';
+        }
+    }
+    
+    // Set rating and review count
+    if (elements.rating) {
+        elements.rating.textContent = `(${product.reviewCount || 0} reviews)`;
+    }
+    
+    // Set stock status with proper formatting
+    if (elements.stock) {
+        elements.stock.textContent = getStockStatusText(product.stock);
+        elements.stock.className = `stock-status ${product.stock || 'in-stock'}`;
+    }
+    
+    // Set SKU
+    if (elements.sku) {
+        elements.sku.textContent = `SKU: ${product.sku || 'N/A'}`;
+    }
+
+    // Generate stars from rating (0-5 scale)
+    if (elements.stars) {
+        elements.stars.innerHTML = '';
+        const rating = product.rating || 5;
         
-        // Handle original price
-        if (elements.originalPrice) {
-            if (product.originalPrice) {
-                elements.originalPrice.textContent = product.originalPrice;
-                elements.originalPrice.style.display = 'inline';
+        for (let i = 0; i < 5; i++) {
+            const star = document.createElement('i');
+            if (i < Math.floor(rating)) {
+                star.className = 'fas fa-star';
+            } else if (i < rating) {
+                star.className = 'fas fa-star-half-alt';
             } else {
-                elements.originalPrice.style.display = 'none';
+                star.className = 'far fa-star';
             }
+            elements.stars.appendChild(star);
         }
+    }
+
+    // Generate features list from admin panel data
+    if (elements.features) {
+        elements.features.innerHTML = '';
         
-        if (elements.rating) elements.rating.textContent = product.rating;
-        if (elements.stock) elements.stock.textContent = product.stock;
-        if (elements.sku) elements.sku.textContent = product.sku;
-
-        // Generate stars
-        if (elements.stars) {
-            elements.stars.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
-                const star = document.createElement('i');
-                if (i < Math.floor(product.stars)) {
-                    star.className = 'fas fa-star';
-                } else if (i < product.stars) {
-                    star.className = 'fas fa-star-half-alt';
-                } else {
-                    star.className = 'far fa-star';
-                }
-                elements.stars.appendChild(star);
-            }
-        }
-
-        // Generate features list
-        if (elements.features && product.features) {
-            elements.features.innerHTML = '';
+        if (product.features && product.features.length > 0) {
             product.features.forEach(feature => {
                 const li = document.createElement('li');
                 li.innerHTML = `<i class="fas fa-check" aria-hidden="true"></i> ${feature}`;
                 elements.features.appendChild(li);
             });
+        } else {
+            // Fallback if no features
+            const li = document.createElement('li');
+            li.innerHTML = `<i class="fas fa-check" aria-hidden="true"></i> Premium quality product`;
+            elements.features.appendChild(li);
         }
-
-        // Show modal
-        modal.classList.add('active');
-        modal.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-
-        // Add focus trap for accessibility
-        trapFocus(modal);
-
-        // Track quick view event
-        trackQuickView(product.title);
     }
+
+    // Update WhatsApp order button with product details
+    updateWhatsAppButton(product);
+
+    // Show modal
+    modal.classList.add('active');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    // Add focus trap for accessibility
+    trapFocus(modal);
+
+    // Track quick view event
+    trackQuickView(product.name || product.title);
+}
+
+// Add these helper functions if they don't exist:
+function formatPrice(price) {
+    return new Intl.NumberFormat('en-UG').format(price);
+}
+
+function getStockStatusText(stock) {
+    const statusMap = {
+        'in-stock': 'In Stock',
+        'out-of-stock': 'Out of Stock', 
+        'pre-order': 'Pre-Order',
+        'limited': 'Limited Stock'
+    };
+    return statusMap[stock] || 'In Stock';
+}
+
+function updateWhatsAppButton(product) {
+    const whatsappBtn = document.querySelector('.whatsapp-order');
+    if (whatsappBtn && product) {
+        const productName = encodeURIComponent(product.name || product.title);
+        const productPrice = encodeURIComponent(`UGX ${formatPrice(product.price)}`);
+        whatsappBtn.href = `https://wa.me/256751924844?text=Hi%20Will's%20Tech!%20I%20want%20to%20order%20${productName}%20for%20${productPrice}`;
+    }
+}
 
 
     function trapFocus(modal) {
@@ -1947,73 +2056,80 @@ function initQuickView() {
 
 
     function createQuickViewModal() {
-        const modalHTML = `
-            <div id="quickViewModal" class="modal" aria-hidden="true">
-                <div class="modal-overlay">
-                    <div class="modal-content" role="dialog" aria-labelledby="modalProductTitle" aria-modal="true">
-                        <button class="modal-close" aria-label="Close quick view">
-                            <i class="fas fa-times" aria-hidden="true"></i>
-                        </button>
+    const modalHTML = `
+        <div id="quickViewModal" class="modal" aria-hidden="true">
+            <div class="modal-overlay">
+                <div class="modal-content" role="dialog" aria-labelledby="modalProductTitle" aria-modal="true">
+                    <button class="modal-close" aria-label="Close quick view">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                    
+                    <div class="modal-body">
+                        <div class="modal-product-image">
+                            <img id="modalProductImage" src="" alt="" loading="lazy">
+                        </div>
                         
-                        <div class="modal-body">
-                            <div class="modal-product-image">
-                                <img id="modalProductImage" src="" alt="" loading="lazy">
+                        <div class="modal-product-info">
+                            <div class="product-header">
+                                <h2 id="modalProductTitle">Product Title</h2>
+                                <div class="product-meta">
+                                    <span id="modalProductStock" class="stock-status in-stock">In Stock</span>
+                                    <span id="modalProductSKU" class="product-sku">SKU: N/A</span>
+                                </div>
                             </div>
                             
-                            <div class="modal-product-info">
-                                <div class="product-header">
-                                    <h2 id="modalProductTitle">Product Title</h2>
-                                    <div class="product-meta">
-                                        <span id="modalProductStock" class="stock-status in-stock">In Stock</span>
-                                        <span id="modalProductSKU" class="product-sku">SKU: N/A</span>
-                                    </div>
+                            <div class="product-rating">
+                                <div id="modalProductStars" class="stars">
+                                    <!-- Stars will be generated here -->
                                 </div>
-                                
-                                <div class="product-rating">
-                                    <div id="modalProductStars" class="stars">
-                                        <!-- Stars will be generated here -->
-                                    </div>
-                                    <span id="modalProductRating" class="rating-count">(0 reviews)</span>
+                                <span id="modalProductRating" class="rating-count">(0 reviews)</span>
+                            </div>
+                            
+                            <div class="product-price">
+                                <span id="modalProductPrice" class="current-price">UGX 0</span>
+                                <span id="modalProductOriginalPrice" class="original-price" style="display: none;"></span>
+                                <span id="modalProductDiscount" class="discount-badge" style="display: none;"></span>
+                            </div>
+                            
+                            <div class="product-description">
+                                <p id="modalProductDescription">Product description will appear here.</p>
+                            </div>
+                            
+                            <div class="product-features">
+                                <h3>Key Features</h3>
+                                <ul id="modalProductFeatures">
+                                    <!-- Features will be generated here -->
+                                </ul>
+                            </div>
+
+                            <div class="product-specifications">
+                                <h3>Specifications</h3>
+                                <div id="modalProductSpecifications">
+                                    <!-- Specifications will be generated here -->
                                 </div>
-                                
-                                <div class="product-price">
-                                    <span id="modalProductPrice" class="current-price">UGX 0</span>
-                                    <span id="modalProductOriginalPrice" class="original-price" style="display: none;"></span>
-                                </div>
-                                
-                                <div class="product-description">
-                                    <p id="modalProductDescription">Product description will appear here.</p>
-                                </div>
-                                
-                                <div class="product-features">
-                                    <h3>Key Features</h3>
-                                    <ul id="modalProductFeatures">
-                                        <!-- Features will be generated here -->
-                                    </ul>
-                                </div>
-                                
-                                <div class="modal-actions">
-                                    <button class="btn btn-primary whatsapp-order">
-                                        <i class="fab fa-whatsapp" aria-hidden="true"></i>
-                                        Order on WhatsApp
-                                    </button>
-                                    <button class="btn btn-outline add-to-wishlist-modal">
-                                        <i class="far fa-heart" aria-hidden="true"></i>
-                                        Add to Wishlist
-                                    </button>
-                                </div>
+                            </div>
+                            
+                            <div class="modal-actions">
+                                <button class="btn btn-primary whatsapp-order">
+                                    <i class="fab fa-whatsapp" aria-hidden="true"></i>
+                                    Order on WhatsApp
+                                </button>
+                                <button class="btn btn-outline add-to-wishlist-modal">
+                                    <i class="far fa-heart" aria-hidden="true"></i>
+                                    Add to Wishlist
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        `;
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    setupQuickViewModal();
+}
 
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        // Re-initialize with the new modal
-        initQuickView();
-    }
 }
 
 // Track quick view events
