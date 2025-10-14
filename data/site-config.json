@@ -6,21 +6,6 @@
   },
   "products": [
     {
-      "id": 2,
-      "name": "MacBook Pro M3",
-      "category": "laptops",
-      "description": "Professional laptop with M3 chip for demanding workflows.",
-      "price": "8100000",
-      "image": "public/macbook-pro-m3-laptop.jpg",
-      "featured": true,
-      "status": "active",
-      "badges": [
-        "bestseller"
-      ],
-      "rating": 5,
-      "dateUpdated": "2025-10-14T17:25:12.077Z"
-    },
-    {
       "id": 3,
       "name": "PlayStation 5",
       "description": "Next-gen gaming console with ultra-high speed SSD",
@@ -101,29 +86,33 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T17:32:49.597Z"
+      "dateUpdated": "2025-10-14T17:32:49.598Z"
     },
     {
-      "id": 1,
-      "name": "iPhone 15 Pro",
-      "category": "smartphones",
-      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
-      "price": 4600000,
-      "image": "public/iphone-15-pro.png",
-      "featured": true,
-      "status": "active",
-      "badges": [
-        "new",
-        "sale"
-      ],
-      "rating": 5,
-      "dateUpdated": "2025-10-14T17:25:40.438Z",
+      "id": 1760458852682,
+      "name": "",
       "sku": "",
+      "category": "",
+      "description": "",
+      "price": 0,
       "originalPrice": null,
-      "stock": "pre-order",
+      "image": "",
+      "stock": "in-stock",
+      "rating": 5,
       "reviewCount": 0,
-      "features": [],
-      "specifications": {}
+      "badges": [
+        "new"
+      ],
+      "features": [
+        "fdsajdagkjfsgk",
+        "dtuktsfghjsjn",
+        "fryuuuuuuuukgjkh"
+      ],
+      "specifications": {},
+      "featured": false,
+      "status": "active",
+      "dateAdded": "2025-10-14T16:20:52.682Z",
+      "dateUpdated": "2025-10-14T17:02:15.172Z"
     }
   ],
   "content": {
@@ -139,5 +128,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:35:22.915Z"
+  "lastUpdated": "2025-10-14T17:36:25.452Z"
 }
