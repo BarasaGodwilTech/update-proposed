@@ -927,32 +927,43 @@ switchProductTab(tabName) {
     }
 
     async saveProductChanges(updatedProduct) {
-        if (!this.githubToken) {
-            this.showAlert('❌ Please set GitHub token in Settings first', 'error');
-            this.showTab('settings');
-            return false;
-        }
-
-        try {
-            this.showAlert(`💾 Updating product: ${updatedProduct.name}...`, 'success');
-            
-            // Update sync timestamp
-            this.currentData.lastUpdated = new Date().toISOString();
-            
-            // Update site-config.json with product changes
-            await this.updateFileOnGitHub(
-                'data/site-config.json',
-                JSON.stringify(this.currentData, null, 2)
-            );
-            
-            this.showAlert(`✅ Product "${updatedProduct.name}" updated successfully!`, 'success');
-            return true;
-            
-        } catch (error) {
-            this.showAlert(`❌ Product update failed: ${error.message}`, 'error');
-            return false;
-        }
+    if (!this.githubToken) {
+        this.showAlert('❌ Please set GitHub token in Settings first', 'error');
+        this.showTab('settings');
+        return false;
     }
+
+    try {
+        this.showAlert(`💾 Updating product: ${updatedProduct.name}...`, 'success');
+        
+        // Update sync timestamp
+        this.currentData.lastUpdated = new Date().toISOString();
+        
+        // Update site-config.json with product changes
+        const result = await this.updateFileOnGitHub(
+            'data/site-config.json',
+            JSON.stringify(this.currentData, null, 2)
+        );
+        
+        if (result && result.skipped) {
+            this.showAlert('ℹ️ No changes detected, update skipped', 'info');
+            return true;
+        }
+        
+        this.showAlert(`✅ Product "${updatedProduct.name}" updated successfully!`, 'success');
+        return true;
+        
+    } catch (error) {
+        // If conflict persists, suggest manual sync
+        if (error.message.includes('409')) {
+            this.showAlert('⚠️ Conflict detected. Please sync and try again.', 'error');
+            this.showTab('dashboard');
+        } else {
+            this.showAlert(`❌ Product update failed: ${error.message}`, 'error');
+        }
+        return false;
+    }
+}
 
     async saveNewProduct(newProduct) {
         if (!this.githubToken) {
@@ -1241,27 +1252,37 @@ cancelEdit() {
     }
 
     async updateFileOnGitHub(filePath, content) {
-        let existingSha = null;
-        
-        try {
-            const getResponse = await fetch(
-                `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.githubToken}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+    let existingSha = null;
+    
+    try {
+        // First, get the current file to get the latest SHA
+        const getResponse = await fetch(
+            `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${this.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
                 }
-            );
-
-            if (getResponse.ok) {
-                const fileData = await getResponse.json();
-                existingSha = fileData.sha;
             }
-        } catch (error) {
-            // File doesn't exist, we'll create it
-        }
+        );
 
+        if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            existingSha = fileData.sha;
+            
+            // If file exists, check if content is actually different
+            const existingContent = atob(fileData.content.replace(/\n/g, ''));
+            if (existingContent === content) {
+                console.log('No changes detected, skipping update');
+                return { skipped: true };
+            }
+        }
+    } catch (error) {
+        // File doesn't exist, we'll create it
+        console.log('File does not exist, will create new one');
+    }
+
+    try {
         const putResponse = await fetch(
             `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}`,
             {
@@ -1281,12 +1302,77 @@ cancelEdit() {
         );
 
         if (!putResponse.ok) {
+            if (putResponse.status === 409) {
+                // Conflict detected - retry with fresh data
+                console.log('Conflict detected, refreshing data and retrying...');
+                await this.syncWithGitHub(); // Refresh data
+                return await this.retryUpdateWithFreshData(filePath, content);
+            }
+            
             const errorText = await putResponse.text();
-            throw new Error(`Failed to update ${filePath}: ${putResponse.status}`);
+            throw new Error(`Failed to update ${filePath}: ${putResponse.status} - ${errorText}`);
         }
 
         return await putResponse.json();
+        
+    } catch (error) {
+        console.error('Update failed:', error);
+        throw error;
     }
+}
+
+// Add this method for retrying with fresh data
+async retryUpdateWithFreshData(filePath, content) {
+    // Wait a moment for sync to complete
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Get fresh SHA and retry
+    let existingSha = null;
+    
+    try {
+        const getResponse = await fetch(
+            `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}?ref=${this.repoConfig.branch}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${this.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                }
+            }
+        );
+
+        if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            existingSha = fileData.sha;
+        }
+    } catch (error) {
+        // File might not exist anymore
+    }
+
+    const putResponse = await fetch(
+        `https://api.github.com/repos/${this.repoConfig.owner}/${this.repoConfig.repo}/contents/${filePath}`,
+        {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${this.githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                message: `🔄 Will's Tech Update - ${filePath} - ${new Date().toLocaleString('en-UG')}`,
+                content: btoa(unescape(encodeURIComponent(content))),
+                branch: this.repoConfig.branch,
+                sha: existingSha
+            })
+        }
+    );
+
+    if (!putResponse.ok) {
+        const errorText = await putResponse.text();
+        throw new Error(`Retry failed for ${filePath}: ${putResponse.status}`);
+    }
+
+    return await putResponse.json();
+}
 
     async deployChanges() {
         const token = document.getElementById('githubToken')?.value;
@@ -1847,6 +1933,23 @@ blobToBase64(blob) {
         reader.onerror = reject;
         reader.readAsDataURL(blob);
     });
+}
+
+// Add this method to force sync and retry
+async forceSyncAndRetry() {
+    this.showAlert('🔄 Force syncing with GitHub...', 'success');
+    
+    try {
+        // Clear local cache and resync
+        this.currentData = {};
+        this.lastSavedData = {};
+        
+        await this.syncWithGitHub();
+        this.showAlert('✅ Sync completed! You can now try your update again.', 'success');
+        
+    } catch (error) {
+        this.showAlert(`❌ Force sync failed: ${error.message}`, 'error');
+    }
 }
 
 } // <-- This is the closing brace of the WillTechAdmin class
