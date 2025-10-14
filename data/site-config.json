@@ -13,7 +13,7 @@
       "price": "4600000",
       "image": "public/iphone-15-pro.png",
       "featured": true,
-      "status": "hidden",
+      "status": "active",
       "badges": [
         "new",
         "sale"
@@ -29,7 +29,7 @@
       "price": "8100000",
       "image": "public/macbook-pro-m3-laptop.jpg",
       "featured": true,
-      "status": "hidden",
+      "status": "active",
       "badges": [
         "bestseller"
       ],
@@ -44,7 +44,7 @@
       "image": "public/playstation-5-gaming-console.jpg",
       "category": "gaming",
       "featured": true,
-      "status": "hidden",
+      "status": "active",
       "dateAdded": "2025-10-10T15:33:25.738Z",
       "badges": [
         "limited"
@@ -60,7 +60,7 @@
       "image": "public/airpods-pro-wireless-earbuds.jpg",
       "category": "accessories",
       "featured": true,
-      "status": "hidden",
+      "status": "active",
       "dateAdded": "2025-10-10T15:33:25.738Z",
       "badges": [
         "bestseller"
