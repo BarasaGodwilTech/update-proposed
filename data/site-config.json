@@ -6,28 +6,6 @@
   },
   "products": [
     {
-      "id": 1,
-      "name": "iPhone 15 Pro",
-      "category": "smartphones",
-      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
-      "price": 4600000,
-      "image": "public/iphone-15-pro.png",
-      "featured": true,
-      "status": "active",
-      "badges": [
-        "new",
-        "sale"
-      ],
-      "rating": 5,
-      "dateUpdated": "2025-10-14T17:25:40.438Z",
-      "sku": "",
-      "originalPrice": null,
-      "stock": "pre-order",
-      "reviewCount": 0,
-      "features": [],
-      "specifications": {}
-    },
-    {
       "id": 2,
       "name": "MacBook Pro M3",
       "category": "laptops",
@@ -123,7 +101,7 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-14T14:09:29.824Z",
-      "dateUpdated": "2025-10-14T17:32:49.597Z"
+      "dateUpdated": "2025-10-14T17:32:49.598Z"
     },
     {
       "id": 1760458852682,
@@ -165,5 +143,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T17:32:49.597Z"
+  "lastUpdated": "2025-10-14T17:34:09.471Z"
 }
