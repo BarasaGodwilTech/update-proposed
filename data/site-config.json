@@ -11,10 +11,10 @@
       "sku": "",
       "category": "smartphones",
       "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
-      "price": "1200000",
-      "originalPrice": "1500000",
+      "price": 1200000,
+      "originalPrice": 1500000,
       "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
-      "stock": "pre-order",
+      "stock": "out-of-stock",
       "rating": 5,
       "reviewCount": 29,
       "badges": [
@@ -28,7 +28,8 @@
       "specifications": {},
       "featured": true,
       "status": "active",
-      "dateAdded": "2025-10-14T18:11:05.949Z"
+      "dateAdded": "2025-10-14T18:11:05.949Z",
+      "dateUpdated": "2025-10-14T18:13:53.830Z"
     }
   ],
   "content": {
@@ -44,5 +45,5 @@
     "tiktok": "http://www.tiktok.com/@willstech.store",
     "youtube": "https://www.youtube.com/@Willstech.storeug"
   },
-  "lastUpdated": "2025-10-14T18:11:05.949Z"
+  "lastUpdated": "2025-10-14T18:13:53.832Z"
 }
