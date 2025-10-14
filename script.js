@@ -4,6 +4,264 @@ if (window.location.pathname.includes('admin.html') &&
     window.location.href = 'admin-login.html';
 }
 
+// Admin authentication check - Add this at the TOP of your script.js file
+if (window.location.pathname.includes('admin.html') && 
+    !localStorage.getItem('willstech_admin_auth')) {
+    window.location.href = 'admin-login.html';
+}
+
+// ===== ONBOARDING GUIDE FUNCTIONALITY =====
+function initOnboardingSystem() {
+    // Check if user has seen the guide before
+    const hasSeenGuide = localStorage.getItem('willstech_guide_seen');
+    
+    // For testing purposes, you can force show the guide by removing the condition
+    if (!hasSeenGuide) {
+        setTimeout(() => {
+            showOnboarding();
+        }, 2000); // Show after 2 seconds
+    }
+    
+    // Initialize onboarding functionality
+    initOnboarding();
+}
+
+function showOnboarding() {
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) {
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function hideOnboarding() {
+    const overlay = document.getElementById('onboardingOverlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function initOnboarding() {
+    const skipBtn = document.getElementById('skipBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const backBtn = document.getElementById('backBtn');
+    const progressDots = document.querySelectorAll('.progress-dot');
+    
+    let currentStep = 0;
+    const totalSteps = 4; // Welcome + 3 tour steps
+    
+    // Skip button functionality
+    skipBtn.addEventListener('click', function() {
+        localStorage.setItem('willstech_guide_seen', 'true');
+        hideOnboarding();
+    });
+    
+    // Next button functionality
+    nextBtn.addEventListener('click', function() {
+        if (currentStep === 0) {
+            // Start the interactive tour
+            startInteractiveTour();
+            currentStep = 1;
+            updateProgressDots();
+            nextBtn.textContent = 'Next';
+            backBtn.style.display = 'inline-block';
+        } else if (currentStep < totalSteps - 1) {
+            // Continue to next step
+            currentStep++;
+            showTourStep(currentStep);
+            updateProgressDots();
+            
+            if (currentStep === totalSteps - 1) {
+                nextBtn.textContent = 'Got It!';
+            }
+        } else {
+            // End tour
+            localStorage.setItem('willstech_guide_seen', 'true');
+            hideOnboarding();
+            showCompletionMessage();
+        }
+    });
+    
+    // Back button functionality
+    backBtn.addEventListener('click', function() {
+        if (currentStep > 1) {
+            currentStep--;
+            showTourStep(currentStep);
+            updateProgressDots();
+            
+            if (currentStep === 1) {
+                backBtn.style.display = 'none';
+            }
+            
+            nextBtn.textContent = 'Next';
+        } else if (currentStep === 1) {
+            // Go back to welcome screen
+            currentStep = 0;
+            hideTourHighlights();
+            updateProgressDots();
+            backBtn.style.display = 'none';
+            nextBtn.textContent = 'Take the Tour';
+        }
+    });
+    
+    function updateProgressDots() {
+        progressDots.forEach((dot, index) => {
+            if (index <= currentStep) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
+        });
+    }
+    
+    function startInteractiveTour() {
+        // Show first tour step
+        showTourStep(1);
+    }
+    
+    function showTourStep(step) {
+        // Clear previous highlights
+        hideTourHighlights();
+        
+        switch(step) {
+            case 1:
+                highlightProductsSection();
+                break;
+            case 2:
+                highlightWhatsAppSection();
+                break;
+            case 3:
+                highlightYouTubeSection();
+                break;
+        }
+    }
+    
+    function highlightProductsSection() {
+        const productsSection = document.getElementById('products');
+        if (productsSection) {
+            const rect = productsSection.getBoundingClientRect();
+            
+            // Create highlight box
+            const highlightBox = document.createElement('div');
+            highlightBox.className = 'highlight-box';
+            highlightBox.style.width = `${rect.width}px`;
+            highlightBox.style.height = `${rect.height}px`;
+            highlightBox.style.top = `${rect.top + window.scrollY}px`;
+            highlightBox.style.left = `${rect.left}px`;
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.innerHTML = '<strong>Enhanced Product Showcase</strong><br>Browse our premium collection with improved filtering and quick view options';
+            tooltip.style.top = `${rect.top + window.scrollY - 120}px`;
+            tooltip.style.left = `${rect.left + rect.width/2 - 125}px`;
+            
+            document.getElementById('tourHighlights').appendChild(highlightBox);
+            document.getElementById('tourHighlights').appendChild(tooltip);
+            
+            // Scroll to section
+            productsSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    function highlightWhatsAppSection() {
+        const whatsappSection = document.querySelector('.whatsapp-cta');
+        if (whatsappSection) {
+            const rect = whatsappSection.getBoundingClientRect();
+            
+            // Create highlight box
+            const highlightBox = document.createElement('div');
+            highlightBox.className = 'highlight-box';
+            highlightBox.style.width = `${rect.width}px`;
+            highlightBox.style.height = `${rect.height}px`;
+            highlightBox.style.top = `${rect.top + window.scrollY}px`;
+            highlightBox.style.left = `${rect.left}px`;
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.innerHTML = '<strong>WhatsApp Integration</strong><br>Get exclusive deals and instant support directly through WhatsApp';
+            tooltip.style.top = `${rect.top + window.scrollY - 120}px`;
+            tooltip.style.left = `${rect.left + rect.width/2 - 125}px`;
+            
+            document.getElementById('tourHighlights').appendChild(highlightBox);
+            document.getElementById('tourHighlights').appendChild(tooltip);
+            
+            // Scroll to section
+            whatsappSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    function highlightYouTubeSection() {
+        const youtubeSection = document.querySelector('.youtube-section');
+        if (youtubeSection) {
+            const rect = youtubeSection.getBoundingClientRect();
+            
+            // Create highlight box
+            const highlightBox = document.createElement('div');
+            highlightBox.className = 'highlight-box';
+            highlightBox.style.width = `${rect.width}px`;
+            highlightBox.style.height = `${rect.height}px`;
+            highlightBox.style.top = `${rect.top + window.scrollY}px`;
+            highlightBox.style.left = `${rect.left}px`;
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip';
+            tooltip.innerHTML = '<strong>Video Reviews & Unboxings</strong><br>Watch authentic product reviews directly on our site';
+            tooltip.style.top = `${rect.top + window.scrollY - 120}px`;
+            tooltip.style.left = `${rect.left + rect.width/2 - 125}px`;
+            
+            document.getElementById('tourHighlights').appendChild(highlightBox);
+            document.getElementById('tourHighlights').appendChild(tooltip);
+            
+            // Scroll to section
+            youtubeSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+    
+    function hideTourHighlights() {
+        const tourHighlights = document.getElementById('tourHighlights');
+        if (tourHighlights) {
+            tourHighlights.innerHTML = '';
+        }
+    }
+    
+    function showCompletionMessage() {
+        // Show a subtle completion message
+        const completionMsg = document.createElement('div');
+        completionMsg.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #164e63;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-family: 'Work Sans', sans-serif;
+            animation: slideInRight 0.5s ease-out;
+        `;
+        completionMsg.innerHTML = '<i class="fas fa-check-circle"></i> You\'re all set! Enjoy exploring Will\'s Tech Store';
+        
+        document.body.appendChild(completionMsg);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            completionMsg.style.animation = 'slideOutRight 0.5s ease-in forwards';
+            setTimeout(() => {
+                if (document.body.contains(completionMsg)) {
+                    document.body.removeChild(completionMsg);
+                }
+            }, 500);
+        }, 5000);
+    }
+}
+
+// ===== END ONBOARDING GUIDE =====
+
 // Your existing script.js code continues below...
 // [YOUR EXISTING SCRIPT.JS CODE HERE]
 
