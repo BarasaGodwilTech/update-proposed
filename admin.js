@@ -624,61 +624,88 @@ switchProductTab(tabName) {
     }
 
     async handleProductForm(e) {
-        e.preventDefault();
-        
-        const productData = {
-            name: document.getElementById('productName').value,
-            category: document.getElementById('productCategory').value,
-            description: document.getElementById('productDescription').value,
-            price: document.getElementById('productPrice').value,
-            image: document.getElementById('productImage').value,
-            featured: document.getElementById('productFeatured').checked,
-            status: 'active'
-        };
-
-        if (this.editingProductId) {
-            // Update existing product
-            const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
-            if (productIndex !== -1) {
-                const oldProduct = this.currentData.products[productIndex];
-                this.currentData.products[productIndex] = {
-                    ...oldProduct,
-                    ...productData,
-                    dateUpdated: new Date().toISOString()
-                };
-                
-                // Check if product actually changed
-                if (this.hasProductChanged(oldProduct, this.currentData.products[productIndex])) {
-                    await this.saveProductChanges(this.currentData.products[productIndex]);
-                    this.showAlert('Product updated successfully!', 'success');
-                } else {
-                    this.showAlert('No changes detected in product.', 'info');
-                }
-            }
-        } else {
-            // Add new product
-            const newProduct = {
-                id: Date.now(),
-                ...productData,
-                dateAdded: new Date().toISOString(),
-                badges: ['new'],
-                rating: 5
-            };
-            
-            if (!this.currentData.products) {
-                this.currentData.products = [];
-            }
-            
-            this.currentData.products.push(newProduct);
-            await this.saveNewProduct(newProduct);
-            this.showAlert('Product added successfully!', 'success');
+    e.preventDefault();
+    
+    // Get badges from checkboxes
+    const badgeCheckboxes = document.querySelectorAll('#add-product input[name="productBadges"]:checked');
+    const badges = Array.from(badgeCheckboxes).map(cb => cb.value);
+    
+    // Get features from textarea
+    const featuresText = document.getElementById('productFeatures').value;
+    const features = featuresText.split('\n').filter(f => f.trim() !== '');
+    
+    // Parse specifications
+    let specifications = {};
+    try {
+        const specsText = document.getElementById('productSpecifications').value;
+        if (specsText.trim()) {
+            specifications = JSON.parse(specsText);
         }
-        
-        this.loadProducts();
-        this.cancelEdit();
-        e.target.reset();
+    } catch (error) {
+        this.showAlert('Invalid specifications JSON format', 'error');
+        return;
     }
 
+    const productData = {
+        name: document.getElementById('productName').value,
+        sku: document.getElementById('productSku').value,
+        category: document.getElementById('productCategory').value,
+        description: document.getElementById('productDescription').value,
+        price: document.getElementById('productPrice').value,
+        originalPrice: document.getElementById('productOriginalPrice').value || null,
+        image: document.getElementById('productImage').value,
+        stock: document.getElementById('productStock').value,
+        rating: parseFloat(document.getElementById('productRating').value),
+        reviewCount: parseInt(document.getElementById('productReviewCount').value),
+        badges: badges,
+        features: features,
+        specifications: specifications,
+        featured: document.getElementById('productFeatured').checked,
+        status: 'active'
+    };
+
+    if (this.editingProductId) {
+        // Update existing product
+        const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
+        if (productIndex !== -1) {
+            const oldProduct = this.currentData.products[productIndex];
+            this.currentData.products[productIndex] = {
+                ...oldProduct,
+                ...productData,
+                dateUpdated: new Date().toISOString()
+            };
+            
+            if (this.hasProductChanged(oldProduct, this.currentData.products[productIndex])) {
+                await this.saveProductChanges(this.currentData.products[productIndex]);
+                this.showAlert('Product updated successfully!', 'success');
+                this.cancelEdit();
+            } else {
+                this.showAlert('No changes detected in product.', 'info');
+            }
+        }
+    } else {
+        // Add new product
+        const newProduct = {
+            id: Date.now(),
+            ...productData,
+            dateAdded: new Date().toISOString()
+        };
+        
+        if (!this.currentData.products) {
+            this.currentData.products = [];
+        }
+        
+        this.currentData.products.push(newProduct);
+        await this.saveNewProduct(newProduct);
+        this.showAlert('Product added successfully!', 'success');
+    }
+    
+    this.loadProducts();
+    this.cancelEdit();
+    e.target.reset();
+}
+
+//handleContentForm
     async handleContentForm(e) {
         e.preventDefault();
         
@@ -993,57 +1020,82 @@ switchProductTab(tabName) {
     }
 
     createProductCard(product) {
-        const card = document.createElement('div');
-        card.className = `product-card ${product.status === 'hidden' ? 'product-hidden' : ''}`;
-        
-        const formattedPrice = this.formatPrice(product.price);
-        const ratingStars = this.generateRatingStars(product.rating || 5);
-        
-        card.innerHTML = `
-            <div class="product-image">
-                ${product.image ? 
-                    `<img src="${product.image}" alt="${product.name}" style="width: 100%; height: 120px; object-fit: cover;">` :
-                    `<i class="fas fa-box" style="font-size: 3rem; color: #ccc;"></i>`
-                }
-                ${product.featured ? '<div class="featured-badge">Featured</div>' : ''}
-                ${product.status === 'hidden' ? '<div class="hidden-badge">Hidden</div>' : ''}
-                ${product.badges && product.badges.length > 0 ? `
-                    <div class="product-badges">
-                        ${product.badges.map(badge => `<span class="product-badge badge-${badge}">${badge}</span>`).join('')}
-                    </div>
-                ` : ''}
-            </div>
-            <h3>${product.name}</h3>
-            <p class="product-description">${product.description}</p>
-            <p><strong>UGX ${formattedPrice}</strong></p>
-            <p><small>Category: ${product.category}</small></p>
-            <p><small>Added: ${new Date(product.dateAdded).toLocaleDateString()}</small></p>
-            ${product.rating ? `
-                <div class="product-rating">
-                    <div class="stars" aria-label="${product.rating} out of 5 stars">
-                        ${ratingStars}
-                    </div>
+    const card = document.createElement('div');
+    card.className = `product-card ${product.status === 'hidden' ? 'product-hidden' : ''}`;
+    
+    const formattedPrice = this.formatPrice(product.price);
+    const formattedOriginalPrice = product.originalPrice ? this.formatPrice(product.originalPrice) : null;
+    const ratingStars = this.generateRatingStars(product.rating || 5);
+    const discount = formattedOriginalPrice ? 
+        Math.round((1 - product.price / product.originalPrice) * 100) : null;
+    
+    card.innerHTML = `
+        <div class="product-image">
+            ${product.image ? 
+                `<img src="${product.image}" alt="${product.name}" style="width: 100%; height: 120px; object-fit: cover;">` :
+                `<i class="fas fa-box" style="font-size: 3rem; color: #ccc;"></i>`
+            }
+            ${product.featured ? '<div class="featured-badge">Featured</div>' : ''}
+            ${product.status === 'hidden' ? '<div class="hidden-badge">Hidden</div>' : ''}
+            ${product.badges && product.badges.length > 0 ? `
+                <div class="product-badges">
+                    ${product.badges.map(badge => `<span class="product-badge badge-${badge}">${badge}</span>`).join('')}
                 </div>
             ` : ''}
-            <div class="product-actions">
-                <button class="btn btn-primary" onclick="admin.editProduct(${product.id})">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                ${product.status === 'hidden' ? 
-                    `<button class="btn btn-success" onclick="admin.toggleProductVisibility(${product.id})">
-                        <i class="fas fa-eye"></i> Show
-                    </button>` :
-                    `<button class="btn btn-warning" onclick="admin.toggleProductVisibility(${product.id})">
-                        <i class="fas fa-eye-slash"></i> Hide
-                    </button>`
-                }
-                <button class="btn btn-danger" onclick="admin.deleteProduct(${product.id})">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
+        </div>
+        <h3>${product.name}</h3>
+        <p class="product-sku"><small>SKU: ${product.sku || 'N/A'}</small></p>
+        <p class="product-description">${product.description}</p>
+        
+        <div class="product-pricing">
+            <p><strong>UGX ${formattedPrice}</strong></p>
+            ${formattedOriginalPrice ? `
+                <p><small style="text-decoration: line-through; color: #666;">UGX ${formattedOriginalPrice}</small></p>
+                ${discount ? `<p><small style="color: #ef4444;">Save ${discount}%</small></p>` : ''}
+            ` : ''}
+        </div>
+        
+        <p><small>Category: ${product.category}</small></p>
+        <p><small>Stock: <span class="stock-${product.stock || 'in-stock'}">${this.formatStockStatus(product.stock)}</span></small></p>
+        
+        ${product.rating ? `
+            <div class="product-rating">
+                <div class="stars" aria-label="${product.rating} out of 5 stars">
+                    ${ratingStars}
+                </div>
+                <span class="rating-count">(${product.reviewCount || 0} reviews)</span>
             </div>
-        `;
-        return card;
-    }
+        ` : ''}
+        
+        ${product.features && product.features.length > 0 ? `
+            <div class="product-features-preview">
+                <strong>Key Features:</strong>
+                <ul>
+                    ${product.features.slice(0, 3).map(feature => `<li>${feature}</li>`).join('')}
+                    ${product.features.length > 3 ? `<li>+${product.features.length - 3} more</li>` : ''}
+                </ul>
+            </div>
+        ` : ''}
+        
+        <div class="product-actions">
+            <button class="btn btn-primary" onclick="admin.editProduct(${product.id})">
+                <i class="fas fa-edit"></i> Edit
+            </button>
+            ${product.status === 'hidden' ? 
+                `<button class="btn btn-success" onclick="admin.toggleProductVisibility(${product.id})">
+                    <i class="fas fa-eye"></i> Show
+                </button>` :
+                `<button class="btn btn-warning" onclick="admin.toggleProductVisibility(${product.id})">
+                    <i class="fas fa-eye-slash"></i> Hide
+                </button>`
+            }
+            <button class="btn btn-danger" onclick="admin.deleteProduct(${product.id})">
+                <i class="fas fa-trash"></i> Delete
+            </button>
+        </div>
+    `;
+    return card;
+}
 
     generateRatingStars(rating) {
         let stars = '';
@@ -1071,13 +1123,31 @@ switchProductTab(tabName) {
     editProduct(productId) {
     const product = this.currentData.products.find(p => p.id === productId);
     if (product) {
-        // Populate edit form with product data
+        // Populate basic fields
         document.getElementById('editProductName').value = product.name;
+        document.getElementById('editProductSku').value = product.sku || '';
         document.getElementById('editProductCategory').value = product.category;
         document.getElementById('editProductDescription').value = product.description;
         document.getElementById('editProductPrice').value = product.price;
+        document.getElementById('editProductOriginalPrice').value = product.originalPrice || '';
         document.getElementById('editProductImage').value = product.image || '';
+        document.getElementById('editProductStock').value = product.stock || 'in-stock';
+        document.getElementById('editProductRating').value = product.rating || 5;
+        document.getElementById('editProductReviewCount').value = product.reviewCount || 0;
         document.getElementById('editProductFeatured').checked = product.featured || false;
+        
+        // Populate badges
+        const badgeCheckboxes = document.querySelectorAll('#edit-product input[name="editProductBadges"]');
+        badgeCheckboxes.forEach(checkbox => {
+            checkbox.checked = product.badges ? product.badges.includes(checkbox.value) : false;
+        });
+        
+        // Populate features
+        document.getElementById('editProductFeatures').value = product.features ? product.features.join('\n') : '';
+        
+        // Populate specifications
+        document.getElementById('editProductSpecifications').value = product.specifications ? 
+            JSON.stringify(product.specifications, null, 2) : '';
         
         // Set editing mode
         this.editingProductId = productId;
@@ -1319,7 +1389,142 @@ cancelEdit() {
         localStorage.removeItem('willstech_admin_auth');
         window.location.href = 'admin-login.html';
     }
-}
+       // ============ NEW METHODS ADD HERE ============
+
+    // Helper method to format stock status
+    formatStockStatus(stock) {
+        const statusMap = {
+            'in-stock': 'In Stock',
+            'out-of-stock': 'Out of Stock',
+            'pre-order': 'Pre-Order',
+            'limited': 'Limited Stock'
+        };
+        return statusMap[stock] || 'In Stock';
+    }
+
+    // Bulk product management methods
+    async exportProducts() {
+        const productsData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            products: this.currentData.products
+        };
+        
+        const dataStr = JSON.stringify(productsData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `willstech-products-export-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        
+        this.showAlert('Products exported successfully!', 'success');
+    }
+
+    async importProducts() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = async e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = async event => {
+                try {
+                    const importData = JSON.parse(event.target.result);
+                    
+                    if (!importData.products || !Array.isArray(importData.products)) {
+                        throw new Error('Invalid import file format');
+                    }
+                    
+                    // Merge imported products with existing ones
+                    const existingIds = new Set(this.currentData.products.map(p => p.id));
+                    let newProductsCount = 0;
+                    let updatedProductsCount = 0;
+                    
+                    importData.products.forEach(importedProduct => {
+                        const existingIndex = this.currentData.products.findIndex(p => p.id === importedProduct.id);
+                        
+                        if (existingIndex !== -1) {
+                            // Update existing product
+                            this.currentData.products[existingIndex] = {
+                                ...this.currentData.products[existingIndex],
+                                ...importedProduct,
+                                dateUpdated: new Date().toISOString()
+                            };
+                            updatedProductsCount++;
+                        } else {
+                            // Add new product with new ID if ID already exists
+                            const newProduct = {
+                                ...importedProduct,
+                                id: existingIds.has(importedProduct.id) ? Date.now() + Math.random() : importedProduct.id,
+                                dateAdded: new Date().toISOString()
+                            };
+                            this.currentData.products.push(newProduct);
+                            existingIds.add(newProduct.id);
+                            newProductsCount++;
+                        }
+                    });
+                    
+                    // Save to GitHub
+                    await this.updateFileOnGitHub(
+                        'data/site-config.json',
+                        JSON.stringify(this.currentData, null, 2)
+                    );
+                    
+                    this.loadProducts();
+                    this.showAlert(`Import successful! ${newProductsCount} new products added, ${updatedProductsCount} products updated.`, 'success');
+                    
+                } catch (error) {
+                    this.showAlert(`Import failed: ${error.message}`, 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        };
+        
+        input.click();
+    }
+
+    async bulkHideProducts() {
+        if (!confirm('Are you sure you want to hide all products?')) {
+            return;
+        }
+        
+        this.currentData.products.forEach(product => {
+            product.status = 'hidden';
+        });
+        
+        await this.updateFileOnGitHub(
+            'data/site-config.json',
+            JSON.stringify(this.currentData, null, 2)
+        );
+        
+        this.loadProducts();
+        this.showAlert('All products hidden successfully!', 'success');
+    }
+
+    async bulkShowProducts() {
+        if (!confirm('Are you sure you want to show all products?')) {
+            return;
+        }
+        
+        this.currentData.products.forEach(product => {
+            product.status = 'active';
+        });
+        
+        await this.updateFileOnGitHub(
+            'data/site-config.json',
+            JSON.stringify(this.currentData, null, 2)
+        );
+        
+        this.loadProducts();
+        this.showAlert('All products shown successfully!', 'success');
+    }
+
+} // <-- This is the closing brace of the WillTechAdmin class
+
 
 // Initialize admin panel when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
