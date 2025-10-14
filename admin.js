@@ -480,39 +480,96 @@ resetProductTabs() {
 }
 
 // Handle edit form submission
+// REPLACE the current handleEditProductForm method with this:
 async handleEditProductForm(e) {
     e.preventDefault();
     
+    // Debug: check what form values we're getting
+    this.debugEditFormValues();
+    
+    console.log('Edit form submitted, product ID:', this.editingProductId);
+    
+    if (!this.editingProductId) {
+        this.showAlert('No product selected for editing', 'error');
+        return;
+    }
+
+    // Get badges from EDIT FORM checkboxes
+    const badgeCheckboxes = document.querySelectorAll('#edit-product input[name="editProductBadges"]:checked');
+    const badges = Array.from(badgeCheckboxes).map(cb => cb.value);
+    
+    // Get features from EDIT FORM textarea
+    const featuresText = document.getElementById('editProductFeatures').value;
+    const features = featuresText.split('\n').filter(f => f.trim() !== '');
+    
+    // Parse specifications from EDIT FORM
+    let specifications = {};
+    try {
+        const specsText = document.getElementById('editProductSpecifications').value;
+        if (specsText.trim()) {
+            specifications = JSON.parse(specsText);
+        }
+    } catch (error) {
+        this.showAlert('Invalid specifications JSON format', 'error');
+        return;
+    }
+
+    // Get values from EDIT FORM fields (notice the "edit" prefix)
     const productData = {
         name: document.getElementById('editProductName').value,
+        sku: document.getElementById('editProductSku').value,
         category: document.getElementById('editProductCategory').value,
         description: document.getElementById('editProductDescription').value,
-        price: document.getElementById('editProductPrice').value,
+        price: parseFloat(document.getElementById('editProductPrice').value) || 0,
+        originalPrice: document.getElementById('editProductOriginalPrice').value ? 
+            parseFloat(document.getElementById('editProductOriginalPrice').value) : null,
         image: document.getElementById('editProductImage').value,
+        stock: document.getElementById('editProductStock').value,
+        rating: parseFloat(document.getElementById('editProductRating').value) || 5,
+        reviewCount: parseInt(document.getElementById('editProductReviewCount').value) || 0,
+        badges: badges,
+        features: features,
+        specifications: specifications,
         featured: document.getElementById('editProductFeatured').checked,
         status: 'active'
     };
 
-    if (this.editingProductId) {
-        // Update existing product
-        const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
-        if (productIndex !== -1) {
-            const oldProduct = this.currentData.products[productIndex];
-            this.currentData.products[productIndex] = {
-                ...oldProduct,
-                ...productData,
-                dateUpdated: new Date().toISOString()
-            };
-            
-            // Check if product actually changed
-            if (this.hasProductChanged(oldProduct, this.currentData.products[productIndex])) {
-                await this.saveProductChanges(this.currentData.products[productIndex]);
-                this.showAlert('Product updated successfully!', 'success');
+    console.log('Updated product data:', productData);
+
+    // Update existing product
+    const productIndex = this.currentData.products.findIndex(p => p.id === this.editingProductId);
+    console.log('Product index found:', productIndex);
+    
+    if (productIndex !== -1) {
+        const oldProduct = this.currentData.products[productIndex];
+        console.log('Old product:', oldProduct);
+        
+        // Preserve original ID and dates, update other fields
+        this.currentData.products[productIndex] = {
+            ...oldProduct,
+            ...productData,
+            id: this.editingProductId, // Ensure ID stays the same
+            dateAdded: oldProduct.dateAdded, // Preserve original date
+            dateUpdated: new Date().toISOString()
+        };
+        
+        console.log('Updated product:', this.currentData.products[productIndex]);
+        
+        // Check if product actually changed
+        if (this.hasProductChanged(oldProduct, this.currentData.products[productIndex])) {
+            console.log('Product changed, saving to GitHub...');
+            const success = await this.saveProductChanges(this.currentData.products[productIndex]);
+            if (success) {
+                this.showAlert(`Product "${productData.name}" updated successfully!`, 'success');
+                this.loadProducts(); // Refresh the products display
                 this.cancelEdit(); // Go back to products list
-            } else {
-                this.showAlert('No changes detected in product.', 'info');
             }
+        } else {
+            this.showAlert('No changes detected in product.', 'info');
+            this.cancelEdit();
         }
+    } else {
+        this.showAlert('Product not found for editing.', 'error');
     }
 }
 
@@ -1121,14 +1178,18 @@ switchProductTab(tabName) {
     // NEW VERSION - REPLACE WITH THIS:
 
     editProduct(productId) {
+    console.log('Editing product ID:', productId);
     const product = this.currentData.products.find(p => p.id === productId);
+    
     if (product) {
+        console.log('Product found:', product);
+        
         // Populate basic fields
-        document.getElementById('editProductName').value = product.name;
+        document.getElementById('editProductName').value = product.name || '';
         document.getElementById('editProductSku').value = product.sku || '';
-        document.getElementById('editProductCategory').value = product.category;
-        document.getElementById('editProductDescription').value = product.description;
-        document.getElementById('editProductPrice').value = product.price;
+        document.getElementById('editProductCategory').value = product.category || 'smartphones';
+        document.getElementById('editProductDescription').value = product.description || '';
+        document.getElementById('editProductPrice').value = product.price || '';
         document.getElementById('editProductOriginalPrice').value = product.originalPrice || '';
         document.getElementById('editProductImage').value = product.image || '';
         document.getElementById('editProductStock').value = product.stock || 'in-stock';
@@ -1147,7 +1208,7 @@ switchProductTab(tabName) {
         
         // Populate specifications
         document.getElementById('editProductSpecifications').value = product.specifications ? 
-            JSON.stringify(product.specifications, null, 2) : '';
+            JSON.stringify(product.specifications, null, 2) : '{}';
         
         // Set editing mode
         this.editingProductId = productId;
@@ -1156,6 +1217,9 @@ switchProductTab(tabName) {
         this.showEditTab();
         
         this.showAlert(`Editing: ${product.name}`, 'success');
+    } else {
+        console.error('Product not found for ID:', productId);
+        this.showAlert('Product not found!', 'error');
     }
 }
 
@@ -1401,6 +1465,45 @@ cancelEdit() {
         };
         return statusMap[stock] || 'In Stock';
     }
+
+    // Debug helper function
+    debugProductData() {
+        console.log('=== CURRENT PRODUCTS DATA ===');
+        console.log('Total products:', this.currentData.products?.length || 0);
+        if (this.currentData.products) {
+            this.currentData.products.forEach((product, index) => {
+                console.log(`Product ${index}:`, {
+                    id: product.id,
+                    name: product.name,
+                    stock: product.stock,
+                    price: product.price,
+                    category: product.category
+                });
+            });
+        }
+        console.log('=== END PRODUCTS DATA ===');
+    }
+
+    // Add this method to debug form field values
+debugEditFormValues() {
+    const fields = [
+        'editProductName', 'editProductSku', 'editProductCategory', 
+        'editProductDescription', 'editProductPrice', 'editProductOriginalPrice',
+        'editProductImage', 'editProductStock', 'editProductRating', 
+        'editProductReviewCount', 'editProductFeatures', 'editProductSpecifications'
+    ];
+    
+    console.log('=== EDIT FORM VALUES ===');
+    fields.forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+            console.log(`${fieldId}:`, element.value);
+        } else {
+            console.log(`${fieldId}: ELEMENT NOT FOUND`);
+        }
+    });
+    console.log('=== END EDIT FORM VALUES ===');
+}
 
     // Bulk product management methods
     async exportProducts() {
