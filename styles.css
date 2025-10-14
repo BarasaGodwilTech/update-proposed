@@ -8638,13 +8638,13 @@ timer-item span.changing {
 }
 
 .onboarding-container {
-    background: white;
-    border-radius: 16px;
+    background: var(--light);
+    border-radius: var(--border-radius-lg);
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-xl);
     animation: slideUp 0.5s ease-out;
 }
 
@@ -8656,18 +8656,18 @@ timer-item span.changing {
 .onboarding-header {
     padding: 24px 30px 0;
     text-align: center;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid var(--gray-200);
 }
 
 .onboarding-header h2 {
     margin: 0 0 10px;
-    color: #164e63;
+    color: var(--primary);
     font-weight: 700;
     font-size: 1.8rem;
 }
 
 .onboarding-header p {
-    color: #64748b;
+    color: var(--text-light);
     margin-bottom: 20px;
     font-size: 1rem;
 }
@@ -8683,8 +8683,8 @@ timer-item span.changing {
 }
 
 .feature-icon {
-    background: #164e63;
-    color: white;
+    background: var(--primary);
+    color: var(--light);
     width: 50px;
     height: 50px;
     border-radius: 50%;
@@ -8697,64 +8697,72 @@ timer-item span.changing {
 
 .feature-text h3 {
     margin: 0 0 8px;
-    color: #164e63;
+    color: var(--primary);
     font-weight: 600;
     font-size: 1.2rem;
 }
 
 .feature-text p {
     margin: 0;
-    color: #64748b;
+    color: var(--text-light);
     line-height: 1.5;
 }
 
 .onboarding-footer {
     padding: 20px 30px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid var(--gray-200);
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.btn {
+.onboarding-btn {
     padding: 12px 24px;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition);
     border: none;
     font-family: 'Work Sans', sans-serif;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-primary {
-    background: #164e63;
-    color: white;
+.onboarding-btn-primary {
+    background: var(--primary);
+    color: var(--light);
 }
 
-.btn-primary:hover {
-    background: #0f3747;
+.onboarding-btn-primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
 }
 
-.btn-outline {
+.onboarding-btn-outline {
     background: transparent;
-    color: #164e63;
-    border: 1px solid #164e63;
+    color: var(--primary);
+    border: 2px solid var(--primary);
 }
 
-.btn-outline:hover {
-    background: #f8fafc;
+.onboarding-btn-outline:hover {
+    background: var(--primary);
+    color: var(--light);
+    transform: translateY(-2px);
 }
 
 .skip-btn {
     background: transparent;
     border: none;
-    color: #64748b;
+    color: var(--text-light);
     cursor: pointer;
     font-size: 0.9rem;
+    transition: var(--transition);
 }
 
 .skip-btn:hover {
-    color: #164e63;
+    color: var(--primary);
 }
 
 .progress-indicator {
@@ -8767,13 +8775,13 @@ timer-item span.changing {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #e2e8f0;
+    background: var(--gray-300);
     margin: 0 5px;
-    transition: all 0.3s ease;
+    transition: var(--transition);
 }
 
 .progress-dot.active {
-    background: #164e63;
+    background: var(--primary);
     width: 20px;
     border-radius: 10px;
 }
@@ -8783,7 +8791,7 @@ timer-item span.changing {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background: rgba(22, 78, 99, 0.2);
+    background: rgba(41, 98, 255, 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -8796,7 +8804,7 @@ timer-item span.changing {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #164e63;
+    background: var(--primary);
 }
 
 @keyframes pulse {
@@ -8807,22 +8815,23 @@ timer-item span.changing {
 
 .highlight-box {
     position: absolute;
-    border: 2px solid #164e63;
-    border-radius: 8px;
+    border: 2px solid var(--primary);
+    border-radius: var(--border-radius);
     box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
     z-index: 10000;
-    transition: all 0.3s ease;
+    transition: var(--transition);
 }
 
 .tooltip {
     position: absolute;
-    background: white;
+    background: var(--light);
     padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
     max-width: 250px;
     z-index: 10001;
     font-size: 0.9rem;
+    color: var(--text);
 }
 
 .tooltip::after {
@@ -8832,7 +8841,7 @@ timer-item span.changing {
     height: 0;
     border-left: 8px solid transparent;
     border-right: 8px solid transparent;
-    border-top: 8px solid white;
+    border-top: 8px solid var(--light);
     bottom: -8px;
     left: 50%;
     transform: translateX(-50%);
@@ -8840,9 +8849,76 @@ timer-item span.changing {
 
 .tooltip.top::after {
     border-top: none;
-    border-bottom: 8px solid white;
+    border-bottom: 8px solid var(--light);
     top: -8px;
     bottom: auto;
+}
+
+/* Dark mode support for onboarding */
+@media (prefers-color-scheme: dark) {
+    .onboarding-container {
+        background: var(--gray-50);
+        color: var(--text);
+    }
+    
+    .onboarding-header {
+        border-bottom-color: var(--gray-300);
+    }
+    
+    .onboarding-header h2 {
+        color: var(--primary-light);
+    }
+    
+    .onboarding-header p {
+        color: var(--text-light);
+    }
+    
+    .feature-icon {
+        background: var(--primary-light);
+    }
+    
+    .feature-text h3 {
+        color: var(--primary-light);
+    }
+    
+    .feature-text p {
+        color: var(--text-light);
+    }
+    
+    .onboarding-footer {
+        border-top-color: var(--gray-300);
+    }
+    
+    .onboarding-btn-outline {
+        color: var(--primary-light);
+        border-color: var(--primary-light);
+    }
+    
+    .onboarding-btn-outline:hover {
+        background: var(--primary-light);
+        color: var(--light);
+    }
+    
+    .skip-btn {
+        color: var(--text-light);
+    }
+    
+    .skip-btn:hover {
+        color: var(--primary-light);
+    }
+    
+    .tooltip {
+        background: var(--gray-50);
+        color: var(--text);
+    }
+    
+    .tooltip::after {
+        border-top-color: var(--gray-50);
+    }
+    
+    .tooltip.top::after {
+        border-bottom-color: var(--gray-50);
+    }
 }
 
 /* Responsive adjustments */
@@ -8860,6 +8936,15 @@ timer-item span.changing {
     .feature-icon {
         margin-right: 0;
         margin-bottom: 10px;
+    }
+    
+    .onboarding-footer {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .onboarding-btn {
+        width: 100%;
     }
 }
 
