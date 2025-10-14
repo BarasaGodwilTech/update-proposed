@@ -7,19 +7,19 @@
   "products": [
     {
       "id": 1,
-      "name": "",
-      "category": "",
-      "description": "",
-      "price": 0,
-      "image": "",
-      "featured": false,
+      "name": "iPhone 15 Pro",
+      "category": "smartphones",
+      "description": "Latest Apple flagship with titanium design and A17 Pro chip.",
+      "price": "4600000",
+      "image": "public/iphone-15-pro.png",
+      "featured": true,
       "status": "active",
       "badges": [
         "new",
         "sale"
       ],
       "rating": 5,
-      "dateUpdated": "2025-10-14T17:01:49.461Z",
+      "dateUpdated": "2025-10-14T17:25:12.077Z",
       "sku": "",
       "originalPrice": null,
       "stock": "in-stock",
@@ -40,7 +40,7 @@
         "bestseller"
       ],
       "rating": 5,
-      "dateUpdated": "2025-10-14T16:24:28.112Z"
+      "dateUpdated": "2025-10-14T17:25:12.077Z"
     },
     {
       "id": 3,
@@ -56,7 +56,8 @@
         "limited"
       ],
       "rating": 4.5,
-      "originalPrice": "0"
+      "originalPrice": "0",
+      "dateUpdated": "2025-10-14T17:25:12.077Z"
     },
     {
       "id": 4,
@@ -73,7 +74,7 @@
       ],
       "rating": 5,
       "originalPrice": "0",
-      "dateUpdated": "2025-10-14T08:53:52.421Z"
+      "dateUpdated": "2025-10-14T17:25:12.077Z"
     },
     {
       "id": 1760449762728,
