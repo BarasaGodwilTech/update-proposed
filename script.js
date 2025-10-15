@@ -941,64 +941,93 @@ function trackFormInteraction(action) {
 
 // YouTube API Initialization
 // Enhanced YouTube API Configuration
-const YT_API_KEY = "AIzaSyBnhvlEoMzX9A_DIq5Lks74m_S5CBL9jXU"
-const PLAYLIST_ID = "PL3UeMmSqW6uaESNSPkwr-RMrZJNiOUmYV"
-const YT = window.YT
+// Enhanced YouTube API Configuration
+const YT_API_KEY = "AIzaSyBnhvlEoMzX9A_DIq5Lks74m_S5CBL9jXU";
+const PLAYLIST_ID = "PL3UeMmSqW6uaESNSPkwr-RMrZJNiOUmYV";
 
 // Global variables
-let player
-let currentVideoId = ""
-let playlistVideos = []
-let hasAutoplayed = false
+let player;
+let currentVideoId = "";
+let playlistVideos = [];
+let hasAutoplayed = false;
+let isPlayerReady = false;
 
 // Enhanced YouTube API Initialization
 function initYouTubeAPI() {
+    console.log('Initializing YouTube API...');
+    
     // Check if YouTube API is already loaded
     if (window.YT && window.YT.Player) {
+        console.log('YouTube API already loaded');
         createYouTubePlayer();
         return;
     }
 
+    // Load YouTube API
     const tag = document.createElement('script');
     tag.src = 'https://www.youtube.com/iframe_api';
+    tag.onerror = () => {
+        console.error('Failed to load YouTube API');
+        showNotification('Failed to load YouTube player', 'error');
+    };
     const firstScriptTag = document.getElementsByTagName('script')[0];
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 }
 
-// Enhanced YouTube Player Creation
+// Enhanced YouTube Player Creation with proper autoplay settings
 function createYouTubePlayer() {
-    player = new YT.Player('mainVideoPlayer', {
-        height: '100%',
-        width: '100%',
-        playerVars: {
-            'autoplay': 0,
-            'controls': 1,
-            'rel': 0,
-            'showinfo': 0,
-            'modestbranding': 1,
-            'playsinline': 1
-        },
-        events: {
-            'onReady': onPlayerReady,
-            'onStateChange': onPlayerStateChange,
-            'onError': onPlayerError
-        }
-    });
+    console.log('Creating YouTube player...');
+    
+    try {
+        player = new YT.Player('mainVideoPlayer', {
+            height: '100%',
+            width: '100%',
+            videoId: '', // Start with empty video
+            playerVars: {
+                'autoplay': 0, // Start with 0 due to browser restrictions
+                'mute': 1, // Start muted to allow autoplay
+                'controls': 1,
+                'rel': 0,
+                'showinfo': 0,
+                'modestbranding': 1,
+                'playsinline': 1,
+                'enablejsapi': 1,
+                'origin': window.location.origin
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange,
+                'onError': onPlayerError
+            }
+        });
+    } catch (error) {
+        console.error('Error creating YouTube player:', error);
+        showNotification('Error creating video player', 'error');
+    }
 }
 
-// YouTube API Ready Callback
-window.onYouTubeIframeAPIReady = createYouTubePlayer;
+// YouTube API Ready Callback - FIXED
+window.onYouTubeIframeAPIReady = function() {
+    console.log('YouTube API ready');
+    createYouTubePlayer();
+};
 
 function onPlayerReady(event) {
-    console.log('YouTube player ready');
-    setupScrollAutoplay();
+    console.log('YouTube player ready and muted');
+    isPlayerReady = true;
+    
+    // Set initial state: muted and volume 0
+    event.target.mute();
+    event.target.setVolume(0);
+    
     setupVolumeControl();
+    setupScrollAutoplay();
     fetchPlaylistVideos();
     
     // Get initial video data
     try {
         const videoData = event.target.getVideoData();
-        if (videoData.video_id) {
+        if (videoData && videoData.video_id) {
             updateActionButtons(videoData.video_id);
         }
     } catch (error) {
@@ -1007,10 +1036,12 @@ function onPlayerReady(event) {
 }
 
 function onPlayerStateChange(event) {
+    console.log('Player state changed:', event.data);
+    
     if (event.data === YT.PlayerState.PLAYING) {
         try {
             const videoData = event.target.getVideoData();
-            if (videoData.video_id && videoData.video_id !== currentVideoId) {
+            if (videoData && videoData.video_id && videoData.video_id !== currentVideoId) {
                 updateActionButtons(videoData.video_id);
                 trackVideoPlay(videoData.video_id, videoData.title);
             }
@@ -1030,37 +1061,53 @@ function onPlayerError(error) {
     showNotification('Error loading video. Please try again.', 'error');
 }
 
-// Enhanced Volume Control
+// FIXED Volume Control System
 function setupVolumeControl() {
     const volumeToggle = document.getElementById('volumeToggle');
     const volumeSlider = document.getElementById('volumeSlider');
     const volumeIndicator = document.querySelector('.volume-indicator');
-    const volumeIcon = volumeToggle.querySelector('i');
+    const volumeIcon = volumeToggle?.querySelector('i');
 
-    let currentVolume = 0;
+    if (!volumeToggle || !volumeSlider || !volumeIndicator) {
+        console.warn('Volume control elements not found');
+        return;
+    }
+
+    let currentVolume = 0; // Start muted
     let previousVolume = 50;
 
     // Initialize volume display
     updateVolumeDisplay(currentVolume);
 
-    volumeToggle.addEventListener('click', () => {
+    volumeToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!isPlayerReady || !player) {
+            console.log('Player not ready yet');
+            return;
+        }
+
         if (currentVolume === 0) {
-            // Unmute
+            // Unmute - restore previous volume
             currentVolume = previousVolume;
-            if (player && player.setVolume) {
-                player.setVolume(currentVolume);
+            try {
                 player.unMute();
+                player.setVolume(currentVolume);
+                showNotification('Volume on', 'success');
+            } catch (error) {
+                console.error('Error unmuting:', error);
             }
-            showNotification('Volume on', 'success');
         } else {
-            // Mute
+            // Mute - store current volume and set to 0
             previousVolume = currentVolume;
             currentVolume = 0;
-            if (player && player.setVolume) {
-                player.setVolume(0);
+            try {
                 player.mute();
+                showNotification('Volume muted', 'info');
+            } catch (error) {
+                console.error('Error muting:', error);
             }
-            showNotification('Volume muted', 'info');
         }
 
         volumeSlider.value = currentVolume;
@@ -1068,8 +1115,11 @@ function setupVolumeControl() {
     });
 
     volumeSlider.addEventListener('input', (e) => {
+        if (!isPlayerReady || !player) return;
+
         currentVolume = parseInt(e.target.value);
-        if (player && player.setVolume) {
+        
+        try {
             player.setVolume(currentVolume);
             
             if (currentVolume === 0) {
@@ -1078,6 +1128,8 @@ function setupVolumeControl() {
                 player.unMute();
                 previousVolume = currentVolume;
             }
+        } catch (error) {
+            console.error('Error setting volume:', error);
         }
 
         updateVolumeDisplay(currentVolume);
@@ -1090,36 +1142,61 @@ function setupVolumeControl() {
         volumeToggle.classList.toggle('muted', volume === 0);
         
         // Update icon based on volume level
-        if (volume === 0) {
-            volumeIcon.className = 'fas fa-volume-mute';
-        } else if (volume < 30) {
-            volumeIcon.className = 'fas fa-volume-down';
-        } else if (volume < 70) {
-            volumeIcon.className = 'fas fa-volume-up';
-        } else {
-            volumeIcon.className = 'fas fa-volume-up';
+        if (volumeIcon) {
+            if (volume === 0) {
+                volumeIcon.className = 'fas fa-volume-mute';
+            } else if (volume < 30) {
+                volumeIcon.className = 'fas fa-volume-down';
+            } else if (volume < 70) {
+                volumeIcon.className = 'fas fa-volume-up';
+            } else {
+                volumeIcon.className = 'fas fa-volume-up';
+            }
         }
     }
 }
 
-// Enhanced Auto-play with Intersection Observer
+// FIXED Auto-play with Intersection Observer
 function setupScrollAutoplay() {
     const videoSection = document.querySelector('.youtube-section');
-    if (!videoSection) return;
+    if (!videoSection) {
+        console.warn('YouTube section not found');
+        return;
+    }
 
     const observer = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => {
-                if (entry.isIntersecting && !hasAutoplayed) {
+                if (entry.isIntersecting && !hasAutoplayed && isPlayerReady) {
                     if (entry.intersectionRatio >= 0.3) {
+                        console.log('Attempting autoplay...');
+                        
                         setTimeout(() => {
-                            if (player && player.playVideo) {
-                                player.playVideo();
-                                hasAutoplayed = true;
-                                observer.unobserve(videoSection);
-                                showNotification('🎥 Video started playing!', 'success');
+                            if (player && typeof player.playVideo === 'function') {
+                                try {
+                                    // Ensure player is muted for autoplay
+                                    player.mute();
+                                    player.setVolume(0);
+                                    player.playVideo();
+                                    hasAutoplayed = true;
+                                    observer.unobserve(videoSection);
+                                    showNotification('🎥 Video started playing!', 'success');
+                                } catch (error) {
+                                    console.error('Error during autoplay:', error);
+                                    // Fallback: let user click play
+                                    showNotification('Click play to start video', 'info');
+                                }
                             }
                         }, 1000);
+                    }
+                } else if (!entry.isIntersecting && hasAutoplayed) {
+                    // Pause when out of view
+                    try {
+                        if (player && typeof player.pauseVideo === 'function') {
+                            player.pauseVideo();
+                        }
+                    } catch (error) {
+                        console.error('Error pausing video:', error);
                     }
                 }
             });
@@ -1131,6 +1208,22 @@ function setupScrollAutoplay() {
     );
 
     observer.observe(videoSection);
+}
+
+// Manual play function for user interaction
+function playVideoManually() {
+    if (!isPlayerReady || !player) {
+        showNotification('Video player not ready yet', 'error');
+        return;
+    }
+    
+    try {
+        player.playVideo();
+        hasAutoplayed = true;
+    } catch (error) {
+        console.error('Error playing video manually:', error);
+        showNotification('Error playing video', 'error');
+    }
 }
 
 // Update action buttons for current video
@@ -1164,44 +1257,48 @@ async function fetchPlaylistVideos() {
         let nextPageToken = "";
         let allVideos = [];
 
-        do {
-            const response = await fetch(
-                `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${PLAYLIST_ID}&key=${YT_API_KEY}&pageToken=${nextPageToken}`
-            );
+        // Fetch first video to set as main video
+        const initialResponse = await fetch(
+            `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=1&playlistId=${PLAYLIST_ID}&key=${YT_API_KEY}`
+        );
 
-            if (!response.ok) {
-                throw new Error(`Failed to fetch videos: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (!data.items) {
-                throw new Error('No videos found in playlist');
-            }
-
-            allVideos = allVideos.concat(
-                data.items.map((item) => ({
-                    id: item.snippet.resourceId.videoId,
-                    title: item.snippet.title,
-                    thumbnail: item.snippet.thumbnails.medium?.url || item.snippet.thumbnails.default?.url,
-                    publishedAt: item.snippet.publishedAt,
-                    description: item.snippet.description
-                }))
-            );
-
-            nextPageToken = data.nextPageToken || "";
-        } while (nextPageToken);
-
-        playlistVideos = allVideos;
-        
-        if (playlistVideos.length > 0) {
-            // Set first video as current
-            const firstVideo = playlistVideos[0];
-            updateActionButtons(firstVideo.id);
-            showNotification(`Loaded ${playlistVideos.length} videos`, 'success');
-        } else {
-            showVideoGridError('No videos found in playlist');
+        if (!initialResponse.ok) {
+            throw new Error(`Failed to fetch videos: ${initialResponse.status}`);
         }
+
+        const initialData = await initialResponse.json();
+
+        if (!initialData.items || initialData.items.length === 0) {
+            throw new Error('No videos found in playlist');
+        }
+
+        // Set first video as current
+        const firstVideo = {
+            id: initialData.items[0].snippet.resourceId.videoId,
+            title: initialData.items[0].snippet.title,
+            thumbnail: initialData.items[0].snippet.thumbnails.medium?.url || initialData.items[0].snippet.thumbnails.default?.url,
+            publishedAt: initialData.items[0].snippet.publishedAt,
+            description: initialData.items[0].snippet.description
+        };
+
+        // Load this video into the player when ready
+        if (isPlayerReady && player) {
+            player.loadVideoById(firstVideo.id);
+            updateActionButtons(firstVideo.id);
+        } else {
+            // Store video ID to load when player is ready
+            setTimeout(() => {
+                if (isPlayerReady && player) {
+                    player.loadVideoById(firstVideo.id);
+                    updateActionButtons(firstVideo.id);
+                }
+            }, 2000);
+        }
+
+        playlistVideos = [firstVideo];
+        
+        showNotification(`YouTube player loaded successfully`, 'success');
+        
     } catch (error) {
         console.error('Error fetching playlist videos:', error);
         showVideoGridError('Failed to load videos. Please try again later.');
@@ -1209,143 +1306,27 @@ async function fetchPlaylistVideos() {
     }
 }
 
-// Enhanced video grid rendering
-function renderVideoGrid(videos) {
-    const videoGrid = document.getElementById('videoGrid');
-    if (!videoGrid) return;
+// Make play function globally available
+window.playVideoManually = playVideoManually;
 
-    if (videos.length === 0) {
-        showVideoGridError('No additional videos available.');
-        return;
+// Add this to your DOMContentLoaded event
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        // Initialize YouTube first since it has the most dependencies
+        initYouTubeAPI();
+        
+        // Then load other functionality
+        await updateWebsiteWithDynamicData();
+        
+        // Initialize other components
+        initPageLoader();
+        initScrollAnimations();
+        initCountdown();
+        // ... other init functions
+    } catch (error) {
+        console.error("Initialization error:", error);
     }
-
-    // Show only first 8 videos for better performance
-    const videosToShow = videos.slice(0, 8);
-    
-    videoGrid.innerHTML = "";
-    videosToShow.forEach((video, index) => {
-        const videoItem = createVideoItem(video, index);
-        videoGrid.appendChild(videoItem);
-    });
-}
-
-function createVideoItem(video, index) {
-    const videoItem = document.createElement('div');
-    videoItem.className = 'video-item';
-    videoItem.style.animationDelay = `${index * 0.1}s`;
-    
-    // Format published date
-    const publishedDate = new Date(video.publishedAt).toLocaleDateString();
-    
-    videoItem.innerHTML = `
-        <a href="https://www.youtube.com/watch?v=${video.id}" target="_blank" rel="noopener noreferrer" class="video-link">
-            <div class="video-thumbnail">
-                <img src="${video.thumbnail}" alt="${escapeHtml(video.title)}" loading="lazy">
-                <div class="play-overlay">
-                    <div class="play-icon">
-                        <i class="fas fa-play" aria-hidden="true"></i>
-                    </div>
-                </div>
-                <div class="video-duration">Watch</div>
-            </div>
-            <div class="video-info">
-                <h4 class="video-title">${escapeHtml(video.title)}</h4>
-                <div class="video-meta">
-                    <span>Published: ${publishedDate}</span>
-                </div>
-            </div>
-        </a>
-    `;
-    
-    // Add click tracking
-    const videoLink = videoItem.querySelector('.video-link');
-    videoLink.addEventListener('click', () => {
-        trackVideoClick(video.id, video.title);
-    });
-    
-    return videoItem;
-}
-
-// Utility functions
-function showVideoGridLoading() {
-    const videoGrid = document.getElementById('videoGrid');
-    if (videoGrid) {
-        videoGrid.innerHTML = `
-            <div class="video-placeholder">
-                <i class="fas fa-spinner" aria-hidden="true"></i>
-                Loading amazing tech videos...
-            </div>
-        `;
-    }
-}
-
-function showVideoGridError(message) {
-    const videoGrid = document.getElementById('videoGrid');
-    if (videoGrid) {
-        videoGrid.innerHTML = `
-            <div class="video-placeholder">
-                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
-                ${message}
-            </div>
-        `;
-    }
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, (m) => map[m]);
-}
-
-// Analytics and tracking
-function trackVideoPlay(videoId, videoTitle) {
-    console.log('Video playing:', videoTitle);
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'play', {
-            'event_category': 'YouTube Video',
-            'event_label': videoTitle,
-            'value': videoId
-        });
-    }
-}
-
-function trackVideoCompletion(videoId) {
-    console.log('Video completed:', videoId);
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'complete', {
-            'event_category': 'YouTube Video',
-            'event_label': 'Video Completed',
-            'value': videoId
-        });
-    }
-}
-
-function trackVideoClick(videoId, videoTitle) {
-    console.log('Video clicked:', videoTitle);
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'click', {
-            'event_category': 'YouTube Video',
-            'event_label': videoTitle,
-            'value': videoId
-        });
-    }
-}
-
-function trackYouTubeError(errorMessage) {
-    console.error('YouTube error:', errorMessage);
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'exception', {
-            'description': errorMessage,
-            'fatal': false
-        });
-    }
-}
+});
 
 function initProductFilters() {
     const categoryBtns = document.querySelectorAll('.category-btn');
