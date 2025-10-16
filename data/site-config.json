@@ -4,101 +4,20 @@
     "description": "We're working hard to bring you the ultimate tech shopping experience, delivering authentic and top-notch technologies and innovation to your doorstep without lifting a foot. Uganda, are you ready? Join our WhatsApp channel for exclusive early-bird deals!",
     "whatsappLink": "https://wa.me/256751924844?text=Hi%20Will's%20Tech!%20I%20want%20to%20join%20your%20channel.%20Thanks."
   },
-  "products": [
-    {
-      "id": 1760465465949,
-      "name": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
-      "sku": "",
-      "category": "smartphones",
-      "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
-      "price": 1200000,
-      "originalPrice": 1500000,
-      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
-      "stock": "out-of-stock",
-      "rating": 5,
-      "reviewCount": 29,
-      "badges": [
-        "new",
-        "limited"
-      ],
-      "features": [
-        "new",
-        "durable",
-        "all you need"
-      ],
-      "specifications": {},
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-14T18:11:05.949Z",
-      "dateUpdated": "2025-10-14T19:58:59.084Z"
-    }
-    {
-      "id": 1760465465949,
-      "name": "iPhone 12 128GB, ",
-      "sku": "",
-      "category": "smartphones",
-      "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
-      "price": 1200000,
-      "originalPrice": 1500000,
-      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
-      "stock": "out-of-stock",
-      "rating": 5,
-      "reviewCount": 29,
-      "badges": [
-        "new",
-        "limited"
-      ],
-      "features": [
-        "new",
-        "durable",
-        "all you need"
-      ],
-      "specifications": {},
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-14T18:11:05.949Z",
-      "dateUpdated": "2025-10-14T19:58:59.084Z"
-    }
-    {
-      "id": 1760465465949,
-      "name": "iPhone 12 128GB,",
-      "sku": "",
-      "category": "smartphones",
-      "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
-      "price": 1200000,
-      "originalPrice": 1500000,
-      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
-      "stock": "out-of-stock",
-      "rating": 5,
-      "reviewCount": 29,
-      "badges": [
-        "new",
-        "limited"
-      ],
-      "features": [
-        "new",
-        "durable",
-        "all you need"
-      ],
-      "specifications": {},
-      "featured": true,
-      "status": "active",
-      "dateAdded": "2025-10-14T18:11:05.949Z",
-      "dateUpdated": "2025-10-14T19:58:59.084Z"
-    }
-  ],
+  "products": [],
   "content": {
-    "storeName": "Will's Tech Store",
+    "storeName": "Will's Tech Store | Premium Gadgets & Tech in Uganda, Kampala | Mbale",
     "tagline": "Elevate Your Lifestyle With Authentic Tech",
     "description": "Uganda's trusted tech store for 100% authentic smartphones, laptops & gadgets. Elevate Your Lifestyle With Authentic Tech. Free delivery around Kampala and Mbale. WhatsApp: +256 751 924 844",
-    "contactInfo": "WhatsApp: +256 751 924 844\nEmail: wills.tech.store.ug@gmail.com\nLocations: Kampala & Mbale, Uganda\nBusiness Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM"
+    "contactInfo": "WhatsApp\n                            +256 751 924 844\n                            Chat Now\n                        \n                    \n                    \n                    \n                        \n                            \n                        \n                        \n                            Location\n                            Kampala & Mbale, Uganda\n                            Free Delivery Available\n                        \n                    \n                    \n                    \n                        \n                            \n                        \n                        \n                            Business Hours\n                            Mon - Sat: 8:00 AM - 8:00 PM\n                            Sunday: 10:00 AM - 6:00 PM"
   },
   "social": {
-    "facebook": "#",
+    "facebook": "",
     "instagram": "https://instagram.com/willstech.store",
     "twitter": "https://x.com/willstech_store",
     "tiktok": "http://www.tiktok.com/@willstech.store",
-    "youtube": "https://www.youtube.com/@Willstech.storeug"
+    "youtube": ""
   },
-  "lastUpdated": "2025-10-14T19:58:59.156Z"
+  "lastSynced": "2025-10-16T13:20:34.197Z",
+  "lastUpdated": "2025-10-16T13:20:55.756Z"
 }
