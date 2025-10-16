@@ -32,6 +32,60 @@
       "dateAdded": "2025-10-14T18:11:05.949Z",
       "dateUpdated": "2025-10-14T19:58:59.084Z"
     }
+    {
+      "id": 1760465465949,
+      "name": "iPhone 12 128GB, ",
+      "sku": "",
+      "category": "smartphones",
+      "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
+      "price": 1200000,
+      "originalPrice": 1500000,
+      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
+      "stock": "out-of-stock",
+      "rating": 5,
+      "reviewCount": 29,
+      "badges": [
+        "new",
+        "limited"
+      ],
+      "features": [
+        "new",
+        "durable",
+        "all you need"
+      ],
+      "specifications": {},
+      "featured": true,
+      "status": "active",
+      "dateAdded": "2025-10-14T18:11:05.949Z",
+      "dateUpdated": "2025-10-14T19:58:59.084Z"
+    }
+    {
+      "id": 1760465465949,
+      "name": "iPhone 12 128GB,",
+      "sku": "",
+      "category": "smartphones",
+      "description": "iPhone 12 128GB, iPhone 13 Pro 128GB, iPhone 13 Pro Max 128   ",
+      "price": 1200000,
+      "originalPrice": 1500000,
+      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760465408481.jpg",
+      "stock": "out-of-stock",
+      "rating": 5,
+      "reviewCount": 29,
+      "badges": [
+        "new",
+        "limited"
+      ],
+      "features": [
+        "new",
+        "durable",
+        "all you need"
+      ],
+      "specifications": {},
+      "featured": true,
+      "status": "active",
+      "dateAdded": "2025-10-14T18:11:05.949Z",
+      "dateUpdated": "2025-10-14T19:58:59.084Z"
+    }
   ],
   "content": {
     "storeName": "Will's Tech Store",
