@@ -8914,6 +8914,77 @@ timer-item span.changing {
     gap: 1rem;
 }
 
+/* Onboarding / Tour buttons */
+.onboarding-btn,
+.skip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    border: 2px solid transparent;
+    font-size: 0.98rem;
+}
+
+.onboarding-btn:focus,
+.skip-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(79, 140, 255, 0.12);
+}
+
+.onboarding-btn-primary {
+    background: var(--primary);
+    color: var(--light);
+    box-shadow: 0 8px 20px rgba(79, 140, 255, 0.12);
+    border-color: transparent;
+}
+
+.onboarding-btn-primary:hover {
+    transform: translateY(-3px);
+    background: var(--primary-dark);
+    box-shadow: 0 14px 30px rgba(79, 140, 255, 0.18);
+}
+
+.skip-btn {
+    background: transparent;
+    color: var(--text);
+    border-color: rgba(0,0,0,0.06);
+}
+
+.skip-btn:hover {
+    background: rgba(0,0,0,0.04);
+    transform: translateY(-2px);
+}
+
+/* If you want the skip action to look more like a secondary outline */
+.skip-btn.secondary-outline {
+    background: transparent;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.skip-btn.secondary-outline:hover {
+    background: var(--primary);
+    color: var(--light);
+}
+
+/* Small-screen adjustments (ensure buttons fill width when stacked) */
+@media (max-width: 768px) {
+    .onboarding-footer {
+        padding: 1rem 1rem;
+        gap: 0.75rem;
+    }
+
+    .onboarding-btn,
+    .skip-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 /* Tour Steps Styles */
 .tour-highlight-overlay {
     position: absolute;
