@@ -5067,7 +5067,7 @@ hero-content {
     color: white;
     padding: 0.2rem 0.6rem;
     border-radius: 12px;
-    font-size: 0.8rem;
+    font-size: 0.6rem;
     font-weight: 700;
 }
 
@@ -5262,7 +5262,11 @@ hero-content {
         padding: 0.7rem 1.5rem;
         font-size: 0.9rem;
     }
+    .discount-badge {
+        font-size: 0.55rem;
+    }
 }
+
 
 /* Tablets */
 @media (max-width: 768px) {
@@ -5343,6 +5347,9 @@ hero-content {
         justify-content: center;
         padding: 1rem 2rem;
     }
+    .discount-badge {
+        font-size: 0.6rem;
+    }
 }
 
 /* Mobile phones */
@@ -5416,7 +5423,7 @@ hero-content {
     }
     
     .product-info h3 {
-        font-size:0.79rem;
+        font-size:0.74rem;
     }
     
     .product-description {
@@ -5424,18 +5431,21 @@ hero-content {
     }
     
     .current-price {
-        font-size: 0.99rem;
+        font-size: 0.8rem;
     }
     
     .original-price {
-        font-size: 0.68rem;
+        font-size: 0.6rem;
+    }
+    .discount-badge {
+        font-size: 0.4rem;
     }
     .product-rating {
-        font-size: 0.75rem;        
+        font-size: 0.7rem;        
     }
 
     .rating-count {
-        font-size: 0.7rem;
+        font-size: 0.55rem;
     }
 
     .product-actions {
@@ -5469,6 +5479,7 @@ hero-content {
     .products-cta p {
         font-size: 1rem;
     }
+    
 }
 
 /* Small mobile phones */
@@ -5485,9 +5496,25 @@ hero-content {
         height: 90px;
     }
 
-    .rating-count {
-        font-size: 0.65rem;
+    .current-price {
+        font-size: 0.6rem;
     }
+
+    .original-price {
+        font-size: 0.5rem;
+    }
+
+    .discount-badge {
+        font-size: 0.3rem;
+    }
+
+    .rating-count {
+        font-size: 0.5rem;
+    }
+    .product-rating {
+        font-size: 0.6rem;        
+    }
+
     .buy-now-btn {
         font-size: 0.5rem;
         padding-left: 0.4rem;
@@ -5875,6 +5902,14 @@ hero-content {
 
 .stock-status.limited-stock {
     background: var(--products-accent);
+    color: white;
+}
+.stock-status.out-of-stock {
+    background: var(--products-danger);
+    color: white;
+}
+.stock-status.pre-order {
+    background: var(--products-primary);
     color: white;
 }
 

@@ -3069,12 +3069,17 @@ function createProductCard(product) {
             <div class="product-price">
                 <span class="current-price">UGX ${formattedPrice}</span>
                 ${product.originalPrice ? `<span class="original-price">UGX ${new Intl.NumberFormat('en-UG').format(product.originalPrice)}</span>` : ''}
+                
+                <span class="discount-badge">${Math.round((1 - product.price / product.originalPrice) * 100)}% Off</span>
             </div>
+            
+            
+            
             <div class="product-rating">
                 <div class="stars" aria-label="${product.rating} out of 5 stars">
                     ${ratingStars}
                 </div>
-                <span class="rating-count">(${Math.floor(Math.random() * 200) + 50} reviews)</span>
+                <span class="rating-count">(${product.reviewCount} reviews)</span>
             </div>
             <div class="product-actions">
                 <button class="add-to-wishlist" aria-label="Add to wishlist">
