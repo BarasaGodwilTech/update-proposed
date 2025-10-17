@@ -5946,6 +5946,50 @@ hero-content {
 .modal .product-description {
     line-height: 1.6;
     color: var(--text-light);
+    font-size: 0.7rem;
+    
+    /* Ensure all text is visible */
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    
+    /* Remove any height restrictions */
+    height: auto !important;
+    max-height: none !important;
+    
+    /* Ensure proper text flow */
+    display: block;
+    width: 100%;
+}
+/* Ensure proper list formatting */
+.modal .product-description ul {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.modal .product-description li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+/* Fix any heading styles */
+.modal .product-description h3 {
+    margin: 1.5rem 0 1rem 0;
+    font-weight: bold;
+}
+
+.modal .product-description h2 {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+/* Remove any text truncation */
+.modal .product-description * {
+    white-space: normal !important;
+    text-overflow: unset !important;
+    overflow: visible !important;
 }
 
 .product-features h3 {
@@ -6001,6 +6045,11 @@ hero-content {
     transform: translateY(-2px);
 }
 
+@media (max-width: 1200px) {
+    .modal .product-description {
+        font-size: 0.95rem;
+    }
+}
 /* ==== Modal Responsive Design ==== */
 @media (max-width: 768px) {
     .modal {
@@ -6040,6 +6089,9 @@ hero-content {
     .modal-actions .btn {
         width: 100%;
     }
+    .modal .product-description {
+        font-size: 0.9rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -6066,6 +6118,9 @@ hero-content {
     
     .modal .current-price {
         font-size: 1.3rem;
+    }
+    .modal .product-description {
+        font-size: 0.85rem;
     }
 }
 

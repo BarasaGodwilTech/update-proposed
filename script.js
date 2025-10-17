@@ -3068,9 +3068,9 @@ function createProductCard(product) {
             <p class="product-description">${product.description}</p>
             <div class="product-price">
                 <span class="current-price">UGX ${formattedPrice}</span>
-                ${product.originalPrice ? `<span class="original-price">UGX ${new Intl.NumberFormat('en-UG').format(product.originalPrice)}</span>` : ''}
+                ${product.originalPrice ? `<span class="original-price">UGX ${new Intl.NumberFormat('en-UG').format(product.originalPrice)}</span>
                 
-                <span class="discount-badge">${Math.round((1 - product.price / product.originalPrice) * 100)}% Off</span>
+                <span class="discount-badge">${Math.round((1 - product.price / product.originalPrice) * 100)}% Off</span>` : ''}
             </div>
             
             
