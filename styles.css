@@ -5423,7 +5423,7 @@ hero-content {
     }
     
     .product-info h3 {
-        font-size:0.74rem;
+        font-size: 1rem;
     }
     
     .product-description {
@@ -5450,7 +5450,8 @@ hero-content {
 
     .product-actions {
         flex-direction: row;
-        gap: 0.3rem;   
+        gap: 0.3rem;
+        padding-top: 0.01rem;   
     }
     
     .buy-now-btn {
