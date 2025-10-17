@@ -4904,6 +4904,7 @@ hero-content {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     border: 1px solid var(--products-border);
+    margin: 0 -0.1rem; /* Adjust margin to reduce space between cards */
 }
 
 .product-card:hover {
@@ -5022,6 +5023,10 @@ hero-content {
     position: relative;
 }
 
+.product-info > * {
+        margin-bottom: 0.22rem; /* Reduce space between elements inside product info */
+    }
+    
 .product-info h3 {
     font-size: 1.3rem;
     margin-bottom: 0.5rem;
@@ -5265,6 +5270,12 @@ hero-content {
     .discount-badge {
         font-size: 0.55rem;
     }
+    .product-image {
+        height: 290px;
+    }
+    .product-info > * {
+        margin-bottom: 0.22rem; /* Reduce space between elements inside product info */
+    }
 }
 
 
@@ -5301,7 +5312,7 @@ hero-content {
     }
     
     .product-image {
-        height: 220px;
+        height: 290px;
     }
     
     .product-categories {
@@ -5316,6 +5327,9 @@ hero-content {
     
     .product-info {
         padding: 1.2rem;
+    }
+    .product-info > * {
+        margin-bottom: 0.22rem; /* Reduce space between elements inside product info */
     }
     
     .product-info h3 {
@@ -5396,11 +5410,11 @@ hero-content {
     }
     
     .product-card {
-        margin: 0 0.25rem;
+        margin: 0 -0.1rem;
     }
     
     .product-image {
-        height: 100px;
+        height: 180px;
     }
     
     .product-badges {
@@ -5420,6 +5434,9 @@ hero-content {
     
     .product-info {
         padding: 0.5rem;
+    }
+    .product-info > * {
+        margin-bottom: 0.23rem; /* Reduce space between elements inside product info */
     }
     
     .product-info h3 {
@@ -5490,11 +5507,14 @@ hero-content {
     }
     
     .product-card {
-        margin: 0 0.125rem;
+        margin: 0 -0.1rem;
     }
     
     .product-image {
-        height: 90px;
+        height: 180px;
+    }
+    .product-info > * {
+        margin-bottom: 0.22rem; /* Reduce space between elements inside product info */
     }
 
     .current-price {
