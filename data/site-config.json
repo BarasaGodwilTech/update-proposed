@@ -18,7 +18,8 @@
       "rating": 3.5,
       "reviewCount": 86,
       "badges": [
-        "sale"
+        "sale",
+        "premium-used"
       ],
       "features": [
         "Advanced dual-camera system for stunning photos and videos",
@@ -35,7 +36,7 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-17T11:32:36.545Z",
-      "dateUpdated": "2025-10-20T14:53:26.051Z"
+      "dateUpdated": "2025-10-20T15:47:03.678Z"
     }
   ],
   "content": {
@@ -52,5 +53,5 @@
     "youtube": ""
   },
   "lastSynced": "2025-10-16T13:20:34.197Z",
-  "lastUpdated": "2025-10-20T14:53:26.052Z"
+  "lastUpdated": "2025-10-20T15:47:03.679Z"
 }
