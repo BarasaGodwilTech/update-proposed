@@ -17,9 +17,7 @@
       "stock": "in-stock",
       "rating": 3.5,
       "reviewCount": 86,
-      "badges": [
-        "sale"
-      ],
+      "badges": [],
       "features": [
         "Advanced dual-camera system for stunning photos and videos",
         "6.1-inch Super Retina XDR display for an immersive viewing experience",
@@ -35,7 +33,7 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-17T11:32:36.545Z",
-      "dateUpdated": "2025-10-20T14:11:49.766Z"
+      "dateUpdated": "2025-10-20T14:35:46.006Z"
     }
   ],
   "content": {
@@ -52,5 +50,5 @@
     "youtube": ""
   },
   "lastSynced": "2025-10-16T13:20:34.197Z",
-  "lastUpdated": "2025-10-20T14:11:49.767Z"
+  "lastUpdated": "2025-10-20T14:35:46.007Z"
 }
