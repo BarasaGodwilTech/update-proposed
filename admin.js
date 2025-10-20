@@ -197,7 +197,7 @@ class WillTechAdmin {
                         if (badge.classList.contains('badge-sale')) badges.push('sale');
                         if (badge.classList.contains('badge-bestseller')) badges.push('bestseller');
                         if (badge.classList.contains('badge-limited')) badges.push('limited');
-                        if (badge.classList.contains('badge-premium-used')) badges.push('premium-used');
+                        if (badge.classList.contains('badge-premiumused')) badges.push('premium-used');
                     });
                     
                     // Extract rating
