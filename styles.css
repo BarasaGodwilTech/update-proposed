@@ -5031,11 +5031,15 @@ hero-content {
     }
     
 .product-info h3 {
-    font-size: 1.3rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.1rem;
     color: var(--products-primary);
     font-weight: 700;
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  width: ; /* or whatever width you need */
 }
 
 .product-description {
