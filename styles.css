@@ -5039,13 +5039,13 @@ hero-content {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  width: ; /* or whatever width you need */
+  /*width: ;  or whatever width you need */
 }
 
 .product-description {
     color: var(--text-light);
     font-size: 0.9rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.1rem;
     line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -5058,18 +5058,19 @@ hero-content {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.1rem;
     flex-wrap: wrap;
 }
 
 .current-price {
-    font-size: 1.4rem;
+    font-size: 1.1rem;
     font-weight: 800;
     color: var(--products-primary);
+    margin-bottom: 0.1rem;
 }
 
 .original-price {
-    font-size: 1.1rem;
+    font-size: 0.7rem;
     color: var(--text-light);
     text-decoration: line-through;
 }

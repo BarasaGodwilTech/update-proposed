@@ -152,9 +152,9 @@ function showSiteImprovementNotification() {
                 if (document.body.contains(notification)) {
                     hideImprovementNotification(notification);
                 }
-            }, 12000);
+            }, 28000);
             
-        }, 1500); // Show after 1.5 seconds of page load
+        }, 1700); // Show after 1.5 seconds of page load
     }
 }
 
@@ -178,7 +178,7 @@ function initOnboardingSystem() {
         // Wait longer before showing tour to let user read improvement notice
         setTimeout(() => {
             showOnboarding();
-        }, 8000); // Show tour 8 seconds after page load (6.5 seconds after improvement notice)
+        }, 27000); // Show tour 8 seconds after page load (6.5 seconds after improvement notice)
     }
 }
 
