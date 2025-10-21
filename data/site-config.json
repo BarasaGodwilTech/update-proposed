@@ -37,6 +37,36 @@
       "status": "active",
       "dateAdded": "2025-10-17T11:32:36.545Z",
       "dateUpdated": "2025-10-20T15:47:03.678Z"
+    },
+    {
+      "id": 1761034720188,
+      "name": "2019 MacBook Pro",
+      "sku": "0101",
+      "category": "laptops",
+      "description": "16GB RAM/ 512GB  ",
+      "price": "2000000",
+      "originalPrice": "2200000",
+      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761034595474.jpg",
+      "stock": "limited",
+      "rating": 4.5,
+      "reviewCount": 92,
+      "badges": [
+        "limited",
+        "premium-used"
+      ],
+      "features": [
+        "2019 MacBook Pro ",
+        "16GB RAM/ 512GB ",
+        "i9"
+      ],
+      "specifications": {
+        "battery": "Up to 6 hours",
+        "charging": "Wireless charging case",
+        "connectivity": "Bluetooth 5.0"
+      },
+      "featured": true,
+      "status": "active",
+      "dateAdded": "2025-10-21T08:18:40.189Z"
     }
   ],
   "content": {
@@ -53,5 +83,5 @@
     "youtube": ""
   },
   "lastSynced": "2025-10-16T13:20:34.197Z",
-  "lastUpdated": "2025-10-20T15:47:03.679Z"
+  "lastUpdated": "2025-10-21T08:18:40.220Z"
 }
