@@ -35,6 +35,9 @@ class WillTechAdmin {
         this.setupNavigation();
         this.setupImageUpload(); // ADD THIS LINE
         
+        // ADD THIS LINE RIGHT HERE:
+        this.setupMediaManagement();
+
         console.log('Admin panel fully initialized');
     }
 
@@ -78,6 +81,8 @@ class WillTechAdmin {
             
             // Store the initial state for comparison
             this.lastSavedData = JSON.parse(JSON.stringify(this.currentData));
+            // ADD THIS LINE RIGHT HERE:
+            this.migrateProductMedia();
             
             // Populate forms with current data
             this.populateForms();
@@ -341,6 +346,49 @@ class WillTechAdmin {
         };
     }
 
+    // Add this method to get empty product structure
+getEmptyProductStructure() {
+    return {
+        id: Date.now(),
+        name: '',
+        sku: '',
+        category: 'smartphones',
+        description: '',
+        price: 0,
+        originalPrice: null,
+        images: [], // CHANGED from 'image' to 'images' array
+        videos: [], // NEW: Array for video URLs
+        stock: 'in-stock',
+        rating: 5,
+        reviewCount: 0,
+        badges: [],
+        features: [],
+        specifications: {},
+        featured: false,
+        status: 'active',
+        dateAdded: new Date().toISOString(),
+        dateUpdated: new Date().toISOString()
+    };
+}
+
+// Add this method to migrate existing products
+migrateProductMedia() {
+    if (!this.currentData.products) return;
+    
+    this.currentData.products.forEach(product => {
+        // If product has old 'image' field, migrate to new 'images' array
+        if (product.image && !product.images) {
+            product.images = [product.image]; // Move single image to images array
+            delete product.image; // Remove old field
+        }
+        
+        // Initialize videos array if it doesn't exist
+        if (!product.videos) {
+            product.videos = [];
+        }
+    });
+}
+
     setupEventListeners() {
         console.log('Setting up event listeners...');
         
@@ -517,24 +565,35 @@ async handleEditProductForm(e) {
     }
 
     // Get values from EDIT FORM fields (notice the "edit" prefix)
-    const productData = {
-        name: document.getElementById('editProductName').value,
-        sku: document.getElementById('editProductSku').value,
-        category: document.getElementById('editProductCategory').value,
-        description: document.getElementById('editProductDescription').value,
-        price: parseFloat(document.getElementById('editProductPrice').value) || 0,
-        originalPrice: document.getElementById('editProductOriginalPrice').value ? 
-            parseFloat(document.getElementById('editProductOriginalPrice').value) : null,
-        image: document.getElementById('editProductImage').value,
-        stock: document.getElementById('editProductStock').value,
-        rating: parseFloat(document.getElementById('editProductRating').value) || 5,
-        reviewCount: parseInt(document.getElementById('editProductReviewCount').value) || 0,
-        badges: badges,
-        features: features,
-        specifications: specifications,
-        featured: document.getElementById('editProductFeatured').checked,
-        status: 'active'
-    };
+    // Get main image
+const mainImage = document.getElementById('editProductImage').value;
+
+// Get additional images and videos
+const additionalImages = this.getAdditionalImagesFromForm('edit');
+const videoUrls = this.getVideoUrlsFromForm('edit');
+
+// Combine main image with additional images
+const allImages = mainImage ? [mainImage, ...additionalImages] : additionalImages;
+
+const productData = {
+    name: document.getElementById('editProductName').value,
+    sku: document.getElementById('editProductSku').value,
+    category: document.getElementById('editProductCategory').value,
+    description: document.getElementById('editProductDescription').value,
+    price: parseFloat(document.getElementById('editProductPrice').value) || 0,
+    originalPrice: document.getElementById('editProductOriginalPrice').value ? 
+        parseFloat(document.getElementById('editProductOriginalPrice').value) : null,
+    images: allImages, // CHANGED to images array
+    videos: videoUrls, // NEW: videos array
+    stock: document.getElementById('editProductStock').value,
+    rating: parseFloat(document.getElementById('editProductRating').value) || 5,
+    reviewCount: parseInt(document.getElementById('editProductReviewCount').value) || 0,
+    badges: badges,
+    features: features,
+    specifications: specifications,
+    featured: document.getElementById('editProductFeatured').checked,
+    status: 'active'
+};
 
     console.log('Updated product data:', productData);
 
@@ -705,23 +764,34 @@ switchProductTab(tabName) {
         return;
     }
 
-    const productData = {
-        name: document.getElementById('productName').value,
-        sku: document.getElementById('productSku').value,
-        category: document.getElementById('productCategory').value,
-        description: document.getElementById('productDescription').value,
-        price: document.getElementById('productPrice').value,
-        originalPrice: document.getElementById('productOriginalPrice').value || null,
-        image: document.getElementById('productImage').value,
-        stock: document.getElementById('productStock').value,
-        rating: parseFloat(document.getElementById('productRating').value),
-        reviewCount: parseInt(document.getElementById('productReviewCount').value),
-        badges: badges,
-        features: features,
-        specifications: specifications,
-        featured: document.getElementById('productFeatured').checked,
-        status: 'active'
-    };
+    // Get main image
+const mainImage = document.getElementById('productImage').value;
+
+// Get additional images and videos
+const additionalImages = this.getAdditionalImagesFromForm('add');
+const videoUrls = this.getVideoUrlsFromForm('add');
+
+// Combine main image with additional images
+const allImages = mainImage ? [mainImage, ...additionalImages] : additionalImages;
+
+const productData = {
+    name: document.getElementById('productName').value,
+    sku: document.getElementById('productSku').value,
+    category: document.getElementById('productCategory').value,
+    description: document.getElementById('productDescription').value,
+    price: document.getElementById('productPrice').value,
+    originalPrice: document.getElementById('productOriginalPrice').value || null,
+    images: allImages, // CHANGED to images array
+    videos: videoUrls, // NEW: videos array
+    stock: document.getElementById('productStock').value,
+    rating: parseFloat(document.getElementById('productRating').value),
+    reviewCount: parseInt(document.getElementById('productReviewCount').value),
+    badges: badges,
+    features: features,
+    specifications: specifications,
+    featured: document.getElementById('productFeatured').checked,
+    status: 'active'
+};
 
     if (this.editingProductId) {
         // Update existing product
@@ -1099,10 +1169,16 @@ switchProductTab(tabName) {
     const discount = formattedOriginalPrice ? 
         Math.round((1 - product.price / product.originalPrice) * 100) : null;
     
+    // Use first image from images array, or fallback to single image
+    const mainImage = product.images && product.images.length > 0 ? product.images[0] : product.image;
+    
     card.innerHTML = `
-        <div class="product-image">
-            ${product.image ? 
-                `<img src="${product.image}" alt="${product.name}" style="width: 100%; height: 120px; object-fit: cover;">` :
+        <div class="product-image" style="position: relative;">
+            ${mainImage ? 
+                `<img src="${mainImage}" alt="${product.name}" style="width: 100%; height: 120px; object-fit: cover;">
+                 ${product.images && product.images.length > 1 ? `<div class="multi-image-badge">+${product.images.length - 1} more</div>` : ''}
+                 ${product.videos && product.videos.length > 0 ? `<div class="video-badge"><i class="fas fa-video"></i></div>` : ''}
+                ` :
                 `<i class="fas fa-box" style="font-size: 3rem; color: #ccc;"></i>`
             }
             ${product.featured ? '<div class="featured-badge">Featured</div>' : ''}
@@ -1146,6 +1222,13 @@ switchProductTab(tabName) {
                 </ul>
             </div>
         ` : ''}
+        
+        <div class="product-media-summary" style="margin: 10px 0; padding: 8px; background: #f8f9fa; border-radius: 4px;">
+            <small style="color: #666;">
+                <i class="fas fa-images"></i> ${product.images ? product.images.length : 0} images
+                ${product.videos && product.videos.length > 0 ? ` • <i class="fas fa-video"></i> ${product.videos.length} videos` : ''}
+            </small>
+        </div>
         
         <div class="product-actions">
             <button class="btn btn-primary" onclick="admin.editProduct(${product.id})">
@@ -1223,7 +1306,10 @@ switchProductTab(tabName) {
         document.getElementById('editProductSpecifications').value = product.specifications ? 
             JSON.stringify(product.specifications, null, 2) : '{}';
         
-        // Set editing mode
+         // ADD THIS LINE to populate media
+        this.populateEditFormMedia(product);
+
+            // Set editing mode
         this.editingProductId = productId;
         
         // Switch to edit tab
@@ -2090,6 +2176,404 @@ async forceSyncAndRetry() {
     } catch (error) {
         this.showAlert(`❌ Force sync failed: ${error.message}`, 'error');
     }
+}
+
+// ============ MEDIA MANAGEMENT METHODS ============
+
+// Setup media management for forms
+setupMediaManagement() {
+    // Add product form media setup
+    this.setupAddFormMedia();
+    
+    // Edit product form media setup
+    this.setupEditFormMedia();
+}
+
+// Setup media for add product form
+setupAddFormMedia() {
+    const addImageBtn = document.getElementById('addImageUploadBtn');
+    const addVideoBtn = document.getElementById('addVideoUrlBtn');
+    
+    if (addImageBtn) {
+        addImageBtn.addEventListener('click', () => this.addImageUploadField('add'));
+    }
+    
+    if (addVideoBtn) {
+        addVideoBtn.addEventListener('click', () => this.addVideoUrlField('add'));
+    }
+    
+    // Add one initial image upload field
+    this.addImageUploadField('add');
+    
+    // Add one initial video URL field
+    this.addVideoUrlField('add');
+}
+
+// Setup media for edit product form
+setupEditFormMedia() {
+    const editAddImageBtn = document.getElementById('editAddImageUploadBtn');
+    const editAddVideoBtn = document.getElementById('editAddVideoUrlBtn');
+    
+    if (editAddImageBtn) {
+        editAddImageBtn.addEventListener('click', () => this.addImageUploadField('edit'));
+    }
+    
+    if (editAddVideoBtn) {
+        editAddVideoBtn.addEventListener('click', () => this.addVideoUrlField('edit'));
+    }
+}
+
+// Add image upload field dynamically
+addImageUploadField(formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const container = document.getElementById(`${prefix}AdditionalImagesUploads`);
+    const previewContainer = document.getElementById(`${prefix}AdditionalImagesPreviews`);
+    
+    if (!container) return;
+    
+    const fieldId = `additionalImage_${Date.now()}`;
+    const fieldHTML = `
+        <div class="image-upload-field" data-field-id="${fieldId}" style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">
+            <div class="input-group">
+                <input type="file" class="form-control additional-image-upload" accept="image/*" data-field-id="${fieldId}">
+                <button type="button" class="btn btn-outline-danger remove-image-btn" data-field-id="${fieldId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm upload-additional-image-btn" data-field-id="${fieldId}" style="margin-top: 5px;">
+                <i class="fas fa-upload"></i> Upload & Crop
+            </button>
+            <div class="additional-image-preview" id="preview_${fieldId}" style="margin-top: 10px; display: none;">
+                <img src="" alt="Preview" style="max-width: 100px; max-height: 100px; border: 1px solid #ddd; padding: 2px;">
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', fieldHTML);
+    
+    // Add event listeners for the new field
+    const removeBtn = container.querySelector(`.remove-image-btn[data-field-id="${fieldId}"]`);
+    const uploadBtn = container.querySelector(`.upload-additional-image-btn[data-field-id="${fieldId}"]`);
+    const fileInput = container.querySelector(`.additional-image-upload[data-field-id="${fieldId}"]`);
+    
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            const fieldId = e.target.closest('.remove-image-btn').dataset.fieldId;
+            this.removeImageField(fieldId, formType);
+        });
+    }
+    
+    if (uploadBtn && fileInput) {
+        uploadBtn.addEventListener('click', () => {
+            this.handleAdditionalImageUpload(fileInput, fieldId, formType);
+        });
+    }
+}
+
+// Add video URL field dynamically
+addVideoUrlField(formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const container = document.getElementById(`${prefix}VideoUrlsContainer`);
+    
+    if (!container) return;
+    
+    const fieldId = `videoUrl_${Date.now()}`;
+    const fieldHTML = `
+        <div class="video-url-field" data-field-id="${fieldId}" style="margin-bottom: 10px;">
+            <div class="input-group">
+                <input type="url" class="form-control video-url-input" placeholder="Enter video URL (YouTube, Vimeo, etc.)" data-field-id="${fieldId}">
+                <button type="button" class="btn btn-outline-danger remove-video-btn" data-field-id="${fieldId}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', fieldHTML);
+    
+    // Add event listener for remove button
+    const removeBtn = container.querySelector(`.remove-video-btn[data-field-id="${fieldId}"]`);
+    if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+            const fieldId = e.target.closest('.remove-video-btn').dataset.fieldId;
+            this.removeVideoField(fieldId, formType);
+        });
+    }
+}
+
+// Handle additional image upload with cropping
+async handleAdditionalImageUpload(fileInput, fieldId, formType) {
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        this.showAlert('Please select an image file first', 'error');
+        return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+        this.showAlert('Please select a valid image file', 'error');
+        return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+        this.showAlert('Image size should be less than 5MB', 'error');
+        return;
+    }
+
+    try {
+        this.showAlert('🔄 Processing additional image...', 'success');
+        
+        const image = new Image();
+        image.onload = async () => {
+            if (image.width === 818 && image.height === 818) {
+                const imageUrl = await this.uploadImageToGitHub(file, file.name);
+                this.updateAdditionalImagePreview(fieldId, imageUrl, formType);
+            } else {
+                this.showAdditionalImageCropper(image, file, fieldId, formType);
+            }
+        };
+        image.src = URL.createObjectURL(file);
+        
+    } catch (error) {
+        this.showAlert(`❌ Additional image processing failed: ${error.message}`, 'error');
+    }
+}
+
+// Show cropper for additional images
+showAdditionalImageCropper(image, file, fieldId, formType) {
+    const modal = document.createElement('div');
+    modal.className = 'image-cropper-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+
+    const cropContainer = document.createElement('div');
+    cropContainer.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        text-align: center;
+    `;
+
+    cropContainer.innerHTML = `
+        <h3 style="margin-bottom: 15px;">Crop Additional Image to 818x818px</h3>
+        <p style="margin-bottom: 15px; color: #666;">Drag to select the area you want to keep</p>
+        <div class="cropper-wrapper" style="max-width: 600px; max-height: 600px; margin: 0 auto 15px;">
+            <img id="cropAdditionalImage" src="${image.src}" alt="Image to crop" style="max-width: 100%; max-height: 400px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <button id="cropAdditionalBtn" class="btn btn-primary" style="margin-right: 10px;">
+                <i class="fas fa-crop"></i> Crop & Upload
+            </button>
+            <button id="cancelAdditionalCropBtn" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+        <div class="crop-preview" style="margin-top: 15px;">
+            <p style="margin-bottom: 5px;">Preview (818x818px):</p>
+            <canvas id="cropAdditionalPreview" width="150" height="150" style="border: 1px solid #ddd; background: #f5f5f5;"></canvas>
+        </div>
+    `;
+
+    modal.appendChild(cropContainer);
+    document.body.appendChild(modal);
+
+    const self = this;
+
+    // Initialize Cropper.js
+    const cropImg = document.getElementById('cropAdditionalImage');
+    const cropper = new Cropper(cropImg, {
+        aspectRatio: 1,
+        viewMode: 1,
+        autoCropArea: 0.8,
+        movable: true,
+        zoomable: true,
+        rotatable: false,
+        scalable: false,
+        ready() {
+            updatePreview();
+        },
+        crop() {
+            updatePreview();
+        }
+    });
+
+    function updatePreview() {
+        const canvas = cropper.getCroppedCanvas({
+            width: 818,
+            height: 818
+        });
+        
+        const previewCanvas = document.getElementById('cropAdditionalPreview');
+        const ctx = previewCanvas.getContext('2d');
+        ctx.clearRect(0, 0, 150, 150);
+        ctx.drawImage(canvas, 0, 0, 150, 150);
+    }
+
+    document.getElementById('cropAdditionalBtn').addEventListener('click', async () => {
+        try {
+            self.showAlert('🔄 Cropping and uploading additional image...', 'success');
+            
+            const canvas = cropper.getCroppedCanvas({
+                width: 818,
+                height: 818
+            });
+            
+            canvas.toBlob(async (blob) => {
+                try {
+                    const imageUrl = await self.uploadImageToGitHub(blob, file.name);
+                    self.updateAdditionalImagePreview(fieldId, imageUrl, formType);
+                    document.body.removeChild(modal);
+                    self.showAlert('✅ Additional image uploaded successfully!', 'success');
+                } catch (error) {
+                    self.showAlert(`❌ Upload failed: ${error.message}`, 'error');
+                }
+            }, 'image/jpeg', 0.9);
+            
+        } catch (error) {
+            self.showAlert(`❌ Cropping failed: ${error.message}`, 'error');
+        }
+    });
+
+    document.getElementById('cancelAdditionalCropBtn').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+// Update additional image preview
+updateAdditionalImagePreview(fieldId, imageUrl, formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const previewContainer = document.getElementById(`preview_${fieldId}`);
+    
+    if (previewContainer) {
+        const img = previewContainer.querySelector('img');
+        if (img) {
+            img.src = imageUrl;
+        }
+        previewContainer.style.display = 'block';
+    }
+    
+    // Store the URL in a data attribute for form submission
+    const fieldElement = document.querySelector(`.image-upload-field[data-field-id="${fieldId}"]`);
+    if (fieldElement) {
+        fieldElement.dataset.imageUrl = imageUrl;
+    }
+}
+
+// Remove image field
+removeImageField(fieldId, formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const fieldElement = document.querySelector(`.image-upload-field[data-field-id="${fieldId}"]`);
+    if (fieldElement) {
+        fieldElement.remove();
+    }
+}
+
+// Remove video field
+removeVideoField(fieldId, formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const fieldElement = document.querySelector(`.video-url-field[data-field-id="${fieldId}"]`);
+    if (fieldElement) {
+        fieldElement.remove();
+    }
+}
+
+// Get additional images from form
+getAdditionalImagesFromForm(formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const imageFields = document.querySelectorAll(`#${prefix}AdditionalImagesUploads .image-upload-field`);
+    const images = [];
+    
+    imageFields.forEach(field => {
+        const imageUrl = field.dataset.imageUrl;
+        if (imageUrl) {
+            images.push(imageUrl);
+        }
+    });
+    
+    return images;
+}
+
+// Get video URLs from form
+getVideoUrlsFromForm(formType) {
+    const prefix = formType === 'edit' ? 'edit' : '';
+    const videoFields = document.querySelectorAll(`#${prefix}VideoUrlsContainer .video-url-field`);
+    const videos = [];
+    
+    videoFields.forEach(field => {
+        const input = field.querySelector('.video-url-input');
+        if (input && input.value.trim()) {
+            videos.push(input.value.trim());
+        }
+    });
+    
+    return videos;
+}
+
+// Populate edit form with existing media
+populateEditFormMedia(product) {
+    // Clear existing media fields
+    this.clearEditFormMedia();
+    
+    // Populate images
+    if (product.images && product.images.length > 0) {
+        product.images.forEach((imageUrl, index) => {
+            this.addImageUploadField('edit');
+            const fields = document.querySelectorAll('#editAdditionalImagesUploads .image-upload-field');
+            const lastField = fields[fields.length - 1];
+            
+            if (lastField) {
+                lastField.dataset.imageUrl = imageUrl;
+                const previewId = lastField.querySelector('.additional-image-preview').id;
+                const previewContainer = document.getElementById(previewId);
+                if (previewContainer) {
+                    const img = previewContainer.querySelector('img');
+                    if (img) {
+                        img.src = imageUrl;
+                    }
+                    previewContainer.style.display = 'block';
+                }
+            }
+        });
+    }
+    
+    // Populate videos
+    if (product.videos && product.videos.length > 0) {
+        product.videos.forEach(videoUrl => {
+            this.addVideoUrlField('edit');
+            const fields = document.querySelectorAll('#editVideoUrlsContainer .video-url-field');
+            const lastField = fields[fields.length - 1];
+            
+            if (lastField) {
+                const input = lastField.querySelector('.video-url-input');
+                if (input) {
+                    input.value = videoUrl;
+                }
+            }
+        });
+    }
+}
+
+// Clear edit form media
+clearEditFormMedia() {
+    const imageUploads = document.getElementById('editAdditionalImagesUploads');
+    const imagePreviews = document.getElementById('editAdditionalImagesPreviews');
+    const videoContainer = document.getElementById('editVideoUrlsContainer');
+    
+    if (imageUploads) imageUploads.innerHTML = '';
+    if (imagePreviews) imagePreviews.innerHTML = '';
+    if (videoContainer) videoContainer.innerHTML = '';
 }
 
 } // <-- This is the closing brace of the WillTechAdmin class

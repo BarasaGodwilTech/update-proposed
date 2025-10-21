@@ -3217,9 +3217,14 @@ function createProductCard(product) {
     const formattedPrice = new Intl.NumberFormat('en-UG').format(product.price);
     const ratingStars = generateRatingStars(product.rating || 5);
     
+    // Use first image from images array, or fallback to single image
+    const mainImage = product.images && product.images.length > 0 ? product.images[0] : product.image;
+    
     productCard.innerHTML = `
-        <div class="product-image">
-            <img src="${product.image}" alt="${product.name}" loading="lazy">
+        <div class="product-image" style="position: relative;">
+            <img src="${mainImage}" alt="${product.name}" loading="lazy">
+            ${product.images && product.images.length > 1 ? `<div class="multi-image-badge">+${product.images.length - 1} more</div>` : ''}
+            ${product.videos && product.videos.length > 0 ? `<div class="video-badge"><i class="fas fa-video"></i></div>` : ''}
             <div class="product-badges">
                 ${product.badges ? product.badges.map(badge => 
                     `<span class="product-badge badge-${badge}">${badge}</span>`
@@ -3234,21 +3239,22 @@ function createProductCard(product) {
         </div>
         <div class="product-info">
             <h3>${product.name}</h3>
+            <p class="product-sku"><small>SKU: ${product.sku || 'N/A'}</small></p>
             <p class="product-description">${product.description}</p>
             <div class="product-price">
                 <span class="current-price">UGX ${formattedPrice}</span>
                 ${product.originalPrice ? `<span class="original-price">UGX ${new Intl.NumberFormat('en-UG').format(product.originalPrice)}</span>
-                
                 <span class="discount-badge">${Math.round((1 - product.price / product.originalPrice) * 100)}% Off</span>` : ''}
             </div>
             
-            
+            <p><small>Category: ${product.category}</small></p>
+            <p><small>Stock: <span class="stock-${product.stock || 'in-stock'}">${getStockStatusText(product.stock)}</span></small></p>
             
             <div class="product-rating">
                 <div class="stars" aria-label="${product.rating} out of 5 stars">
                     ${ratingStars}
                 </div>
-                <span class="rating-count">(${product.reviewCount} reviews)</span>
+                <span class="rating-count">(${product.reviewCount || 0} reviews)</span>
             </div>
             <div class="product-actions">
                 <button class="add-to-wishlist" aria-label="Add to wishlist">
