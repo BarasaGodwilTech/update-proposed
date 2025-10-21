@@ -7,13 +7,178 @@ if (window.location.pathname.includes('admin.html') &&
 // ===== ONBOARDING GUIDE FUNCTIONALITY =====
 // ==== FIXED ONBOARDING GUIDE FUNCTIONALITY ====
 // ==== PROFESSIONAL ONBOARDING GUIDE ====
+// ===== ONBOARDING GUIDE FUNCTIONALITY =====
+// ==== ENHANCED ONBOARDING WITH SITE IMPROVEMENT NOTIFICATION ====
+// ==== PROFESSIONAL ONBOARDING GUIDE ====
+
+// ==== SITE IMPROVEMENT NOTIFICATION ====
+function showSiteImprovementNotification() {
+    const hasSeenImprovementNotice = localStorage.getItem('willstech_site_improvement_seen');
+    
+    // Only show if user hasn't seen it before
+    if (!hasSeenImprovementNotice) {
+        setTimeout(() => {
+            const notification = document.createElement('div');
+            notification.className = 'site-improvement-notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+                color: white;
+                padding: 1.5rem;
+                border-radius: var(--border-radius-lg);
+                box-shadow: var(--shadow-xl);
+                z-index: 10000;
+                max-width: 380px;
+                animation: slideInRight 0.5s ease-out;
+                border-left: 4px solid var(--accent);
+                font-family: 'Work Sans', sans-serif;
+                backdrop-filter: blur(10px);
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <div style="flex-shrink: 0;">
+                        <i class="fas fa-star" style="font-size: 1.5rem; color: var(--accent);"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 1.1rem; font-weight: 700;">
+                            🚀 We've Supercharged Your Experience!
+                        </h4>
+                        <p style="margin: 0 0 16px 0; font-size: 0.9rem; line-height: 1.4; opacity: 0.9;">
+                            <strong>Good news!</strong> We've completely revamped Will's Tech Store with exciting new features:
+                        </p>
+                        <ul style="margin: 0 0 16px 0; padding-left: 16px; font-size: 0.85rem; opacity: 0.9;">
+                            <li>✨ Enhanced product browsing</li>
+                            <li>🎯 Smart quick-view features</li>
+                            <li>📱 Better mobile experience</li>
+                            <li>⚡ Faster performance</li>
+                        </ul>
+                        <p style="margin: 0 0 16px 0; font-size: 0.85rem; font-style: italic; opacity: 0.8;">
+                            A quick guide will appear shortly to show you around the new improvements!
+                        </p>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button id="exploreNowBtn" style="
+                                background: var(--accent);
+                                color: white;
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 6px;
+                                font-weight: 600;
+                                font-size: 0.85rem;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                                flex: 1;
+                            ">
+                                <i class="fas fa-bolt" style="margin-right: 6px;"></i>
+                                Explore Now
+                            </button>
+                            <button id="learnMoreBtn" style="
+                                background: rgba(255, 255, 255, 0.2);
+                                color: white;
+                                border: 1px solid rgba(255, 255, 255, 0.3);
+                                padding: 8px 16px;
+                                border-radius: 6px;
+                                font-weight: 600;
+                                font-size: 0.85rem;
+                                cursor: pointer;
+                                transition: all 0.2s ease;
+                            ">
+                                <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                                Learn More
+                            </button>
+                        </div>
+                    </div>
+                    <button id="closeImprovementNotice" style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border: none;
+                        color: white;
+                        cursor: pointer;
+                        padding: 6px;
+                        border-radius: 50%;
+                        transition: all 0.2s ease;
+                        flex-shrink: 0;
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    " aria-label="Close notification">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Add hover effects
+            const buttons = notification.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+                });
+                btn.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+            
+            // Event listeners
+            document.getElementById('exploreNowBtn').addEventListener('click', function() {
+                localStorage.setItem('willstech_site_improvement_seen', 'true');
+                hideImprovementNotification(notification);
+                // Let user explore naturally, tour will come shortly
+            });
+            
+            document.getElementById('learnMoreBtn').addEventListener('click', function() {
+                // Scroll to features section
+                const featuresSection = document.getElementById('features');
+                if (featuresSection) {
+                    featuresSection.scrollIntoView({ behavior: 'smooth' });
+                }
+                localStorage.setItem('willstech_site_improvement_seen', 'true');
+                hideImprovementNotification(notification);
+            });
+            
+            document.getElementById('closeImprovementNotice').addEventListener('click', function() {
+                localStorage.setItem('willstech_site_improvement_seen', 'true');
+                hideImprovementNotification(notification);
+            });
+            
+            // Auto-dismiss after 12 seconds (gives user time to read)
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    hideImprovementNotification(notification);
+                }
+            }, 12000);
+            
+        }, 1500); // Show after 1.5 seconds of page load
+    }
+}
+
+function hideImprovementNotification(notification) {
+    notification.style.animation = 'slideOutRight 0.5s ease-in forwards';
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+        }
+    }, 500);
+}
+
 function initOnboardingSystem() {
     const hasSeenGuide = localStorage.getItem('willstech_guide_seen');
     
+    // Show site improvement notification first
+    showSiteImprovementNotification();
+    
+    // Only show tour if user hasn't seen it before
     if (!hasSeenGuide) {
+        // Wait longer before showing tour to let user read improvement notice
         setTimeout(() => {
             showOnboarding();
-        }, 1500);
+        }, 8000); // Show tour 8 seconds after page load (6.5 seconds after improvement notice)
     }
 }
 
@@ -49,6 +214,7 @@ function initOnboardingEvents() {
     if (skipTourBtn) {
         skipTourBtn.addEventListener('click', () => {
             localStorage.setItem('willstech_guide_seen', 'true');
+            localStorage.setItem('willstech_site_improvement_seen', 'true');
             hideOnboarding();
             showCompletionMessage();
         });
@@ -57,6 +223,7 @@ function initOnboardingEvents() {
     if (closeTourBtn) {
         closeTourBtn.addEventListener('click', () => {
             localStorage.setItem('willstech_guide_seen', 'true');
+            localStorage.setItem('willstech_site_improvement_seen', 'true');
             hideOnboarding();
             showCompletionMessage();
         });
@@ -236,6 +403,7 @@ function previousTourStep() {
 
 function finishTour() {
     localStorage.setItem('willstech_guide_seen', 'true');
+    localStorage.setItem('willstech_site_improvement_seen', 'true'); // Add this line
     hideOnboarding();
     showCompletionMessage();
 }
@@ -3180,3 +3348,69 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+// Add CSS for site improvement notification animations
+const siteImprovementNotificationCSS = `
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+.site-improvement-notification {
+    animation: slideInRight 0.5s ease-out;
+}
+
+.site-improvement-notification button {
+    transition: all 0.2s ease;
+}
+
+.site-improvement-notification ul li {
+    margin-bottom: 4px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .site-improvement-notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        top: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .site-improvement-notification {
+        padding: 1rem;
+    }
+    
+    .site-improvement-notification h4 {
+        font-size: 1rem;
+    }
+    
+    .site-improvement-notification p, 
+    .site-improvement-notification ul {
+        font-size: 0.8rem;
+    }
+}
+`;
+
+// Inject the CSS
+const style = document.createElement('style');
+style.textContent = siteImprovementNotificationCSS;
+document.head.appendChild(style);
