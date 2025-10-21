@@ -13,7 +13,7 @@
       "description": "Experience the latest innovation with the iPhone 14, featuring a stunning 6.1-inch Super Retina XDR display, a powerful A15 Bionic chip, and an advanced dual-camera system that captures life's moments with precision.",
       "price": 1500000,
       "originalPrice": null,
-      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1760700526325.jpg",
+      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761065755522.jpg",
       "stock": "in-stock",
       "rating": 3.5,
       "reviewCount": 86,
@@ -36,7 +36,7 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-17T11:32:36.545Z",
-      "dateUpdated": "2025-10-20T15:47:03.678Z"
+      "dateUpdated": "2025-10-21T16:56:15.893Z"
     },
     {
       "id": 1761034720188,
@@ -83,5 +83,5 @@
     "youtube": ""
   },
   "lastSynced": "2025-10-16T13:20:34.197Z",
-  "lastUpdated": "2025-10-21T08:18:40.220Z"
+  "lastUpdated": "2025-10-21T16:56:15.893Z"
 }
