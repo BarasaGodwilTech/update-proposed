@@ -1758,7 +1758,7 @@ setupImageUpload() {
     const urlInput = document.getElementById('productImage');
 
     if (uploadBtn && fileInput) {
-        uploadBtn.addEventListener('click', () => this.handleImageUpload(fileInput, preview, previewImg, urlInput));
+        uploadBtn.addEventListener('click', () => this.handleImageUploadWithCrop(fileInput, preview, previewImg, urlInput));
     }
 
     // Edit product form upload
@@ -1769,7 +1769,7 @@ setupImageUpload() {
     const editUrlInput = document.getElementById('editProductImage');
 
     if (editUploadBtn && editFileInput) {
-        editUploadBtn.addEventListener('click', () => this.handleImageUpload(editFileInput, editPreview, editPreviewImg, editUrlInput));
+        editUploadBtn.addEventListener('click', () => this.handleImageUploadWithCrop(editFileInput, editPreview, editPreviewImg, editUrlInput));
     }
 
     // Preview when URL changes
@@ -1796,7 +1796,8 @@ setupImageUpload() {
     }
 }
 
-async handleImageUpload(fileInput, preview, previewImg, urlInput) {
+// New method to handle image upload with cropping
+async handleImageUploadWithCrop(fileInput, preview, previewImg, urlInput) {
     const file = fileInput.files[0];
     
     if (!file) {
@@ -1819,23 +1820,161 @@ async handleImageUpload(fileInput, preview, previewImg, urlInput) {
     try {
         this.showAlert('🔄 Processing image...', 'success');
         
-        // Resize image to 818x818
-        const resizedImage = await this.resizeImage(file, 818, 818);
-        
-        // Upload to GitHub
-        const imageUrl = await this.uploadImageToGitHub(resizedImage, file.name);
-        
-        // Update URL input and show preview
-        urlInput.value = imageUrl;
-        previewImg.src = imageUrl;
-        preview.style.display = 'block';
-        
-        this.showAlert('✅ Image uploaded successfully!', 'success');
+        // Check image dimensions and show cropper if needed
+        const image = new Image();
+        image.onload = async () => {
+            if (image.width === 818 && image.height === 818) {
+                // Perfect size, upload directly
+                const imageUrl = await this.uploadImageToGitHub(file, file.name);
+                this.updateImageFields(imageUrl, preview, previewImg, urlInput);
+            } else {
+                // Show cropping interface
+                this.showImageCropper(image, file, preview, previewImg, urlInput);
+            }
+        };
+        image.src = URL.createObjectURL(file);
         
     } catch (error) {
-        this.showAlert(`❌ Image upload failed: ${error.message}`, 'error');
+        this.showAlert(`❌ Image processing failed: ${error.message}`, 'error');
     }
 }
+
+// Method to show image cropper
+showImageCropper(image, file, preview, previewImg, urlInput) {
+    // Create cropping modal
+    const modal = document.createElement('div');
+    modal.className = 'image-cropper-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+
+    // Create cropping container
+    const cropContainer = document.createElement('div');
+    cropContainer.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        text-align: center;
+    `;
+
+    cropContainer.innerHTML = `
+        <h3 style="margin-bottom: 15px;">Crop Image to 818x818px</h3>
+        <p style="margin-bottom: 15px; color: #666;">Drag to select the area you want to keep</p>
+        <div class="cropper-wrapper" style="max-width: 600px; max-height: 600px; margin: 0 auto 15px;">
+            <img id="cropImage" src="${image.src}" alt="Image to crop" style="max-width: 100%; max-height: 400px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <button id="cropBtn" class="btn btn-primary" style="margin-right: 10px;">
+                <i class="fas fa-crop"></i> Crop & Upload
+            </button>
+            <button id="cancelCropBtn" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+        </div>
+        <div class="crop-preview" style="margin-top: 15px;">
+            <p style="margin-bottom: 5px;">Preview (818x818px):</p>
+            <canvas id="cropPreview" width="150" height="150" style="border: 1px solid #ddd; background: #f5f5f5;"></canvas>
+        </div>
+    `;
+
+    modal.appendChild(cropContainer);
+    document.body.appendChild(modal);
+
+    // Store reference to 'this' for use in event listeners
+    const self = this;
+
+    // Initialize Cropper.js
+    const cropImg = document.getElementById('cropImage');
+    const cropper = new Cropper(cropImg, {
+        aspectRatio: 1, // Square aspect ratio
+        viewMode: 1,
+        autoCropArea: 0.8,
+        movable: true,
+        zoomable: true,
+        rotatable: false,
+        scalable: false,
+        ready() {
+            updatePreview();
+        },
+        crop() {
+            updatePreview();
+        }
+    });
+
+    // Update preview canvas
+    function updatePreview() {
+        const canvas = cropper.getCroppedCanvas({
+            width: 818,
+            height: 818
+        });
+        
+        const previewCanvas = document.getElementById('cropPreview');
+        const ctx = previewCanvas.getContext('2d');
+        
+        // Clear and draw preview
+        ctx.clearRect(0, 0, 150, 150);
+        ctx.drawImage(canvas, 0, 0, 150, 150);
+    }
+
+    // Handle crop button click
+    document.getElementById('cropBtn').addEventListener('click', async () => {
+        try {
+            self.showAlert('🔄 Cropping and uploading image...', 'success');
+            
+            // Get cropped canvas
+            const canvas = cropper.getCroppedCanvas({
+                width: 818,
+                height: 818
+            });
+            
+            // Convert canvas to blob
+            canvas.toBlob(async (blob) => {
+                try {
+                    // Upload cropped image
+                    const imageUrl = await self.uploadImageToGitHub(blob, file.name);
+                    
+                    // Update form fields
+                    self.updateImageFields(imageUrl, preview, previewImg, urlInput);
+                    
+                    // Close modal
+                    document.body.removeChild(modal);
+                    
+                    self.showAlert('✅ Image cropped and uploaded successfully!', 'success');
+                } catch (error) {
+                    self.showAlert(`❌ Upload failed: ${error.message}`, 'error');
+                }
+            }, 'image/jpeg', 0.9);
+            
+        } catch (error) {
+            self.showAlert(`❌ Cropping failed: ${error.message}`, 'error');
+        }
+    });
+
+    // Handle cancel button click
+    document.getElementById('cancelCropBtn').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+}
+
+// Helper method to update image fields after upload
+updateImageFields(imageUrl, preview, previewImg, urlInput) {
+    urlInput.value = imageUrl;
+    previewImg.src = imageUrl;
+    preview.style.display = 'block';
+}
+
+
 
 resizeImage(file, maxWidth, maxHeight) {
     return new Promise((resolve, reject) => {
@@ -1886,19 +2025,19 @@ resizeImage(file, maxWidth, maxHeight) {
     });
 }
 
-async uploadImageToGitHub(imageBlob, originalFileName) {
+async uploadImageToGitHub(imageData, originalFileName) {
     if (!this.githubToken) {
         throw new Error('GitHub token not set. Please configure settings first.');
     }
 
     // Generate unique filename
     const timestamp = Date.now();
-    const fileExtension = 'jpg'; // Always save as JPG after resizing
+    const fileExtension = 'jpg'; // Save as JPG
     const fileName = `product-${timestamp}.${fileExtension}`;
     const filePath = `public/images/products/${fileName}`;
 
-    // Convert blob to base64
-    const base64Image = await this.blobToBase64(imageBlob);
+    // Convert image data to base64
+    const base64Image = await this.blobToBase64(imageData);
 
     // Upload to GitHub
     const response = await fetch(

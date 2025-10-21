@@ -433,6 +433,8 @@
 
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
 </head>
 <body>
     <div class="admin-container">
@@ -625,14 +627,15 @@ We're working hard to bring you the ultimate tech shopping experience, deliverin
                 </div>
 
                 <!-- Add this upload section -->
+<!-- REPLACE this section in your add product form -->
 <div class="form-group">
-    <label for="productImageUpload">Or Upload Image (818x818px)</label>
+    <label for="productImageUpload">Upload Product Image (Will be cropped to 818x818px)</label>
     <input type="file" id="productImageUpload" name="productImageUpload" class="form-control" accept="image/*">
     <div id="productImagePreview" style="margin-top: 10px; display: none;">
         <img id="productPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
     </div>
     <button type="button" id="uploadProductImageBtn" class="btn btn-secondary" style="margin-top: 10px;">
-        <i class="fas fa-upload"></i> Upload Image
+        <i class="fas fa-upload"></i> Upload & Crop Image
     </button>
 </div>
                 
@@ -753,14 +756,15 @@ We're working hard to bring you the ultimate tech shopping experience, deliverin
                 </div>
                 
                 <!-- Add this upload section -->
+<!-- REPLACE this section in your edit product form -->
 <div class="form-group">
-    <label for="editProductImageUpload">Or Upload Image (818x818px)</label>
+    <label for="editProductImageUpload">Upload Product Image (Will be cropped to 818x818px)</label>
     <input type="file" id="editProductImageUpload" name="editProductImageUpload" class="form-control" accept="image/*">
     <div id="editProductImagePreview" style="margin-top: 10px; display: none;">
         <img id="editProductPreviewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;">
     </div>
     <button type="button" id="uploadEditProductImageBtn" class="btn btn-secondary" style="margin-top: 10px;">
-        <i class="fas fa-upload"></i> Upload Image
+        <i class="fas fa-upload"></i> Upload & Crop Image
     </button>
 </div>
 
@@ -1040,5 +1044,6 @@ Business Hours: Mon-Sat 8:00 AM - 8:00 PM, Sun 10:00 AM - 6:00 PM</textarea>
     </div>
 
     <script src="admin.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </body>
 </html>
