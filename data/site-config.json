@@ -13,7 +13,6 @@
       "description": "Experience the latest innovation with the iPhone 14, featuring a stunning 6.1-inch Super Retina XDR display, a powerful A15 Bionic chip, and an advanced dual-camera system that captures life's moments with precision.",
       "price": 1500000,
       "originalPrice": null,
-      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761065755522.jpg",
       "stock": "in-stock",
       "rating": 3.5,
       "reviewCount": 86,
@@ -36,7 +35,12 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-17T11:32:36.545Z",
-      "dateUpdated": "2025-10-21T16:56:15.893Z"
+      "dateUpdated": "2025-10-22T12:56:37.501Z",
+      "images": [
+        "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761065755522.jpg",
+        "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761137784796.jpg"
+      ],
+      "videos": []
     },
     {
       "id": 1761034720188,
@@ -46,7 +50,6 @@
       "description": "16GB RAM/ 512GB  ",
       "price": "2000000",
       "originalPrice": "2200000",
-      "image": "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761034595474.jpg",
       "stock": "limited",
       "rating": 4.5,
       "reviewCount": 92,
@@ -66,7 +69,11 @@
       },
       "featured": true,
       "status": "active",
-      "dateAdded": "2025-10-21T08:18:40.189Z"
+      "dateAdded": "2025-10-21T08:18:40.189Z",
+      "images": [
+        "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761034595474.jpg"
+      ],
+      "videos": []
     }
   ],
   "content": {
@@ -83,5 +90,5 @@
     "youtube": ""
   },
   "lastSynced": "2025-10-16T13:20:34.197Z",
-  "lastUpdated": "2025-10-21T16:56:15.893Z"
+  "lastUpdated": "2025-10-22T12:56:37.505Z"
 }
