@@ -35,8 +35,12 @@ class WillTechAdmin {
         this.setupNavigation();
         this.setupImageUpload(); // ADD THIS LINE
         
-        // ADD THIS LINE RIGHT HERE:
-        this.setupMediaManagement();
+                // ADD THIS LINE RIGHT HERE:
+        setTimeout(() => {
+            console.log('⏰ Delayed media setup...');
+            this.setupMediaManagement();
+            this.debugMediaSetup(); // Add this debug call
+        }, 1000);
 
         console.log('Admin panel fully initialized');
     }
@@ -1692,6 +1696,19 @@ async retryUpdateWithFreshData(filePath, content) {
         };
         return statusMap[stock] || 'In Stock';
     }
+    // Debug method for media setup
+    debugMediaSetup() {
+        console.log('=== DEBUG MEDIA SETUP ===');
+        console.log('setupMediaManagement called:', typeof this.setupMediaManagement);
+        console.log('setupAddFormMedia called:', typeof this.setupAddFormMedia);
+        
+        const addImageBtn = document.getElementById('addImageUploadBtn');
+        const addVideoBtn = document.getElementById('addVideoUrlBtn');
+        
+        console.log('Add Image Button found:', !!addImageBtn);
+        console.log('Add Video Button found:', !!addVideoBtn);
+        console.log('=== END DEBUG ===');
+    }
     // Helper method to format stock status
 formatStockStatus(stock) {
     const statusMap = {
@@ -2267,94 +2284,169 @@ async forceSyncAndRetry() {
 // ============ MEDIA MANAGEMENT METHODS ============
 
 // Setup media management for forms
-setupMediaManagement() {
-    // Add product form media setup
-    this.setupAddFormMedia();
-    
-    // Edit product form media setup
-    this.setupEditFormMedia();
-}
+    // ============ MEDIA MANAGEMENT METHODS ============
+
+    // Setup media management for forms
+    setupMediaManagement() {
+        console.log('🔄 Setting up media management...');
+        
+        // Add product form media setup
+        this.setupAddFormMedia();
+        
+        // Edit product form media setup  
+        this.setupEditFormMedia();
+        
+        console.log('✅ Media management setup complete');
+    }
 
 // Setup media for add product form
-setupAddFormMedia() {
-    const addImageBtn = document.getElementById('addImageUploadBtn');
-    const addVideoBtn = document.getElementById('addVideoUrlBtn');
-    
-    if (addImageBtn) {
-        addImageBtn.addEventListener('click', () => this.addImageUploadField('add'));
+    // Setup media for add product form
+    setupAddFormMedia() {
+        console.log('🔄 Setting up ADD form media...');
+        
+        const addImageBtn = document.getElementById('addImageUploadBtn');
+        const addVideoBtn = document.getElementById('addVideoUrlBtn');
+        
+        console.log('Add Image Button:', addImageBtn);
+        console.log('Add Video Button:', addVideoBtn);
+        
+        if (addImageBtn) {
+            console.log('✅ Add Image button found, adding event listener');
+            addImageBtn.addEventListener('click', () => {
+                console.log('➕ Add Image button clicked!');
+                this.addImageUploadField('add');
+            });
+        } else {
+            console.log('❌ Add Image button NOT found!');
+            // Let's check what elements exist
+            const allButtons = document.querySelectorAll('button');
+            console.log('All buttons on page:', Array.from(allButtons).map(btn => ({
+                id: btn.id,
+                text: btn.textContent,
+                html: btn.outerHTML
+            })));
+        }
+        
+        if (addVideoBtn) {
+            console.log('✅ Add Video button found, adding event listener');
+            addVideoBtn.addEventListener('click', () => {
+                console.log('➕ Add Video button clicked!');
+                this.addVideoUrlField('add');
+            });
+        } else {
+            console.log('❌ Add Video button NOT found!');
+        }
+        
+        // Add one initial image upload field
+        console.log('Adding initial image upload field...');
+        this.addImageUploadField('add');
+        
+        // Add one initial video URL field
+        console.log('Adding initial video URL field...');
+        this.addVideoUrlField('add');
+        
+        console.log('✅ Add form media setup complete');
     }
-    
-    if (addVideoBtn) {
-        addVideoBtn.addEventListener('click', () => this.addVideoUrlField('add'));
-    }
-    
-    // Add one initial image upload field
-    this.addImageUploadField('add');
-    
-    // Add one initial video URL field
-    this.addVideoUrlField('add');
-}
 
-// Setup media for edit product form
-setupEditFormMedia() {
-    const editAddImageBtn = document.getElementById('editAddImageUploadBtn');
-    const editAddVideoBtn = document.getElementById('editAddVideoUrlBtn');
-    
-    if (editAddImageBtn) {
-        editAddImageBtn.addEventListener('click', () => this.addImageUploadField('edit'));
+    // Setup media for edit product form
+    setupEditFormMedia() {
+        console.log('🔄 Setting up EDIT form media...');
+        
+        const editAddImageBtn = document.getElementById('editAddImageUploadBtn');
+        const editAddVideoBtn = document.getElementById('editAddVideoUrlBtn');
+        
+        console.log('Edit Add Image Button:', editAddImageBtn);
+        console.log('Edit Add Video Button:', editAddVideoBtn);
+        
+        if (editAddImageBtn) {
+            console.log('✅ Edit Add Image button found, adding event listener');
+            editAddImageBtn.addEventListener('click', () => {
+                console.log('➕ Edit Add Image button clicked!');
+                this.addImageUploadField('edit');
+            });
+        } else {
+            console.log('❌ Edit Add Image button NOT found!');
+        }
+        
+        if (editAddVideoBtn) {
+            console.log('✅ Edit Add Video button found, adding event listener');
+            editAddVideoBtn.addEventListener('click', () => {
+                console.log('➕ Edit Add Video button clicked!');
+                this.addVideoUrlField('edit');
+            });
+        } else {
+            console.log('❌ Edit Add Video button NOT found!');
+        }
+        
+        console.log('✅ Edit form media setup complete');
     }
-    
-    if (editAddVideoBtn) {
-        editAddVideoBtn.addEventListener('click', () => this.addVideoUrlField('edit'));
-    }
-}
 
 // Add image upload field dynamically
-addImageUploadField(formType) {
-    const prefix = formType === 'edit' ? 'edit' : '';
-    const container = document.getElementById(`${prefix}AdditionalImagesUploads`);
-    const previewContainer = document.getElementById(`${prefix}AdditionalImagesPreviews`);
-    
-    if (!container) return;
-    
-    const fieldId = `additionalImage_${Date.now()}`;
-    const fieldHTML = `
-        <div class="image-upload-field" data-field-id="${fieldId}" style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">
-            <div class="input-group">
-                <input type="file" class="form-control additional-image-upload" accept="image/*" data-field-id="${fieldId}">
-                <button type="button" class="btn btn-outline-danger remove-image-btn" data-field-id="${fieldId}">
-                    <i class="fas fa-times"></i>
+    // Add image upload field dynamically
+    addImageUploadField(formType) {
+        console.log(`➕ Adding image upload field for form type: ${formType}`);
+        
+        const prefix = formType === 'edit' ? 'edit' : '';
+        const container = document.getElementById(`${prefix}AdditionalImagesUploads`);
+        const previewContainer = document.getElementById(`${prefix}AdditionalImagesPreviews`);
+        
+        console.log('Container found:', !!container);
+        console.log('Preview container found:', !!previewContainer);
+        
+        if (!container) {
+            console.error(`❌ Container not found: ${prefix}AdditionalImagesUploads`);
+            console.log('Available elements with "AdditionalImagesUploads":', 
+                document.querySelectorAll('[id*="AdditionalImagesUploads"]'));
+            return;
+        }
+        
+        const fieldId = `additionalImage_${Date.now()}`;
+        const fieldHTML = `
+            <div class="image-upload-field" data-field-id="${fieldId}" style="margin-bottom: 10px; padding: 10px; border: 1px dashed #ccc; border-radius: 5px;">
+                <div class="input-group">
+                    <input type="file" class="form-control additional-image-upload" accept="image/*" data-field-id="${fieldId}">
+                    <button type="button" class="btn btn-outline-danger remove-image-btn" data-field-id="${fieldId}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm upload-additional-image-btn" data-field-id="${fieldId}" style="margin-top: 5px;">
+                    <i class="fas fa-upload"></i> Upload & Crop
                 </button>
+                <div class="additional-image-preview" id="preview_${fieldId}" style="margin-top: 10px; display: none;">
+                    <img src="" alt="Preview" style="max-width: 100px; max-height: 100px; border: 1px solid #ddd; padding: 2px;">
+                </div>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm upload-additional-image-btn" data-field-id="${fieldId}" style="margin-top: 5px;">
-                <i class="fas fa-upload"></i> Upload & Crop
-            </button>
-            <div class="additional-image-preview" id="preview_${fieldId}" style="margin-top: 10px; display: none;">
-                <img src="" alt="Preview" style="max-width: 100px; max-height: 100px; border: 1px solid #ddd; padding: 2px;">
-            </div>
-        </div>
-    `;
-    
-    container.insertAdjacentHTML('beforeend', fieldHTML);
-    
-    // Add event listeners for the new field
-    const removeBtn = container.querySelector(`.remove-image-btn[data-field-id="${fieldId}"]`);
-    const uploadBtn = container.querySelector(`.upload-additional-image-btn[data-field-id="${fieldId}"]`);
-    const fileInput = container.querySelector(`.additional-image-upload[data-field-id="${fieldId}"]`);
-    
-    if (removeBtn) {
-        removeBtn.addEventListener('click', (e) => {
-            const fieldId = e.target.closest('.remove-image-btn').dataset.fieldId;
-            this.removeImageField(fieldId, formType);
-        });
+        `;
+        
+        console.log('Inserting field HTML...');
+        container.insertAdjacentHTML('beforeend', fieldHTML);
+        
+        // Add event listeners for the new field
+        const removeBtn = container.querySelector(`.remove-image-btn[data-field-id="${fieldId}"]`);
+        const uploadBtn = container.querySelector(`.upload-additional-image-btn[data-field-id="${fieldId}"]`);
+        const fileInput = container.querySelector(`.additional-image-upload[data-field-id="${fieldId}"]`);
+        
+        console.log('Remove button found:', !!removeBtn);
+        console.log('Upload button found:', !!uploadBtn);
+        console.log('File input found:', !!fileInput);
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                console.log('🗑️ Remove image button clicked');
+                const fieldId = e.target.closest('.remove-image-btn').dataset.fieldId;
+                this.removeImageField(fieldId, formType);
+            });
+        }
+        
+        if (uploadBtn && fileInput) {
+            uploadBtn.addEventListener('click', () => {
+                console.log('📤 Upload additional image button clicked');
+                this.handleAdditionalImageUpload(fileInput, fieldId, formType);
+            });
+        }
+        
+        console.log('✅ Image upload field added successfully');
     }
-    
-    if (uploadBtn && fileInput) {
-        uploadBtn.addEventListener('click', () => {
-            this.handleAdditionalImageUpload(fileInput, fieldId, formType);
-        });
-    }
-}
 
 // Add video URL field dynamically
 addVideoUrlField(formType) {
@@ -2695,9 +2787,21 @@ clearEditFormMedia() {
     if (imagePreviews) imagePreviews.innerHTML = '';
     if (videoContainer) videoContainer.innerHTML = '';
 }
+    // Add this method for manual testing
+    manualInitMedia() {
+        console.log('🛠️ MANUAL MEDIA INITIALIZATION');
+        this.setupMediaManagement();
+    }
 
 } // <-- This is the closing brace of the WillTechAdmin class
-
+// Make it globally available
+window.manualInitMedia = () => {
+    if (window.admin) {
+        window.admin.manualInitMedia();
+    } else {
+        console.error('Admin not initialized');
+    }
+}
 
 // Initialize admin panel when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {

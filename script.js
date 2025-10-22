@@ -2144,7 +2144,6 @@ function trackModalAction(action, productName) {
 
     // Update modal content with product data
     const elements = {
-        image: document.getElementById('modalProductImage'),
         title: document.getElementById('modalProductTitle'),
         description: document.getElementById('modalProductDescription'),
         price: document.getElementById('modalProductPrice'),
@@ -2156,19 +2155,22 @@ function trackModalAction(action, productName) {
         sku: document.getElementById('modalProductSKU'),
         discount: document.getElementById('modalProductDiscount'),
         thumbnails: document.getElementById('modalProductThumbnails'),
-        videos: document.getElementById('modalProductVideos'),
-        videoThumbnails: document.getElementById('modalVideoThumbnails')
+        mainImageContainer: document.getElementById('mainImageContainer'),
+        mainVideoContainer: document.getElementById('mainVideoContainer'),
+        modalProductVideo: document.getElementById('modalProductVideo'),
+        videoControls: document.getElementById('videoControls')
     };
 
     // Set product data
     const images = product.images && product.images.length > 0 ? product.images : [product.image].filter(Boolean);
-    const mainImage = images[0] || '/placeholder.svg';
+    const videos = product.videos || [];
     
-    if (elements.image) {
-        elements.image.src = mainImage;
-        elements.image.alt = product.name || 'Product image';
-    }
-    
+    // Combine all media (images + videos)
+    const allMedia = [
+        ...images.map(img => ({ type: 'image', url: img })),
+        ...videos.map(video => ({ type: 'video', url: video }))
+    ];
+
     if (elements.title) elements.title.textContent = product.name || 'Product';
     if (elements.description) elements.description.textContent = product.description || 'No description available';
     
@@ -2183,7 +2185,6 @@ function trackModalAction(action, productName) {
             elements.originalPrice.textContent = `UGX ${formatPrice(product.originalPrice)}`;
             elements.originalPrice.style.display = 'inline';
             
-            // Calculate and show discount
             const discount = Math.round((1 - product.price / product.originalPrice) * 100);
             if (elements.discount) {
                 elements.discount.textContent = `Save ${discount}%`;
@@ -2240,7 +2241,6 @@ function trackModalAction(action, productName) {
                 elements.features.appendChild(li);
             });
         } else {
-            // Fallback features
             const defaultFeatures = [
                 'Premium quality product',
                 'Authentic and genuine',
@@ -2255,62 +2255,63 @@ function trackModalAction(action, productName) {
         }
     }
 
-    // Generate image thumbnails
+    // Generate combined media thumbnails
     if (elements.thumbnails) {
         elements.thumbnails.innerHTML = '';
         
-        images.forEach((image, index) => {
-            const thumbnail = document.createElement('div');
-            thumbnail.className = `thumbnail ${index === 0 ? 'active' : ''}`;
-            thumbnail.innerHTML = `<img src="${image}" alt="${product.name} - Image ${index + 1}" loading="lazy">`;
-            thumbnail.addEventListener('click', () => {
-                // Update main image
-                elements.image.src = image;
+        if (allMedia.length === 0) {
+            // No media available
+            const noMedia = document.createElement('div');
+            noMedia.className = 'media-loading';
+            noMedia.innerHTML = '<i class="fas fa-image"></i> No media available';
+            elements.thumbnails.appendChild(noMedia);
+        } else {
+            // Create thumbnails for all media
+            allMedia.forEach((media, index) => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = `media-thumbnail ${index === 0 ? 'active' : ''}`;
+                thumbnail.setAttribute('data-media-index', index);
+                thumbnail.setAttribute('data-media-type', media.type);
                 
-                // Update active thumbnail
-                document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
-                thumbnail.classList.add('active');
-            });
-            elements.thumbnails.appendChild(thumbnail);
-        });
-    }
-
-    // Generate video thumbnails
-    if (elements.videoThumbnails && elements.videos) {
-        elements.videoThumbnails.innerHTML = '';
-        
-        if (product.videos && product.videos.length > 0) {
-            elements.videos.style.display = 'block';
-            
-            product.videos.forEach((videoUrl, index) => {
-                const videoThumbnail = document.createElement('div');
-                videoThumbnail.className = 'video-thumbnail';
+                if (media.type === 'image') {
+                    thumbnail.innerHTML = `
+                        <img src="${media.url}" alt="${product.name} - Image ${index + 1}" loading="lazy">
+                        <div class="thumbnail-type">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    `;
+                } else {
+                    const videoId = extractVideoId(media.url);
+                    const thumbnailUrl = videoId ? getVideoThumbnail(media.url, videoId) : '/placeholder.svg';
+                    
+                    thumbnail.innerHTML = `
+                        <img src="${thumbnailUrl}" alt="${product.name} - Video ${index + 1}" loading="lazy">
+                        <div class="thumbnail-type video-indicator">
+                            <i class="fas fa-play"></i>
+                        </div>
+                    `;
+                }
                 
-                // Extract video ID for thumbnail (for YouTube/Vimeo)
-                const videoId = extractVideoId(videoUrl);
-                const thumbnailUrl = videoId ? getVideoThumbnail(videoUrl, videoId) : '/placeholder.svg';
-                
-                videoThumbnail.innerHTML = `
-                    <img src="${thumbnailUrl}" alt="${product.name} - Video ${index + 1}" loading="lazy">
-                    <div class="video-play-button">
-                        <i class="fas fa-play"></i>
-                    </div>
-                    <div class="video-thumbnail-label">Video ${index + 1}</div>
-                `;
-                
-                videoThumbnail.addEventListener('click', () => {
-                    openVideoModal(videoUrl, product.name);
+                thumbnail.addEventListener('click', () => {
+                    displayMedia(media, index, allMedia, elements);
+                    
+                    // Update active thumbnail
+                    document.querySelectorAll('.media-thumbnail').forEach(thumb => thumb.classList.remove('active'));
+                    thumbnail.classList.add('active');
                 });
                 
-                elements.videoThumbnails.appendChild(videoThumbnail);
+                elements.thumbnails.appendChild(thumbnail);
             });
-        } else {
-            elements.videos.style.display = 'none';
         }
     }
 
+    // Display first media item
+    if (allMedia.length > 0) {
+        displayMedia(allMedia[0], 0, allMedia, elements);
+    }
+
     // Initialize gallery navigation
-    initGalleryNavigation(images, elements.image);
+    initCombinedGalleryNavigation(allMedia, elements);
 
     // Update WhatsApp order button
     updateWhatsAppButton(product);
@@ -2325,6 +2326,140 @@ function trackModalAction(action, productName) {
 
     // Track quick view event
     trackQuickView(product.name || 'Unknown Product');
+}
+
+// Display media in the main container
+function displayMedia(media, index, allMedia, elements) {
+    if (media.type === 'image') {
+        // Show image, hide video
+        elements.mainImageContainer.style.display = 'flex';
+        elements.mainVideoContainer.style.display = 'none';
+        elements.videoControls.style.display = 'none';
+        
+        const img = elements.mainImageContainer.querySelector('#modalProductImage');
+        if (img) {
+            img.src = media.url;
+            img.alt = `Product image ${index + 1}`;
+        }
+    } else {
+        // Show video, hide image
+        elements.mainImageContainer.style.display = 'none';
+        elements.mainVideoContainer.style.display = 'block';
+        elements.videoControls.style.display = 'flex';
+        
+        const embedUrl = getEmbedUrl(media.url);
+        elements.modalProductVideo.src = embedUrl;
+    }
+    
+    // Update media counter
+    updateMediaCounter(index + 1, allMedia.length);
+}
+
+// Update media counter
+function updateMediaCounter(current, total) {
+    let counter = document.querySelector('.media-counter');
+    if (!counter) {
+        counter = document.createElement('div');
+        counter.className = 'media-counter';
+        document.querySelector('.main-media-container').appendChild(counter);
+    }
+    counter.textContent = `${current} / ${total}`;
+}
+
+// Initialize combined gallery navigation
+function initCombinedGalleryNavigation(allMedia, elements) {
+    if (!allMedia || allMedia.length <= 1) return;
+    
+    let currentMediaIndex = 0;
+    const prevButton = document.querySelector('.gallery-prev');
+    const nextButton = document.querySelector('.gallery-next');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    
+    function navigateToMedia(index) {
+        if (allMedia[index]) {
+            currentMediaIndex = index;
+            displayMedia(allMedia[index], index, allMedia, elements);
+            
+            // Update active thumbnail
+            document.querySelectorAll('.media-thumbnail').forEach((thumb, thumbIndex) => {
+                thumb.classList.toggle('active', thumbIndex === index);
+            });
+        }
+    }
+    
+    function nextMedia() {
+        const newIndex = (currentMediaIndex + 1) % allMedia.length;
+        navigateToMedia(newIndex);
+    }
+    
+    function prevMedia() {
+        const newIndex = (currentMediaIndex - 1 + allMedia.length) % allMedia.length;
+        navigateToMedia(newIndex);
+    }
+    
+    // Navigation buttons
+    if (prevButton) {
+        prevButton.addEventListener('click', prevMedia);
+    }
+    
+    if (nextButton) {
+        nextButton.addEventListener('click', nextMedia);
+    }
+    
+    // Video controls
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', () => {
+            // This would require YouTube API for full control
+            // For now, we'll just toggle the icon
+            const icon = playPauseBtn.querySelector('i');
+            if (icon.classList.contains('fa-play')) {
+                icon.className = 'fas fa-pause';
+            } else {
+                icon.className = 'fas fa-play';
+            }
+        });
+    }
+    
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', () => {
+            const videoContainer = elements.mainVideoContainer;
+            if (videoContainer.requestFullscreen) {
+                videoContainer.requestFullscreen();
+            }
+        });
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('quickViewModal').classList.contains('active')) return;
+        
+        if (e.key === 'ArrowLeft') {
+            prevMedia();
+        } else if (e.key === 'ArrowRight') {
+            nextMedia();
+        } else if (e.key === 'Escape') {
+            // Exit fullscreen if active
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            }
+        }
+    });
+    
+    // Auto-play first video when navigated to
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const videoContainer = elements.mainVideoContainer;
+                if (videoContainer.style.display !== 'none' && allMedia[currentMediaIndex].type === 'video') {
+                    // Video is now visible - you could auto-play here if desired
+                    console.log('Video is now visible:', allMedia[currentMediaIndex].url);
+                }
+            }
+        });
+    });
+    
+    observer.observe(elements.mainVideoContainer, { attributes: true });
 }
 
 // Add these helper functions if they don't exist:
@@ -2480,27 +2615,38 @@ function initQuickView() {
                     <div class="modal-body">
                         <!-- Product Gallery Section -->
                         <div class="modal-product-gallery">
-                            <div class="main-image-container">
-                                <img id="modalProductImage" src="" alt="" loading="lazy">
-                                <button class="gallery-nav gallery-prev" aria-label="Previous image">
+                            <div class="main-media-container">
+                                <!-- Images will be displayed here -->
+                                <div class="main-image-container" id="mainImageContainer">
+                                    <img id="modalProductImage" src="" alt="" loading="lazy">
+                                </div>
+                                
+                                <!-- Videos will be displayed here -->
+                                <div class="main-video-container" id="mainVideoContainer" style="display: none;">
+                                    <iframe id="modalProductVideo" frameborder="0" allowfullscreen></iframe>
+                                </div>
+                                
+                                <button class="gallery-nav gallery-prev" aria-label="Previous media">
                                     <i class="fas fa-chevron-left"></i>
                                 </button>
-                                <button class="gallery-nav gallery-next" aria-label="Next image">
+                                <button class="gallery-nav gallery-next" aria-label="Next media">
                                     <i class="fas fa-chevron-right"></i>
                                 </button>
-                            </div>
-                            
-                            <!-- Image Thumbnails -->
-                            <div class="image-thumbnails" id="modalProductThumbnails">
-                                <!-- Thumbnails will be generated here -->
-                            </div>
-                            
-                            <!-- Video Gallery -->
-                            <div class="video-gallery" id="modalProductVideos" style="display: none;">
-                                <h4>Product Videos</h4>
-                                <div class="video-thumbnails" id="modalVideoThumbnails">
-                                    <!-- Video thumbnails will be generated here -->
+                                
+                                <!-- Video Play/Pause Controls -->
+                                <div class="video-controls" id="videoControls" style="display: none;">
+                                    <button class="video-control-btn" id="playPauseBtn" aria-label="Play/Pause">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button class="video-control-btn" id="fullscreenBtn" aria-label="Fullscreen">
+                                        <i class="fas fa-expand"></i>
+                                    </button>
                                 </div>
+                            </div>
+                            
+                            <!-- Combined Media Thumbnails -->
+                            <div class="media-thumbnails" id="modalProductThumbnails">
+                                <!-- Combined image and video thumbnails will be generated here -->
                             </div>
                         </div>
                         
