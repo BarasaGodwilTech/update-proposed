@@ -2154,12 +2154,18 @@ function trackModalAction(action, productName) {
         features: document.getElementById('modalProductFeatures'),
         stock: document.getElementById('modalProductStock'),
         sku: document.getElementById('modalProductSKU'),
-        discount: document.getElementById('modalProductDiscount')
+        discount: document.getElementById('modalProductDiscount'),
+        thumbnails: document.getElementById('modalProductThumbnails'),
+        videos: document.getElementById('modalProductVideos'),
+        videoThumbnails: document.getElementById('modalVideoThumbnails')
     };
 
     // Set product data
+    const images = product.images && product.images.length > 0 ? product.images : [product.image].filter(Boolean);
+    const mainImage = images[0] || '/placeholder.svg';
+    
     if (elements.image) {
-        elements.image.src = product.image || '/placeholder.svg';
+        elements.image.src = mainImage;
         elements.image.alt = product.name || 'Product image';
     }
     
@@ -2248,6 +2254,63 @@ function trackModalAction(action, productName) {
             });
         }
     }
+
+    // Generate image thumbnails
+    if (elements.thumbnails) {
+        elements.thumbnails.innerHTML = '';
+        
+        images.forEach((image, index) => {
+            const thumbnail = document.createElement('div');
+            thumbnail.className = `thumbnail ${index === 0 ? 'active' : ''}`;
+            thumbnail.innerHTML = `<img src="${image}" alt="${product.name} - Image ${index + 1}" loading="lazy">`;
+            thumbnail.addEventListener('click', () => {
+                // Update main image
+                elements.image.src = image;
+                
+                // Update active thumbnail
+                document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
+                thumbnail.classList.add('active');
+            });
+            elements.thumbnails.appendChild(thumbnail);
+        });
+    }
+
+    // Generate video thumbnails
+    if (elements.videoThumbnails && elements.videos) {
+        elements.videoThumbnails.innerHTML = '';
+        
+        if (product.videos && product.videos.length > 0) {
+            elements.videos.style.display = 'block';
+            
+            product.videos.forEach((videoUrl, index) => {
+                const videoThumbnail = document.createElement('div');
+                videoThumbnail.className = 'video-thumbnail';
+                
+                // Extract video ID for thumbnail (for YouTube/Vimeo)
+                const videoId = extractVideoId(videoUrl);
+                const thumbnailUrl = videoId ? getVideoThumbnail(videoUrl, videoId) : '/placeholder.svg';
+                
+                videoThumbnail.innerHTML = `
+                    <img src="${thumbnailUrl}" alt="${product.name} - Video ${index + 1}" loading="lazy">
+                    <div class="video-play-button">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="video-thumbnail-label">Video ${index + 1}</div>
+                `;
+                
+                videoThumbnail.addEventListener('click', () => {
+                    openVideoModal(videoUrl, product.name);
+                });
+                
+                elements.videoThumbnails.appendChild(videoThumbnail);
+            });
+        } else {
+            elements.videos.style.display = 'none';
+        }
+    }
+
+    // Initialize gallery navigation
+    initGalleryNavigation(images, elements.image);
 
     // Update WhatsApp order button
     updateWhatsAppButton(product);
@@ -2415,10 +2478,33 @@ function initQuickView() {
                     </button>
                     
                     <div class="modal-body">
-                        <div class="modal-product-image">
-                            <img id="modalProductImage" src="" alt="" loading="lazy">
+                        <!-- Product Gallery Section -->
+                        <div class="modal-product-gallery">
+                            <div class="main-image-container">
+                                <img id="modalProductImage" src="" alt="" loading="lazy">
+                                <button class="gallery-nav gallery-prev" aria-label="Previous image">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="gallery-nav gallery-next" aria-label="Next image">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Image Thumbnails -->
+                            <div class="image-thumbnails" id="modalProductThumbnails">
+                                <!-- Thumbnails will be generated here -->
+                            </div>
+                            
+                            <!-- Video Gallery -->
+                            <div class="video-gallery" id="modalProductVideos" style="display: none;">
+                                <h4>Product Videos</h4>
+                                <div class="video-thumbnails" id="modalVideoThumbnails">
+                                    <!-- Video thumbnails will be generated here -->
+                                </div>
+                            </div>
                         </div>
                         
+                        <!-- Product Info Section -->
                         <div class="modal-product-info">
                             <div class="product-header">
                                 <h2 id="modalProductTitle">Product Title</h2>
@@ -2589,6 +2675,7 @@ function initMobileMenu() {
         }
     });
 
+
     // Enhanced dropdown functionality for mobile
     const dropdowns = document.querySelectorAll(".dropdown");
     dropdowns.forEach(dropdown => {
@@ -2633,6 +2720,150 @@ function initMobileMenu() {
             closeMobileMenu();
         }
     });
+}
+
+// Gallery navigation functionality
+function initGalleryNavigation(images, mainImageElement) {
+    if (!images || images.length <= 1) return;
+    
+    let currentImageIndex = 0;
+    const prevButton = document.querySelector('.gallery-prev');
+    const nextButton = document.querySelector('.gallery-next');
+    
+    function updateMainImage(index) {
+        if (images[index]) {
+            mainImageElement.src = images[index];
+            
+            // Update active thumbnail
+            document.querySelectorAll('.thumbnail').forEach((thumb, thumbIndex) => {
+                thumb.classList.toggle('active', thumbIndex === index);
+            });
+            
+            currentImageIndex = index;
+        }
+    }
+    
+    if (prevButton) {
+        prevButton.addEventListener('click', () => {
+            const newIndex = (currentImageIndex - 1 + images.length) % images.length;
+            updateMainImage(newIndex);
+        });
+    }
+    
+    if (nextButton) {
+        nextButton.addEventListener('click', () => {
+            const newIndex = (currentImageIndex + 1) % images.length;
+            updateMainImage(newIndex);
+        });
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!document.getElementById('quickViewModal').classList.contains('active')) return;
+        
+        if (e.key === 'ArrowLeft') {
+            const newIndex = (currentImageIndex - 1 + images.length) % images.length;
+            updateMainImage(newIndex);
+        } else if (e.key === 'ArrowRight') {
+            const newIndex = (currentImageIndex + 1) % images.length;
+            updateMainImage(newIndex);
+        }
+    });
+}
+
+// Video thumbnail helpers
+function extractVideoId(url) {
+    if (!url) return null;
+    
+    // YouTube
+    const youtubeMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (youtubeMatch) return youtubeMatch[1];
+    
+    // Vimeo
+    const vimeoMatch = url.match(/(?:vimeo\.com\/|player\.vimeo\.com\/video\/)([0-9]+)/);
+    if (vimeoMatch) return vimeoMatch[1];
+    
+    return null;
+}
+
+function getVideoThumbnail(url, videoId) {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    } else if (url.includes('vimeo.com')) {
+        return `https://vumbnail.com/${videoId}.jpg`;
+    } else {
+        return '/placeholder.svg';
+    }
+}
+
+// Video modal functionality
+function openVideoModal(videoUrl, productName) {
+    // Create video modal
+    const videoModal = document.createElement('div');
+    videoModal.className = 'video-modal';
+    videoModal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 20px;
+    `;
+    
+    videoModal.innerHTML = `
+        <div class="video-modal-content" style="position: relative; max-width: 90%; max-height: 90%;">
+            <button class="video-modal-close" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="video-container" style="width: 800px; max-width: 90vw; height: 450px; max-height: 80vh;">
+                <iframe 
+                    src="${getEmbedUrl(videoUrl)}" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                    style="width: 100%; height: 100%; border-radius: 8px;"
+                    title="${productName} - Video"
+                ></iframe>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(videoModal);
+    
+    // Close functionality
+    const closeBtn = videoModal.querySelector('.video-modal-close');
+    closeBtn.addEventListener('click', () => {
+        document.body.removeChild(videoModal);
+    });
+    
+    videoModal.addEventListener('click', (e) => {
+        if (e.target === videoModal) {
+            document.body.removeChild(videoModal);
+        }
+    });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.contains(videoModal)) {
+            document.body.removeChild(videoModal);
+        }
+    });
+}
+
+function getEmbedUrl(url) {
+    const videoId = extractVideoId(url);
+    
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        return `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    } else if (url.includes('vimeo.com')) {
+        return `https://player.vimeo.com/video/${videoId}?autoplay=1`;
+    } else {
+        return url; // Direct video URL
+    }
 }
 
 function showNotification(message, type = "info") {
@@ -3192,6 +3423,11 @@ function updateProductsSection(productsData) {
     if (!productsGrid) return;
     
     console.log('Updating products section with:', productsData.length, 'products');
+    console.log('Sample product media:', productsData[0] ? {
+        name: productsData[0].name,
+        images: productsData[0].images,
+        videos: productsData[0].videos
+    } : 'No products');
     
     // Clear existing products (keep the structure, just update content)
     const existingProductCards = productsGrid.querySelectorAll('.product-card');
@@ -3207,6 +3443,11 @@ function updateProductsSection(productsData) {
     });
     
     console.log('Products section updated. Total cards:', productsGrid.querySelectorAll('.product-card').length);
+    
+    // Re-initialize quick view after products are loaded
+    setTimeout(() => {
+        initQuickView();
+    }, 1000);
 }
 
 function createProductCard(product) {
@@ -3221,10 +3462,10 @@ function createProductCard(product) {
     const mainImage = product.images && product.images.length > 0 ? product.images[0] : product.image;
     
     productCard.innerHTML = `
-        <div class="product-image" style="position: relative;">
+        <div class="product-image">
             <img src="${mainImage}" alt="${product.name}" loading="lazy">
             ${product.images && product.images.length > 1 ? `<div class="multi-image-badge">+${product.images.length - 1} more</div>` : ''}
-            ${product.videos && product.videos.length > 0 ? `<div class="video-badge"><i class="fas fa-video"></i></div>` : ''}
+            ${product.videos && product.videos.length > 0 ? `<div class="video-badge"><i class="fas fa-video"></i> ${product.videos.length}</div>` : ''}
             <div class="product-badges">
                 ${product.badges ? product.badges.map(badge => 
                     `<span class="product-badge badge-${badge}">${badge}</span>`

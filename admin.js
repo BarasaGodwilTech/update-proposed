@@ -372,14 +372,24 @@ getEmptyProductStructure() {
 }
 
 // Add this method to migrate existing products
+// Add this method to migrate existing products
 migrateProductMedia() {
     if (!this.currentData.products) return;
     
+    let migratedCount = 0;
+    
     this.currentData.products.forEach(product => {
-        // If product has old 'image' field, migrate to new 'images' array
-        if (product.image && !product.images) {
+        // If product has old 'image' field but no 'images' array, migrate it
+        if (product.image && (!product.images || !Array.isArray(product.images))) {
             product.images = [product.image]; // Move single image to images array
             delete product.image; // Remove old field
+            migratedCount++;
+            console.log(`Migrated product: ${product.name}`);
+        }
+        
+        // Ensure images is always an array
+        if (!product.images) {
+            product.images = [];
         }
         
         // Initialize videos array if it doesn't exist
@@ -387,6 +397,10 @@ migrateProductMedia() {
             product.videos = [];
         }
     });
+    
+    if (migratedCount > 0) {
+        console.log(`Migrated ${migratedCount} products to new media format`);
+    }
 }
 
     setupEventListeners() {
@@ -565,7 +579,7 @@ async handleEditProductForm(e) {
     }
 
     // Get values from EDIT FORM fields (notice the "edit" prefix)
-    // Get main image
+// Get main image from URL input
 const mainImage = document.getElementById('editProductImage').value;
 
 // Get additional images and videos
@@ -573,7 +587,17 @@ const additionalImages = this.getAdditionalImagesFromForm('edit');
 const videoUrls = this.getVideoUrlsFromForm('edit');
 
 // Combine main image with additional images
-const allImages = mainImage ? [mainImage, ...additionalImages] : additionalImages;
+let allImages = [];
+if (mainImage) {
+    allImages = [mainImage, ...additionalImages];
+} else if (additionalImages.length > 0) {
+    allImages = additionalImages;
+} else {
+    allImages = [];
+}
+
+console.log('Final images array for edit:', allImages);
+console.log('Video URLs for edit:', videoUrls);
 
 const productData = {
     name: document.getElementById('editProductName').value,
@@ -583,8 +607,8 @@ const productData = {
     price: parseFloat(document.getElementById('editProductPrice').value) || 0,
     originalPrice: document.getElementById('editProductOriginalPrice').value ? 
         parseFloat(document.getElementById('editProductOriginalPrice').value) : null,
-    images: allImages, // CHANGED to images array
-    videos: videoUrls, // NEW: videos array
+    images: allImages,
+    videos: videoUrls,
     stock: document.getElementById('editProductStock').value,
     rating: parseFloat(document.getElementById('editProductRating').value) || 5,
     reviewCount: parseInt(document.getElementById('editProductReviewCount').value) || 0,
@@ -594,7 +618,6 @@ const productData = {
     featured: document.getElementById('editProductFeatured').checked,
     status: 'active'
 };
-
     console.log('Updated product data:', productData);
 
     // Update existing product
@@ -765,6 +788,7 @@ switchProductTab(tabName) {
     }
 
     // Get main image
+// Get main image from URL input
 const mainImage = document.getElementById('productImage').value;
 
 // Get additional images and videos
@@ -772,7 +796,17 @@ const additionalImages = this.getAdditionalImagesFromForm('add');
 const videoUrls = this.getVideoUrlsFromForm('add');
 
 // Combine main image with additional images
-const allImages = mainImage ? [mainImage, ...additionalImages] : additionalImages;
+let allImages = [];
+if (mainImage) {
+    allImages = [mainImage, ...additionalImages];
+} else if (additionalImages.length > 0) {
+    allImages = additionalImages;
+} else {
+    allImages = [];
+}
+
+console.log('Final images array:', allImages);
+console.log('Video URLs:', videoUrls);
 
 const productData = {
     name: document.getElementById('productName').value,
@@ -781,8 +815,8 @@ const productData = {
     description: document.getElementById('productDescription').value,
     price: document.getElementById('productPrice').value,
     originalPrice: document.getElementById('productOriginalPrice').value || null,
-    images: allImages, // CHANGED to images array
-    videos: videoUrls, // NEW: videos array
+    images: allImages, // Always use images array
+    videos: videoUrls,
     stock: document.getElementById('productStock').value,
     rating: parseFloat(document.getElementById('productRating').value),
     reviewCount: parseInt(document.getElementById('productReviewCount').value),
@@ -1177,7 +1211,7 @@ const productData = {
             ${mainImage ? 
                 `<img src="${mainImage}" alt="${product.name}" style="width: 100%; height: 120px; object-fit: cover;">
                  ${product.images && product.images.length > 1 ? `<div class="multi-image-badge">+${product.images.length - 1} more</div>` : ''}
-                 ${product.videos && product.videos.length > 0 ? `<div class="video-badge"><i class="fas fa-video"></i></div>` : ''}
+                 ${product.videos && product.videos.length > 0 ? `<div class="video-badge"><i class="fas fa-video"></i> ${product.videos.length} videos</div>` : ''}
                 ` :
                 `<i class="fas fa-box" style="font-size: 3rem; color: #ccc;"></i>`
             }
@@ -1281,18 +1315,37 @@ const productData = {
         console.log('Product found:', product);
         
         // Populate basic fields
-        document.getElementById('editProductName').value = product.name || '';
-        document.getElementById('editProductSku').value = product.sku || '';
-        document.getElementById('editProductCategory').value = product.category || 'smartphones';
-        document.getElementById('editProductDescription').value = product.description || '';
-        document.getElementById('editProductPrice').value = product.price || '';
-        document.getElementById('editProductOriginalPrice').value = product.originalPrice || '';
-        document.getElementById('editProductImage').value = product.image || '';
-        document.getElementById('editProductStock').value = product.stock || 'in-stock';
-        document.getElementById('editProductRating').value = product.rating || 5;
-        document.getElementById('editProductReviewCount').value = product.reviewCount || 0;
-        document.getElementById('editProductFeatured').checked = product.featured || false;
-        
+    // Populate basic fields
+document.getElementById('editProductName').value = product.name || '';
+document.getElementById('editProductSku').value = product.sku || '';
+document.getElementById('editProductCategory').value = product.category || 'smartphones';
+document.getElementById('editProductDescription').value = product.description || '';
+document.getElementById('editProductPrice').value = product.price || '';
+document.getElementById('editProductOriginalPrice').value = product.originalPrice || '';
+
+// Handle main image - support both old and new structure
+let mainImage = '';
+if (product.images && product.images.length > 0) {
+    mainImage = product.images[0];
+} else if (product.image) {
+    mainImage = product.image;
+}
+document.getElementById('editProductImage').value = mainImage || '';
+
+// Update preview if main image exists
+if (mainImage) {
+    const preview = document.getElementById('editProductImagePreview');
+    const previewImg = document.getElementById('editProductPreviewImg');
+    if (preview && previewImg) {
+        previewImg.src = mainImage;
+        preview.style.display = 'block';
+    }
+}
+
+document.getElementById('editProductStock').value = product.stock || 'in-stock';
+document.getElementById('editProductRating').value = product.rating || 5;
+document.getElementById('editProductReviewCount').value = product.reviewCount || 0;
+document.getElementById('editProductFeatured').checked = product.featured || false;
         // Populate badges
         const badgeCheckboxes = document.querySelectorAll('#edit-product input[name="editProductBadges"]');
         badgeCheckboxes.forEach(checkbox => {
@@ -1639,6 +1692,16 @@ async retryUpdateWithFreshData(filePath, content) {
         };
         return statusMap[stock] || 'In Stock';
     }
+    // Helper method to format stock status
+formatStockStatus(stock) {
+    const statusMap = {
+        'in-stock': 'In Stock',
+        'out-of-stock': 'Out of Stock',
+        'pre-order': 'Pre-Order',
+        'limited': 'Limited Stock'
+    };
+    return statusMap[stock] || 'In Stock';
+}
 
     // Debug helper function
     debugProductData() {
@@ -1883,6 +1946,7 @@ setupImageUpload() {
 }
 
 // New method to handle image upload with cropping
+// New method to handle image upload with cropping
 async handleImageUploadWithCrop(fileInput, preview, previewImg, urlInput) {
     const file = fileInput.files[0];
     
@@ -2054,10 +2118,32 @@ showImageCropper(image, file, preview, previewImg, urlInput) {
 }
 
 // Helper method to update image fields after upload
+// Helper method to update image fields after upload
 updateImageFields(imageUrl, preview, previewImg, urlInput) {
-    urlInput.value = imageUrl;
-    previewImg.src = imageUrl;
-    preview.style.display = 'block';
+    // Update the URL input field
+    if (urlInput) {
+        urlInput.value = imageUrl;
+        console.log('Updated URL input with:', imageUrl);
+    }
+    
+    // Update the preview
+    if (previewImg) {
+        previewImg.src = imageUrl;
+    }
+    if (preview) {
+        preview.style.display = 'block';
+    }
+}
+// Debug method to check image data
+debugImageData(product) {
+    console.log('=== DEBUG IMAGE DATA ===');
+    console.log('Product ID:', product.id);
+    console.log('Product Name:', product.name);
+    console.log('Old image field:', product.image);
+    console.log('New images array:', product.images);
+    console.log('Images array length:', product.images ? product.images.length : 0);
+    console.log('First image in array:', product.images ? product.images[0] : 'N/A');
+    console.log('=== END DEBUG ===');
 }
 
 
@@ -2522,13 +2608,43 @@ getVideoUrlsFromForm(formType) {
 }
 
 // Populate edit form with existing media
+// Populate edit form with existing media
 populateEditFormMedia(product) {
+    console.log('Populating edit form media for product:', product);
+    
     // Clear existing media fields
     this.clearEditFormMedia();
     
-    // Populate images
+    // Handle main image - support both old 'image' and new 'images' structure
+    let mainImage = '';
     if (product.images && product.images.length > 0) {
-        product.images.forEach((imageUrl, index) => {
+        mainImage = product.images[0]; // Use first image as main image
+    } else if (product.image) {
+        mainImage = product.image; // Fallback to old single image field
+    }
+    
+    console.log('Main image URL:', mainImage);
+    
+    // Set main image URL in the input field
+    const mainImageInput = document.getElementById('editProductImage');
+    if (mainImageInput && mainImage) {
+        mainImageInput.value = mainImage;
+        console.log('Set main image input to:', mainImage);
+        
+        // Also update the preview
+        const preview = document.getElementById('editProductImagePreview');
+        const previewImg = document.getElementById('editProductPreviewImg');
+        if (preview && previewImg) {
+            previewImg.src = mainImage;
+            preview.style.display = 'block';
+        }
+    }
+    
+    // Populate additional images (skip the first one since it's the main image)
+    if (product.images && product.images.length > 1) {
+        console.log('Populating additional images:', product.images.slice(1));
+        
+        product.images.slice(1).forEach((imageUrl, index) => {
             this.addImageUploadField('edit');
             const fields = document.querySelectorAll('#editAdditionalImagesUploads .image-upload-field');
             const lastField = fields[fields.length - 1];
@@ -2544,12 +2660,15 @@ populateEditFormMedia(product) {
                     }
                     previewContainer.style.display = 'block';
                 }
+                console.log('Added additional image:', imageUrl);
             }
         });
     }
     
     // Populate videos
     if (product.videos && product.videos.length > 0) {
+        console.log('Populating videos:', product.videos);
+        
         product.videos.forEach(videoUrl => {
             this.addVideoUrlField('edit');
             const fields = document.querySelectorAll('#editVideoUrlsContainer .video-url-field');
@@ -2559,6 +2678,7 @@ populateEditFormMedia(product) {
                 const input = lastField.querySelector('.video-url-input');
                 if (input) {
                     input.value = videoUrl;
+                    console.log('Set video URL:', videoUrl);
                 }
             }
         });

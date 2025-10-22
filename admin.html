@@ -461,6 +461,63 @@
 .stock-pre-order { color: #f59e0b; font-weight: 600; }
 .stock-limited { color: #f59e0b; font-weight: 600; }
 
+/* Media Section Styling */
+.form-section {
+    background: #fafbfc;
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+}
+
+.upload-section {
+    padding: 15px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+}
+
+.image-upload-field, .video-url-field {
+    transition: all 0.3s ease;
+}
+
+.image-upload-field:hover, .video-url-field:hover {
+    background: #f9fafb;
+}
+
+.additional-image-preview img {
+    border-radius: 4px;
+    transition: transform 0.2s ease;
+}
+
+.additional-image-preview img:hover {
+    transform: scale(1.05);
+}
+
+/* Button Styling */
+.btn-outline-primary {
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Preview Grid */
+#additionalImagesPreviews, #editAdditionalImagesPreviews {
+    min-height: 50px;
+}
+
+/* Video Examples */
+.video-examples {
+    border-left: 3px solid #3b82f6;
+}
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
@@ -668,6 +725,54 @@ We're working hard to bring you the ultimate tech shopping experience, deliverin
         <i class="fas fa-upload"></i> Upload & Crop Image
     </button>
 </div>
+
+<!-- ===== ADDITIONAL MEDIA SECTION ===== -->
+<!-- ===== ADDITIONAL MEDIA SECTION ===== -->
+<div class="form-section" style="margin: 2rem 0; padding: 1.5rem; border: 2px dashed #e2e8f0; border-radius: 8px;">
+    <h3 style="margin-bottom: 1.5rem; color: #374151;">
+        <i class="fas fa-images"></i> Additional Media
+    </h3>
+
+    <!-- Additional Images Section -->
+    <div class="form-group">
+        <label style="display: block; margin-bottom: 1rem;">
+            <i class="fas fa-layer-group"></i> Additional Product Images
+        </label>
+        <small class="form-text text-muted" style="display: block; margin-bottom: 1rem;">
+            Add multiple images to create a product gallery. Each image will be cropped to 818x818px.
+        </small>
+        
+        <div id="additionalImagesUploads">
+            <!-- Dynamic upload fields will appear here -->
+        </div>
+        
+        <button type="button" id="addImageUploadBtn" class="btn btn-outline-primary" style="margin-top: 10px;">
+            <i class="fas fa-plus"></i> Add Another Image
+        </button>
+        
+        <div id="additionalImagesPreviews" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+            <!-- Uploaded image previews will appear here -->
+        </div>
+    </div>
+
+    <!-- Product Videos Section -->
+    <div class="form-group">
+        <label style="display: block; margin-bottom: 1rem;">
+            <i class="fas fa-video"></i> Product Videos
+        </label>
+        <small class="form-text text-muted" style="display: block; margin-bottom: 1rem;">
+            Add YouTube, Vimeo, or direct video URLs. Videos will be embedded in the product gallery.
+        </small>
+        
+        <div id="videoUrlsContainer">
+            <!-- Dynamic video URL fields will appear here -->
+        </div>
+        
+        <button type="button" id="addVideoUrlBtn" class="btn btn-outline-primary" style="margin-top: 10px;">
+            <i class="fas fa-plus"></i> Add Video URL
+        </button>
+    </div>
+</div>
                 
                 <div class="form-group">
                     <label for="productStock">Stock Status</label>
@@ -796,6 +901,54 @@ We're working hard to bring you the ultimate tech shopping experience, deliverin
     <button type="button" id="uploadEditProductImageBtn" class="btn btn-secondary" style="margin-top: 10px;">
         <i class="fas fa-upload"></i> Upload & Crop Image
     </button>
+</div>
+
+<!-- ===== ADDITIONAL MEDIA SECTION (EDIT) ===== -->
+<!-- ===== ADDITIONAL MEDIA SECTION ===== -->
+<div class="form-section" style="margin: 2rem 0; padding: 1.5rem; border: 2px dashed #e2e8f0; border-radius: 8px;">
+    <h3 style="margin-bottom: 1.5rem; color: #374151;">
+        <i class="fas fa-images"></i> Additional Media
+    </h3>
+
+    <!-- Additional Images Section -->
+    <div class="form-group">
+        <label style="display: block; margin-bottom: 1rem;">
+            <i class="fas fa-layer-group"></i> Additional Product Images
+        </label>
+        <small class="form-text text-muted" style="display: block; margin-bottom: 1rem;">
+            Add multiple images to create a product gallery. Each image will be cropped to 818x818px.
+        </small>
+        
+        <div id="additionalImagesUploads">
+            <!-- Dynamic upload fields will appear here -->
+        </div>
+        
+        <button type="button" id="addImageUploadBtn" class="btn btn-outline-primary" style="margin-top: 10px;">
+            <i class="fas fa-plus"></i> Add Another Image
+        </button>
+        
+        <div id="additionalImagesPreviews" style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 10px;">
+            <!-- Uploaded image previews will appear here -->
+        </div>
+    </div>
+
+    <!-- Product Videos Section -->
+    <div class="form-group">
+        <label style="display: block; margin-bottom: 1rem;">
+            <i class="fas fa-video"></i> Product Videos
+        </label>
+        <small class="form-text text-muted" style="display: block; margin-bottom: 1rem;">
+            Add YouTube, Vimeo, or direct video URLs. Videos will be embedded in the product gallery.
+        </small>
+        
+        <div id="videoUrlsContainer">
+            <!-- Dynamic video URL fields will appear here -->
+        </div>
+        
+        <button type="button" id="addVideoUrlBtn" class="btn btn-outline-primary" style="margin-top: 10px;">
+            <i class="fas fa-plus"></i> Add Video URL
+        </button>
+    </div>
 </div>
 
                 <div class="form-group">
