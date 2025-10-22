@@ -35,12 +35,14 @@
       "featured": true,
       "status": "active",
       "dateAdded": "2025-10-17T11:32:36.545Z",
-      "dateUpdated": "2025-10-22T12:56:37.501Z",
+      "dateUpdated": "2025-10-22T15:21:31.992Z",
       "images": [
         "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761065755522.jpg",
         "https://raw.githubusercontent.com/BarasaGodwilTech/update-proposed/branch-test/public/images/products/product-1761137784796.jpg"
       ],
-      "videos": []
+      "videos": [
+        "https://youtu.be/OHD--3Sc-Xg?list=PL3UeMmSqW6uaESNSPkwr-RMrZJNiOUmYV"
+      ]
     },
     {
       "id": 1761034720188,
@@ -90,5 +92,5 @@
     "youtube": ""
   },
   "lastSynced": "2025-10-16T13:20:34.197Z",
-  "lastUpdated": "2025-10-22T12:56:37.505Z"
+  "lastUpdated": "2025-10-22T15:21:31.994Z"
 }
