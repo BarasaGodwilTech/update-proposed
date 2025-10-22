@@ -660,6 +660,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => {
         initQuickView();
         initModalActions(); // Ensure modal actions are initialized
+        initShareFunctionality(); // ADD THIS LINE
+
+         // Check if URL has product parameter and open it
+        checkUrlForProduct(); // ADD THIS LINE
     }, 2500); // Increased delay to ensure everything is loaded
     
   } catch (error) {
@@ -2135,7 +2139,58 @@ function trackModalAction(action, productName) {
         }
     });
 
+    // Check URL for product parameter and open the product
+function checkUrlForProduct() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('id');
+    const productSlug = urlParams.get('product');
+    
+    if (productId && productId !== 'unknown') {
+        // Find the product in the site data and open it
+        openProductFromUrl(productId, productSlug);
+    }
+}
+
+// Open product from URL parameters
+function openProductFromUrl(productId, productSlug) {
+    console.log('Opening product from URL:', productId, productSlug);
+    
+    // Wait for products to load
+    setTimeout(() => {
+        if (window.siteData && window.siteData.products) {
+            const product = window.siteData.products.find(p => 
+                p.id.toString() === productId.toString() || 
+                createProductSlug(p.name) === productSlug
+            );
+            
+            if (product) {
+                console.log('Product found, opening quick view:', product.name);
+                // Scroll to products section first
+                const productsSection = document.getElementById('products');
+                if (productsSection) {
+                    productsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+                
+                // Open quick view after a short delay
+                setTimeout(() => {
+                    openQuickViewModal(product);
+                }, 1000);
+            } else {
+                console.log('Product not found in site data');
+            }
+        } else {
+            console.log('Site data not loaded yet');
+            // Retry after a delay
+            setTimeout(() => openProductFromUrl(productId, productSlug), 500);
+        }
+    }, 1000);
+}
+
     function openQuickViewModal(product) {
+        // Store product globally for URL sharing
+    window.currentProductData = product;
+    window.currentProductId = product.id;
+
     const modal = document.getElementById('quickViewModal');
     if (!modal) {
         console.error('Quick view modal not found');
@@ -2324,6 +2379,9 @@ function trackModalAction(action, productName) {
     // Add focus trap for accessibility
     trapFocus(modal);
 
+      // Store product data for sharing
+    window.currentProductData = product;
+    
     // Track quick view event
     trackQuickView(product.name || 'Unknown Product');
 }
@@ -2509,45 +2567,48 @@ function initQuickView() {
         // Re-select buttons after cloning
         const freshQuickViewBtns = document.querySelectorAll('.quick-view-btn');
         
-        freshQuickViewBtns.forEach(quickViewBtn => {
-            quickViewBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Quick view button clicked!');
-                
-                const productCard = this.closest('.product-card');
-                if (!productCard) {
-                    console.error('Product card not found');
-                    return;
-                }
-                
-                const productName = productCard.querySelector('h3')?.textContent || '';
-                console.log('Product name:', productName);
-                
-                // Try to get product from admin panel data first
-                let product = null;
-                if (window.siteData && window.siteData.products) {
-                    product = window.siteData.products.find(p => 
-                        p.name === productName || 
-                        p.name?.includes(productName) || 
-                        productName.includes(p.name)
-                    );
-                }
-                
-                // Fallback to card data
-                if (!product) {
-                    product = getProductFromCard(productCard);
-                }
-                
-                if (product) {
-                    console.log('Opening quick view for:', product.name);
-                    openQuickViewModal(product);
-                } else {
-                    console.error('Product data not found for:', productName);
-                    showNotification('Product information not available', 'error');
-                }
-            });
-        });
+        // In your initQuickView function, make sure the click handler stores the product
+freshQuickViewBtns.forEach(quickViewBtn => {
+    quickViewBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Quick view button clicked!');
+        
+        const productCard = this.closest('.product-card');
+        if (!productCard) {
+            console.error('Product card not found');
+            return;
+        }
+        
+        const productName = productCard.querySelector('h3')?.textContent || '';
+        console.log('Product name:', productName);
+        
+        // Try to get product from admin panel data first
+        let product = null;
+        if (window.siteData && window.siteData.products) {
+            product = window.siteData.products.find(p => 
+                p.name === productName || 
+                p.name?.includes(productName) || 
+                productName.includes(p.name)
+            );
+        }
+        
+        // Fallback to card data
+        if (!product) {
+            product = getProductFromCard(productCard);
+        }
+        
+        if (product) {
+            console.log('Opening quick view for:', product.name);
+            // Store product globally for URL sharing
+            window.currentProductData = product;
+            openQuickViewModal(product);
+        } else {
+            console.error('Product data not found for:', productName);
+            showNotification('Product information not available', 'error');
+        }
+    });
+});
 
         // Close modal functionality
         const closeBtn = document.querySelector('.modal-close');
@@ -2574,6 +2635,31 @@ function initQuickView() {
 
         console.log('Quick view initialization complete');
     }, 2000); // Increased delay to ensure products are loaded
+}
+
+
+// Clean up URL when quick view closes
+function cleanupProductUrl() {
+    if (window.history && window.history.replaceState) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+}
+
+// Update closeQuickViewModal to clean URL
+function closeQuickViewModal() {
+    const modal = document.getElementById('quickViewModal');
+    if (!modal) return;
+    
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = 'auto';
+
+    // Clean up URL
+    cleanupProductUrl();
+
+    // Remove focus trap
+    removeFocusTrap();
 }
 
     function trapFocus(modal) {
@@ -2642,6 +2728,11 @@ function initQuickView() {
                                         <i class="fas fa-expand"></i>
                                     </button>
                                 </div>
+                                
+                                <!-- Share Button -->
+                                <button class="share-product-btn" id="shareProductBtn" aria-label="Share this product">
+                                    <i class="fas fa-share-alt"></i>
+                                </button>
                             </div>
                             
                             <!-- Combined Media Thumbnails -->
@@ -2693,7 +2784,89 @@ function initQuickView() {
                                     <i class="far fa-heart" aria-hidden="true"></i>
                                     Add to Wishlist
                                 </button>
+                                <button class="btn btn-outline share-product-main-btn">
+                                    <i class="fas fa-share-alt" aria-hidden="true"></i>
+                                    Share Product
+                                </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Share Modal -->
+        <div id="shareModal" class="modal share-modal" aria-hidden="true">
+            <div class="modal-overlay">
+                <div class="modal-content share-modal-content">
+                    <button class="modal-close share-modal-close" aria-label="Close share modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    
+                    <div class="share-modal-header">
+                        <h3>Share This Product</h3>
+                        <p>Share this amazing product with your friends and family</p>
+                    </div>
+                    
+                    <div class="share-options">
+                        <button class="share-option" data-platform="whatsapp">
+                            <div class="share-icon whatsapp">
+                                <i class="fab fa-whatsapp"></i>
+                            </div>
+                            <span>WhatsApp</span>
+                        </button>
+                        
+                        <button class="share-option" data-platform="facebook">
+                            <div class="share-icon facebook">
+                                <i class="fab fa-facebook-f"></i>
+                            </div>
+                            <span>Facebook</span>
+                        </button>
+                        
+                        <button class="share-option" data-platform="twitter">
+                            <div class="share-icon twitter">
+                                <i class="fab fa-twitter"></i>
+                            </div>
+                            <span>Twitter</span>
+                        </button>
+                        
+                        <button class="share-option" data-platform="telegram">
+                            <div class="share-icon telegram">
+                                <i class="fab fa-telegram"></i>
+                            </div>
+                            <span>Telegram</span>
+                        </button>
+                        
+                        <button class="share-option" data-platform="copy">
+                            <div class="share-icon copy">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <span>Copy Link</span>
+                        </button>
+                        
+                        <button class="share-option" data-platform="email">
+                            <div class="share-icon email">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <span>Email</span>
+                        </button>
+                    </div>
+                    
+                    <div class="share-link-container">
+                        <input type="text" id="shareableLink" readonly class="share-link-input">
+                        <button class="btn btn-secondary copy-link-btn">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="share-preview">
+                        <div class="share-preview-image">
+                            <img id="sharePreviewImage" src="" alt="">
+                        </div>
+                        <div class="share-preview-content">
+                            <h4 id="sharePreviewTitle">Product Title</h4>
+                            <p id="sharePreviewDescription">Product description...</p>
+                            <div class="share-preview-price" id="sharePreviewPrice">UGX 0</div>
                         </div>
                     </div>
                 </div>
@@ -3569,13 +3742,12 @@ function updateProductsSection(productsData) {
     if (!productsGrid) return;
     
     console.log('Updating products section with:', productsData.length, 'products');
-    console.log('Sample product media:', productsData[0] ? {
-        name: productsData[0].name,
-        images: productsData[0].images,
-        videos: productsData[0].videos
-    } : 'No products');
     
-    // Clear existing products (keep the structure, just update content)
+    // Store products globally for URL access
+    window.siteData = window.siteData || {};
+    window.siteData.products = productsData;
+    
+    // Clear existing products
     const existingProductCards = productsGrid.querySelectorAll('.product-card');
     console.log('Removing existing product cards:', existingProductCards.length);
     existingProductCards.forEach(card => card.remove());
@@ -3626,7 +3798,7 @@ function createProductCard(product) {
         </div>
         <div class="product-info">
             <h3>${product.name}</h3>
-            <p class="product-sku"><small>SKU: ${product.sku || 'N/A'}</small></p>
+        
             <p class="product-description">${product.description}</p>
             <div class="product-price">
                 <span class="current-price">UGX ${formattedPrice}</span>
@@ -3634,7 +3806,7 @@ function createProductCard(product) {
                 <span class="discount-badge">${Math.round((1 - product.price / product.originalPrice) * 100)}% Off</span>` : ''}
             </div>
             
-            <p><small>Category: ${product.category}</small></p>
+            
             <p><small>Stock: <span class="stock-${product.stock || 'in-stock'}">${getStockStatusText(product.stock)}</span></small></p>
             
             <div class="product-rating">
@@ -3719,6 +3891,287 @@ function updateSocialLinks(socialData) {
             link.href = socialData.youtube;
         }
     });
+}
+
+// Initialize share functionality
+function initShareFunctionality() {
+    const shareProductBtn = document.getElementById('shareProductBtn');
+    const shareProductMainBtn = document.querySelector('.share-product-main-btn');
+    const shareModal = document.getElementById('shareModal');
+    const shareModalClose = document.querySelector('.share-modal-close');
+    const shareOptions = document.querySelectorAll('.share-option');
+    const copyLinkBtn = document.querySelector('.copy-link-btn');
+    const shareableLink = document.getElementById('shareableLink');
+
+    // Floating share button
+    if (shareProductBtn) {
+        shareProductBtn.addEventListener('click', openShareModal);
+    }
+
+    // Main share button
+    if (shareProductMainBtn) {
+        shareProductMainBtn.addEventListener('click', openShareModal);
+    }
+
+    // Close share modal
+    if (shareModalClose) {
+        shareModalClose.addEventListener('click', closeShareModal);
+    }
+
+    // Close modal when clicking outside
+    if (shareModal) {
+        shareModal.addEventListener('click', (e) => {
+            if (e.target === shareModal) {
+                closeShareModal();
+            }
+        });
+    }
+
+    // Share options
+    shareOptions.forEach(option => {
+        option.addEventListener('click', (e) => {
+            const platform = e.currentTarget.dataset.platform;
+            shareProduct(platform);
+        });
+    });
+
+    // Copy link button
+    if (copyLinkBtn && shareableLink) {
+        copyLinkBtn.addEventListener('click', () => {
+            copyToClipboard(shareableLink.value);
+            showShareSuccess('Product link copied to clipboard!');
+        });
+    }
+
+    // Close with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && shareModal.classList.contains('active')) {
+            closeShareModal();
+        }
+    });
+}
+
+// Create a URL-friendly slug from product title
+function createProductSlug(title) {
+    return title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '')
+        .substring(0, 50); // Limit length
+}
+
+// Generate unique product URL
+function generateProductUrl(slug, productId) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    return `${baseUrl}?product=${slug}&id=${productId}`;
+}
+
+// Get current product data from quick view
+function getCurrentProductData() {
+    // Try to get data from the stored product first (more accurate)
+    if (window.currentProductData) {
+        const product = window.currentProductData;
+        const productSlug = createProductSlug(product.name);
+        const productUrl = generateProductUrl(productSlug, product.id);
+        
+        return {
+            title: product.name,
+            description: product.description || 'Check out this amazing product from Will\'s Tech Store!',
+            price: `UGX ${formatPrice(product.price || 0)}`,
+            image: product.images && product.images.length > 0 ? product.images[0] : product.image || '/placeholder.svg',
+            url: productUrl,
+            slug: productSlug,
+            product: product,
+            id: product.id
+        };
+    }
+    
+    // Fallback to DOM data
+    const title = document.getElementById('modalProductTitle')?.textContent;
+    const description = document.getElementById('modalProductDescription')?.textContent;
+    const price = document.getElementById('modalProductPrice')?.textContent;
+    const image = document.getElementById('modalProductImage')?.src;
+    
+    if (!title) return null;
+    
+    // Create a unique product URL
+    const productSlug = createProductSlug(title);
+    const productUrl = generateProductUrl(productSlug, 'unknown');
+    
+    return {
+        title: title,
+        description: description || 'Check out this amazing product from Will\'s Tech Store!',
+        price: price || '',
+        image: image || '/placeholder.svg',
+        url: productUrl,
+        slug: productSlug,
+        id: 'unknown'
+    };
+}
+
+// Update share modal content
+function updateShareModalContent(product) {
+    // Update preview
+    document.getElementById('sharePreviewTitle').textContent = product.title;
+    document.getElementById('sharePreviewDescription').textContent = product.description;
+    document.getElementById('sharePreviewPrice').textContent = product.price;
+    document.getElementById('sharePreviewImage').src = product.image;
+    
+    // Update shareable link
+    const shareableLink = document.getElementById('shareableLink');
+    if (shareableLink) {
+        shareableLink.value = product.url;
+    }
+    
+    // Store current product for sharing
+    window.currentSharedProduct = product;
+}
+
+// Share product on different platforms
+function shareProduct(platform) {
+    const product = window.currentSharedProduct;
+    if (!product) return;
+
+    const text = `🚀 Check out "${product.title}" at Will's Tech Store! ${product.price} - ${product.description.substring(0, 100)}...`;
+    const encodedText = encodeURIComponent(text);
+    const encodedUrl = encodeURIComponent(product.url);
+
+    let shareUrl = '';
+
+    switch (platform) {
+        case 'whatsapp':
+            shareUrl = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
+            break;
+            
+        case 'facebook':
+            shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
+            break;
+            
+        case 'twitter':
+            shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+            break;
+            
+        case 'telegram':
+            shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+            break;
+            
+        case 'email':
+            shareUrl = `mailto:?subject=${encodeURIComponent(product.title)}&body=${encodedText}%0A%0A${encodedUrl}`;
+            break;
+            
+        case 'copy':
+            copyToClipboard(product.url);
+            showShareSuccess('Product link copied to clipboard!');
+            return;
+            
+        default:
+            return;
+    }
+
+    // Open share window
+    if (platform !== 'email') {
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    } else {
+        window.location.href = shareUrl;
+    }
+    
+    // Show success message
+    showShareSuccess(`Shared on ${platform.charAt(0).toUpperCase() + platform.slice(1)}!`);
+    
+    // Track share event
+    trackShareEvent(platform, product.title);
+    
+    // Close modal after a delay
+    setTimeout(closeShareModal, 1000);
+}
+
+// Track share events
+function trackShareEvent(platform, productTitle) {
+    console.log(`Product shared: ${productTitle} on ${platform}`);
+    
+    // Google Analytics tracking
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'share', {
+            'event_category': 'Product Sharing',
+            'event_label': platform,
+            'value': 1
+        });
+    }
+}
+
+// Open share modal
+function openShareModal() {
+    const shareModal = document.getElementById('shareModal');
+    const quickViewModal = document.getElementById('quickViewModal');
+    const currentProduct = getCurrentProductData();
+    
+    if (!currentProduct) return;
+    
+    // Update share modal content
+    updateShareModalContent(currentProduct);
+    
+    // Show share modal
+    shareModal.classList.add('active');
+    shareModal.setAttribute('aria-hidden', 'false');
+    
+    // Hide quick view modal temporarily
+    if (quickViewModal) {
+        quickViewModal.style.visibility = 'hidden';
+    }
+}
+
+// Close share modal
+function closeShareModal() {
+    const shareModal = document.getElementById('shareModal');
+    const quickViewModal = document.getElementById('quickViewModal');
+    
+    shareModal.classList.remove('active');
+    shareModal.setAttribute('aria-hidden', 'true');
+    
+    // Show quick view modal again
+    if (quickViewModal) {
+        quickViewModal.style.visibility = 'visible';
+    }
+}
+
+// Copy to clipboard function
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        console.log('Text copied to clipboard');
+    }).catch(err => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+    });
+}
+
+// Show share success message
+function showShareSuccess(message) {
+    // Remove existing success message
+    const existingSuccess = document.querySelector('.share-success');
+    if (existingSuccess) {
+        existingSuccess.remove();
+    }
+
+    const success = document.createElement('div');
+    success.className = 'share-success';
+    success.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        <span>${message}</span>
+    `;
+
+    document.body.appendChild(success);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (document.body.contains(success)) {
+            document.body.removeChild(success);
+        }
+    }, 3000);
 }
 
 // Manual re-initialization function
