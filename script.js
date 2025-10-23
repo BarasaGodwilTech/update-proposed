@@ -2780,11 +2780,11 @@ function closeQuickViewModal() {
                                     <i class="fab fa-whatsapp" aria-hidden="true"></i>
                                     Order on WhatsApp
                                 </a>
-                                <button class="btn btn-outline add-to-wishlist-modal">
+                                <button class="btn btn-outline-view add-to-wishlist-modal">
                                     <i class="far fa-heart" aria-hidden="true"></i>
                                     Add to Wishlist
                                 </button>
-                                <button class="btn btn-outline share-product-main-btn">
+                                <button class="btn btn-outline-view share-product-main-btn">
                                     <i class="fas fa-share-alt" aria-hidden="true"></i>
                                     Share Product
                                 </button>

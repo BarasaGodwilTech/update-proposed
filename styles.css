@@ -1357,7 +1357,12 @@ hero-content {
 }
 
 .btn-outline {
-  background: var(--notify-accent);
+  background: transparent;
+  color: var(--light);
+  border-color: var(--light);
+}
+.btn-outline-view {
+  background: linear-gradient(90deg, #030697, #f59e0b);
   color: var(--light);
   border-color: var(--light);
 }
@@ -9882,6 +9887,8 @@ body.tour-active {
     border-radius: 12px;
     padding: 0;
     overflow: hidden;
+    width: 90vw; /* Responsive width */
+    margin: 5vh auto; /* Center with vertical spacing */
 }
 
 .share-modal-header {
@@ -9893,13 +9900,13 @@ body.tour-active {
 .share-modal-header h3 {
     margin: 0 0 0.5rem 0;
     color: #1f2937;
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 4vw, 1.5rem); /* Fluid font size */
 }
 
 .share-modal-header p {
     margin: 0;
     color: #6b7280;
-    font-size: 0.9rem;
+    font-size: clamp(0.8rem, 3vw, 0.9rem); /* Fluid font size */
 }
 
 .share-options {
@@ -10004,7 +10011,14 @@ body.tour-active {
     margin: 0 0 0.5rem 0;
     font-size: 1rem;
     color: #1f2937;
+    /* Prevent text cutoff */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
 }
+
 
 .share-preview-content p {
     margin: 0 0 0.5rem 0;
@@ -10014,6 +10028,7 @@ body.tour-active {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.4;
 }
 
 .share-preview-price {
@@ -10066,19 +10081,336 @@ body.tour-active {
     }
 }
 
-/* Responsive Design */
-@media (max-width: 640px) {
+/* Enhanced Responsive Design */
+/* Large screens (desktops) */
+@media (min-width: 1200px) {
+    .share-modal .modal-content {
+        max-width: 550px;
+    }
+    
     .share-options {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.25rem;
+    }
+}
+
+/* Medium screens (tablets) */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .share-modal .modal-content {
+        max-width: 600px;
+        width: 85vw;
+    }
+    
+    .share-options {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+}
+
+/* Small screens (large phones) */
+@media (max-width: 767px) and (min-width: 481px) {
+    .share-modal .modal-content {
+        width: 90vw;
+        margin: 2vh auto;
+    }
+    
+    .share-options {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        padding: 1.25rem;
+    }
+    
+    .share-option {
+        padding: 0.75rem;
+    }
+    
+    .share-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.25rem;
+    }
+    
+    .share-link-container {
+        padding: 0 1.25rem;
+        margin-bottom: 1.25rem;
     }
     
     .share-preview {
-        flex-direction: column;
-        text-align: center;
+        padding: 1.25rem;
+        flex-direction: row;
     }
     
     .share-preview-image {
-        width: 120px;
-        height: 120px;
+        width: 70px;
+        height: 70px;
+    }
+    
+    .share-modal-header {
+        padding: 1.25rem 1.25rem 0.75rem;
+    }
+}
+
+/* Extra small screens (phones) */
+@media (max-width: 480px) {
+    .share-modal .modal-content {
+        width: 95vw;
+        margin: 1vh auto;
+        border-radius: 10px;
+    }
+    
+    .share-options {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .share-option {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .share-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+    }
+    
+    .share-option span {
+        font-size: 0.75rem;
+    }
+    
+    .share-link-container {
+        padding: 0 1rem;
+        margin-bottom: 1rem;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .share-link-input {
+        font-size: 0.85rem;
+        padding: 0.75rem;
+    }
+    
+    .copy-link-btn {
+        padding: 0.75rem;
+        width: 100%;
+    }
+    
+    .share-preview {
+        padding: 1rem;
+        flex-direction: row; /* Keep horizontal layout on mobile */
+        text-align: left; /* Align text to left */
+        gap: 0.75rem;
+        align-items: flex-start; /* Align to top */
+    }
+    
+    .share-preview-image {
+        width: 70px; /* Smaller image on mobile */
+        height: 70px;
+        flex-shrink: 0;
+    }
+    
+    .share-modal-header {
+        padding: 1rem 1rem 0.75rem;
+    }
+    
+    .share-modal-header h3 {
+        font-size: 1.25rem;
+    }
+    
+    .share-modal-close {
+        top: 0.75rem;
+        right: 0.75rem;
+        font-size: 1.1rem;
+    }
+     .share-preview-content {
+        flex: 1;
+        min-width: 0; /* Important: allows text truncation to work */
+    }
+     .share-preview-content h4 {
+        font-size: 0.9rem;
+        -webkit-line-clamp: 2; /* Show 2 lines max */
+        line-height: 1.2;
+    }
+    
+    .share-preview-content p {
+        font-size: 0.75rem;
+        -webkit-line-clamp: 2; /* Show 2 lines max */
+        line-height: 1.3;
+        margin-bottom: 0.25rem;
+    }
+    
+    .share-preview-price {
+        font-size: 0.9rem;
+    }
+}
+
+
+/* Very small screens (small phones) */
+@media (max-width: 360px) {
+    .share-options {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        padding: 0.75rem;
+    }
+    
+    .share-option {
+        padding: 0.5rem;
+    }
+    
+    .share-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    
+    .share-option span {
+        font-size: 0.7rem;
+    }
+    
+    .share-link-container {
+        padding: 0 0.75rem;
+    }
+    
+     .share-preview {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .share-preview-image {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .share-preview-content h4 {
+        font-size: 0.85rem;
+        -webkit-line-clamp: 2;
+    }
+    
+    .share-preview-content p {
+        font-size: 0.7rem;
+        -webkit-line-clamp: 2;
+    }
+    
+    .share-preview-price {
+        font-size: 0.9rem;
+    }
+    
+/* Ensure text doesn't overflow on all screens */
+.share-preview-content {
+    overflow: hidden; /* Contain the text */
+}
+
+.share-preview-content h4,
+.share-preview-content p {
+    word-wrap: break-word; /* Break long words */
+    overflow-wrap: break-word; /* Modern property */
+}
+}
+
+/* Landscape orientation for mobile devices */
+@media (max-height: 500px) and (orientation: landscape) {
+    .share-modal .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+        margin: 5vh auto;
+    }
+    
+    .share-options {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .share-preview {
+        padding: 1rem;
+    }
+    
+    .share-modal-header {
+        padding: 1rem 1rem 0.5rem;
+    }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .share-product-btn {
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .share-option:hover {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .share-product-btn,
+    .share-option,
+    .share-success {
+        transition: none;
+        animation: none;
+    }
+    
+    .share-product-btn:hover {
+        transform: none;
+    }
+    
+    .share-option:hover {
+        transform: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .share-modal .modal-content {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .share-modal-header {
+        border-bottom-color: #374151;
+    }
+    
+    .share-modal-header h3 {
+        color: #f9fafb;
+    }
+    
+    .share-modal-header p {
+        color: #d1d5db;
+    }
+    
+    .share-option {
+        border-color: #374151;
+        background: #374151;
+    }
+    
+    .share-option span {
+        color: #f9fafb;
+    }
+    
+    .share-link-input {
+        background: #111827;
+        border-color: #374151;
+        color: #f9fafb;
+    }
+    
+    .share-preview {
+        background: #111827;
+        border-top-color: #374151;
+    }
+    
+    .share-preview-content h4 {
+        color: #f9fafb;
+    }
+    
+    .share-preview-content p {
+        color: #d1d5db;
+    }
+    
+    .share-modal-close {
+        color: #d1d5db;
+    }
+    
+    .share-modal-close:hover {
+        color: #f9fafb;
     }
 }
