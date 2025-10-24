@@ -1863,6 +1863,9 @@ function closeQuickViewModal() {
     const modal = document.getElementById('quickViewModal');
     if (!modal) return;
     
+    // Clean up gallery state
+    cleanupGallery();
+    
     modal.classList.remove('active');
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = 'auto';
@@ -2310,7 +2313,7 @@ function openProductFromUrl(productId, productSlug) {
         }
     }
 
-    // Generate combined media thumbnails
+        // Generate combined media thumbnails
     if (elements.thumbnails) {
         elements.thumbnails.innerHTML = '';
         
@@ -2321,6 +2324,10 @@ function openProductFromUrl(productId, productSlug) {
             noMedia.innerHTML = '<i class="fas fa-image"></i> No media available';
             elements.thumbnails.appendChild(noMedia);
         } else {
+            // Store current media in modal for thumbnail click handlers
+            const modal = document.getElementById('quickViewModal');
+            modal.currentMedia = allMedia;
+            
             // Create thumbnails for all media
             allMedia.forEach((media, index) => {
                 const thumbnail = document.createElement('div');
@@ -2348,7 +2355,14 @@ function openProductFromUrl(productId, productSlug) {
                 }
                 
                 thumbnail.addEventListener('click', () => {
-                    displayMedia(media, index, allMedia, elements);
+                    // Use the current media stored in the modal
+                    const currentMedia = modal.currentMedia;
+                    if (!currentMedia) return;
+                    
+                    displayMedia(media, index, currentMedia, elements);
+                    
+                    // Update modal's current index
+                    modal.currentMediaIndex = index;
                     
                     // Update active thumbnail
                     document.querySelectorAll('.media-thumbnail').forEach(thumb => thumb.classList.remove('active'));
@@ -2388,6 +2402,13 @@ function openProductFromUrl(productId, productSlug) {
 
 // Display media in the main container
 function displayMedia(media, index, allMedia, elements) {
+    const modal = document.getElementById('quickViewModal');
+    
+    // Update modal's current index
+    if (modal) {
+        modal.currentMediaIndex = index;
+    }
+    
     if (media.type === 'image') {
         // Show image, hide video
         elements.mainImageContainer.style.display = 'flex';
@@ -2425,18 +2446,24 @@ function updateMediaCounter(current, total) {
 }
 
 // Initialize combined gallery navigation
+// Initialize combined gallery navigation
 function initCombinedGalleryNavigation(allMedia, elements) {
     if (!allMedia || allMedia.length <= 1) return;
     
-    let currentMediaIndex = 0;
+    // Store the current product's media in the modal for reference
+    const modal = document.getElementById('quickViewModal');
+    modal.currentMedia = allMedia;
+    modal.currentMediaIndex = 0;
+    
     const prevButton = document.querySelector('.gallery-prev');
     const nextButton = document.querySelector('.gallery-next');
     const playPauseBtn = document.getElementById('playPauseBtn');
     
     function navigateToMedia(index) {
-        if (allMedia[index]) {
-            currentMediaIndex = index;
-            displayMedia(allMedia[index], index, allMedia, elements);
+        const currentMedia = modal.currentMedia;
+        if (currentMedia && currentMedia[index]) {
+            modal.currentMediaIndex = index;
+            displayMedia(currentMedia[index], index, currentMedia, elements);
             
             // Update active thumbnail
             document.querySelectorAll('.media-thumbnail').forEach((thumb, thumbIndex) => {
@@ -2446,30 +2473,49 @@ function initCombinedGalleryNavigation(allMedia, elements) {
     }
     
     function nextMedia() {
-        const newIndex = (currentMediaIndex + 1) % allMedia.length;
+        const currentMedia = modal.currentMedia;
+        if (!currentMedia) return;
+        
+        const newIndex = (modal.currentMediaIndex + 1) % currentMedia.length;
         navigateToMedia(newIndex);
     }
     
     function prevMedia() {
-        const newIndex = (currentMediaIndex - 1 + allMedia.length) % allMedia.length;
+        const currentMedia = modal.currentMedia;
+        if (!currentMedia) return;
+        
+        const newIndex = (modal.currentMediaIndex - 1 + currentMedia.length) % currentMedia.length;
         navigateToMedia(newIndex);
     }
     
-    // Navigation buttons
+    // Remove existing event listeners to prevent duplicates
     if (prevButton) {
-        prevButton.addEventListener('click', prevMedia);
+        prevButton.replaceWith(prevButton.cloneNode(true));
+    }
+    if (nextButton) {
+        nextButton.replaceWith(nextButton.cloneNode(true));
     }
     
-    if (nextButton) {
-        nextButton.addEventListener('click', nextMedia);
+    // Get fresh references after cloning
+    const freshPrevButton = document.querySelector('.gallery-prev');
+    const freshNextButton = document.querySelector('.gallery-next');
+    
+    // Add event listeners to fresh buttons
+    if (freshPrevButton) {
+        freshPrevButton.addEventListener('click', prevMedia);
+    }
+    
+    if (freshNextButton) {
+        freshNextButton.addEventListener('click', nextMedia);
     }
     
     // Video controls
     if (playPauseBtn) {
-        playPauseBtn.addEventListener('click', () => {
-            // This would require YouTube API for full control
-            // For now, we'll just toggle the icon
-            const icon = playPauseBtn.querySelector('i');
+        playPauseBtn.replaceWith(playPauseBtn.cloneNode(true));
+        const freshPlayPauseBtn = document.getElementById('playPauseBtn');
+        
+        freshPlayPauseBtn.addEventListener('click', () => {
+            const icon = freshPlayPauseBtn.querySelector('i');
             if (icon.classList.contains('fa-play')) {
                 icon.className = 'fas fa-pause';
             } else {
@@ -2480,7 +2526,10 @@ function initCombinedGalleryNavigation(allMedia, elements) {
     
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     if (fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', () => {
+        fullscreenBtn.replaceWith(fullscreenBtn.cloneNode(true));
+        const freshFullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        freshFullscreenBtn.addEventListener('click', () => {
             const videoContainer = elements.mainVideoContainer;
             if (videoContainer.requestFullscreen) {
                 videoContainer.requestFullscreen();
@@ -2488,8 +2537,11 @@ function initCombinedGalleryNavigation(allMedia, elements) {
         });
     }
     
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
+    // Remove existing keyboard listener and add fresh one
+    document.removeEventListener('keydown', handleGalleryKeydown);
+    document.addEventListener('keydown', handleGalleryKeydown);
+    
+    function handleGalleryKeydown(e) {
         if (!document.getElementById('quickViewModal').classList.contains('active')) return;
         
         if (e.key === 'ArrowLeft') {
@@ -2497,27 +2549,14 @@ function initCombinedGalleryNavigation(allMedia, elements) {
         } else if (e.key === 'ArrowRight') {
             nextMedia();
         } else if (e.key === 'Escape') {
-            // Exit fullscreen if active
             if (document.fullscreenElement) {
                 document.exitFullscreen();
             }
         }
-    });
+    }
     
-    // Auto-play first video when navigated to
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                const videoContainer = elements.mainVideoContainer;
-                if (videoContainer.style.display !== 'none' && allMedia[currentMediaIndex].type === 'video') {
-                    // Video is now visible - you could auto-play here if desired
-                    console.log('Video is now visible:', allMedia[currentMediaIndex].url);
-                }
-            }
-        });
-    });
-    
-    observer.observe(elements.mainVideoContainer, { attributes: true });
+    // Store the handler for cleanup
+    modal.galleryKeydownHandler = handleGalleryKeydown;
 }
 
 // Add these helper functions if they don't exist:
@@ -2533,6 +2572,36 @@ function getStockStatusText(stock) {
         'limited': 'Limited Stock'
     };
     return statusMap[stock] || 'In Stock';
+}
+// Clean up gallery when closing modal
+function cleanupGallery() {
+    const modal = document.getElementById('quickViewModal');
+    if (!modal) return;
+    
+    // Clear stored media
+    modal.currentMedia = null;
+    modal.currentMediaIndex = 0;
+    
+    // Remove keyboard listener
+    if (modal.galleryKeydownHandler) {
+        document.removeEventListener('keydown', modal.galleryKeydownHandler);
+        modal.galleryKeydownHandler = null;
+    }
+    
+    // Clear video iframe src to stop playback
+    const videoIframe = document.getElementById('modalProductVideo');
+    if (videoIframe) {
+        videoIframe.src = '';
+    }
+    
+    // Reset video controls
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    if (playPauseBtn) {
+        const icon = playPauseBtn.querySelector('i');
+        if (icon) {
+            icon.className = 'fas fa-play';
+        }
+    }
 }
 
 function updateWhatsAppButton(product) {
