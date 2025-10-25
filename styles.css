@@ -5934,7 +5934,7 @@ hero-content {
     color: white;
 }
 
-.stock-status.limited-stock {
+.stock-status.limited {
     background: var(--products-accent);
     color: white;
 }
